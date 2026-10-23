@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Logga in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --ink:    #0F1210;
+  --fg:     #F2F0EA;
+  --fg2:    #CCC9BF;
+  --fg3:    #8A8E89;
+  --fg4:    #4a4e49;
+  --accent: #8FAE8A;
+  --trust:  #5B7FA6;
+  --warn:   #C4875A;
+  --danger: #A85C5C;
+  --serif:  'Cormorant Garamond', Georgia, serif;
+  --sans:   'Jost', system-ui, sans-serif;
+  --border: rgba(242,240,234,0.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--ink);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-weight: 300;
+  line-height: 1.7;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* ── LEFT — VISUAL ── */
+.visual {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  display: flex; align-items: flex-end;
+}
+
+/* Animated gradient background */
+.visual-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 30% 40%, rgba(143,174,138,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 70% 70%, rgba(91,127,166,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 100% 100% at 50% 0%, rgba(168,92,92,0.04) 0%, transparent 50%),
+    linear-gradient(160deg, #0a0e0b 0%, #0F1210 40%, #111510 100%);
+  animation: breathe 8s ease infinite alternate;
+}
+
+@keyframes breathe {
+  0%   { opacity: 0.8; transform: scale(1); }
+  100% { opacity: 1;   transform: scale(1.04); }
+}
+
+/* Grid lines */
+.visual-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(143,174,138,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(143,174,138,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 80% at 40% 50%, black 0%, transparent 70%);
+}
+
+/* Floating data points */
+.data-points {
+  position: absolute; inset: 0; pointer-events: none;
+}
+.dp {
+  position: absolute;
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--accent);
+  animation: float var(--dur, 6s) ease-in-out infinite alternate;
+  opacity: var(--op, 0.3);
+}
+@keyframes float {
+  0%   { transform: translateY(0) translateX(0); opacity: var(--op); }
+  100% { transform: translateY(var(--dy, -20px)) translateX(var(--dx, 10px)); opacity: calc(var(--op) * 0.4); }
+}
+
+/* Pulse ring */
+.pulse-ring {
+  position: absolute;
+  top: 38%; left: 42%;
+  transform: translate(-50%, -50%);
+  width: 180px; height: 180px;
+}
+.pr-circle {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(143,174,138,0.15);
+  animation: pulseRing var(--d, 3s) ease-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes pulseRing {
+  0%   { transform: scale(0.6); opacity: 0.6; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* HRV curve */
+.hrv-curve {
+  position: absolute;
+  bottom: 35%; left: 8%; right: 8%;
+  opacity: 0.25;
+}
+
+/* Visual content */
+.visual-content {
+  position: relative; z-index: 2;
+  padding: 3rem;
+  width: 100%;
+}
+.visual-quote {
+  font-family: var(--serif);
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  font-weight: 300; line-height: 1.25;
+  color: var(--fg); margin-bottom: 1.2rem;
+}
+.visual-quote em { font-style: italic; color: rgba(143,174,138,0.8); }
+.visual-sub {
+  font-size: 0.72rem; color: var(--fg3);
+  letter-spacing: 0.1em; line-height: 1.8;
+  max-width: 320px;
+}
+.visual-sub strong { color: var(--fg2); font-weight: 400; }
+
+/* Stats row */
+.visual-stats {
+  display: flex; gap: 2rem; margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.vs-item {}
+.vs-val {
+  font-family: var(--serif); font-size: 1.6rem;
+  font-weight: 300; line-height: 1; color: var(--fg);
+  margin-bottom: 0.2rem;
+}
+.vs-lbl {
+  font-size: 0.62rem; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--fg4);
+}
+
+/* ── RIGHT — FORM ── */
+.form-side {
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  min-height: 100vh;
+  padding: 3rem 2rem;
+  border-left: 1px solid rgba(91,127,166,0.18);
+  position: relative;
+}
+
+/* Top nav */
+.form-nav {
+  position: absolute; top: 2rem; left: 2rem; right: 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.form-logo {
+  font-family: var(--serif); font-size: 1rem;
+  font-weight: 400; letter-spacing: 0.16em;
+  color: var(--fg); text-decoration: none;
+}
+.form-back {
+  font-size: 0.6rem; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--fg3);
+  text-decoration: none; transition: color 0.2s;
+}
+.form-back:hover { color: var(--fg2); }
+
+/* Form container */
+.form-wrap { width: 100%; max-width: 360px; }
+
+/* Tabs */
+.form-tabs {
+  display: flex; gap: 0; margin-bottom: 2.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.form-tab {
+  flex: 1; padding: 0.7rem; text-align: center;
+  font-size: 0.74rem; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--fg3);
+  cursor: pointer; transition: all 0.2s;
+  background: none; border: none; font-family: var(--sans);
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.form-tab.active { color: var(--fg); border-bottom-color: var(--accent); }
+.form-tab:hover:not(.active) { color: var(--fg2); }
+
+/* Form heading */
+.form-heading {
+  font-family: var(--serif); font-size: 2rem;
+  font-weight: 300; line-height: 1.2; color: var(--fg);
+  margin-bottom: 0.4rem;
+}
+.form-heading em { font-style: italic; color: var(--fg2); }
+.form-subheading {
+  font-size: 0.88rem; color: var(--fg3);
+  line-height: 1.7; margin-bottom: 2rem;
+}
+
+/* Fields */
+.field { margin-bottom: 1.2rem; }
+.field-label {
+  font-size: 0.68rem; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--fg3);
+  display: block; margin-bottom: 0.5rem;
+}
+.field input {
+  width: 100%; background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border); color: var(--fg);
+  font-family: var(--sans); font-size: 0.88rem;
+  font-weight: 300; padding: 0.85rem 1rem;
+  outline: none; transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.field input:focus { border-color: rgba(143,174,138,0.4); }
+.field input::placeholder { color: var(--fg4); }
+
+/* Submit */
+.submit-btn {
+  width: 100%; padding: 1rem;
+  background: var(--fg); color: var(--ink);
+  font-family: var(--sans); font-size: 0.72rem;
+  font-weight: 500; letter-spacing: 0.2em;
+  text-transform: uppercase; border: none; cursor: pointer;
+  transition: all 0.3s; margin-top: 0.4rem;
+}
+.submit-btn:hover { background: var(--fg2); transform: translateY(-1px); }
+.submit-btn:active { transform: translateY(0); }
+.submit-btn.loading { opacity: 0.6; cursor: default; }
+
+/* Divider */
+.form-divider {
+  display: flex; align-items: center; gap: 1rem;
+  margin: 1.4rem 0; color: var(--fg4);
+  font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase;
+}
+.form-divider::before, .form-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* Magic link */
+.magic-btn {
+  width: 100%; padding: 0.85rem;
+  background: transparent; color: var(--fg2);
+  font-family: var(--sans); font-size: 0.78rem;
+  font-weight: 300; letter-spacing: 0.14em;
+  text-transform: uppercase; border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.2s;
+}
+.magic-btn:hover { border-color: rgba(91,127,166,0.5); color: var(--fg); }
+
+/* Error / success */
+.form-msg {
+  font-size: 0.78rem; line-height: 1.6;
+  padding: 0.8rem 1rem; margin-bottom: 1rem;
+  display: none;
+}
+.form-msg.error   { color: var(--danger); border: 1px solid rgba(168,92,92,0.2); background: rgba(168,92,92,0.06); }
+.form-msg.success { color: var(--trust);  border: 1px solid rgba(91,127,166,0.25); background: rgba(91,127,166,0.07); }
+.form-msg.visible { display: block; }
+
+/* Form footer */
+.form-footer {
+  margin-top: 2rem; padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.74rem; color: var(--fg4);
+  line-height: 1.8; text-align: center;
+}
+.form-footer a { color: var(--fg3); text-decoration: none; transition: color 0.2s; }
+.form-footer a:hover { color: var(--fg2); }
+
+/* Password toggle */
+.field-row { position: relative; }
+.field-toggle {
+  position: absolute; right: 1rem; top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.68rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--fg4);
+  cursor: pointer; transition: color 0.2s; user-select: none;
+}
+.field-toggle:hover { color: var(--fg3); }
+
+/* Form screens */
+.form-screen { display: none; }
+.form-screen.active { display: block; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  body { grid-template-columns: 1fr; }
+  .visual { display: none; }
+  .form-side { border-left: none; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.form-wrap { animation: fadeUp 0.5s ease both; }
+
+
+/* ── FORSYNE DESIGN UPGRADE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+/* Topbar glow line */
+.topbar, nav {
+  border-bottom: 1px solid rgba(143,174,138,0.1) !important;
+  box-shadow: 0 1px 0 rgba(143,174,138,0.04);
+}
+/* Metric cards hover glow */
+.metric-card, .panel, .card, .data-card, .insight-card {
+  transition: box-shadow 0.3s ease;
+}
+.metric-card:hover, .panel:hover, .card:hover, .data-card:hover, .insight-card:hover {
+  box-shadow: 0 0 0 1px rgba(143,174,138,0.1), 0 4px 20px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+
+<!-- ── LEFT — VISUAL ── -->
+<div class="visual">
+  <div class="visual-bg"></div>
+  <div class="visual-grid"></div>
+
+  <!-- Floating data points -->
+  <div class="data-points" id="dataPoints"></div>
+
+  <!-- Pulse rings -->
+  <div class="pulse-ring">
+    <div class="pr-circle" style="--d:4s; --delay:0s;"></div>
+    <div class="pr-circle" style="--d:4s; --delay:1.3s;"></div>
+    <div class="pr-circle" style="--d:4s; --delay:2.6s;"></div>
+  </div>
+
+  <!-- HRV curve -->
+  <div class="hrv-curve">
+    <svg width="100%" height="60" viewBox="0 0 500 60" preserveAspectRatio="none">
+      <path d="M0,30 C40,30 60,30 80,20 C100,10 110,5 120,12 C130,19 140,38 160,30 C180,22 190,8 210,15 C230,22 240,38 260,30 C280,22 300,10 320,18 C340,26 350,40 370,30 C390,20 410,12 440,22 C460,28 480,30 500,30"
+        fill="none" stroke="var(--accent)" stroke-width="1" opacity="0.6"/>
+    </svg>
+  </div>
+
+  <!-- Content -->
+  <div class="visual-content">
+    <h2 class="visual-quote">Du märker det<br>om 72 timmar.<br><em>Vi ser det nu.</em></h2>
+    <p class="visual-sub">Systemet lär sig hur <strong>just du</strong> fungerar — och blir skarpare för varje dag du använder det.</p>
+    <div class="visual-stats">
+      <div class="vs-item">
+        <div class="vs-val">14</div>
+        <div class="vs-lbl">Mönster identifierade</div>
+      </div>
+      <div class="vs-item">
+        <div class="vs-val">7</div>
+        <div class="vs-lbl">Dagar till full modell</div>
+      </div>
+      <div class="vs-item">
+        <div class="vs-val">1</div>
+        <div class="vs-lbl">Fokus idag</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── RIGHT — FORM ── -->
+<div class="form-side">
+
+  <div class="form-nav">
+    <a href="landing.html" class="form-logo">Forsyne</a>
+    <a href="landing.html" class="form-back">← Tillbaka</a>
+  </div>
+
+  <div class="form-wrap">
+
+    <!-- TABS -->
+    <div class="form-tabs">
+      <button class="form-tab active" onclick="switchTab('login', this)">Logga in</button>
+      <button class="form-tab" onclick="switchTab('register', this)">Skapa konto</button>
+    </div>
+
+    <!-- MESSAGE -->
+    <div class="form-msg" id="formMsg"></div>
+
+    <!-- LOGIN SCREEN -->
+    <div class="form-screen active" id="loginScreen">
+      <h2 class="form-heading">Välkommen<br><em>tillbaka.</em></h2>
+      <p class="form-subheading">Modellen har fortsatt lära sig sedan du var här sist.</p>
+
+      <div class="field">
+        <label class="field-label">Email</label>
+        <input type="email" id="loginEmail" placeholder="din@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label class="field-label">Lösenord</label>
+        <div class="field-row">
+          <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+          <span class="field-toggle" onclick="togglePassword('loginPassword', this)">Visa</span>
+        </div>
+      </div>
+
+      <button class="submit-btn" onclick="handleLogin()" id="loginBtn">Logga in</button>
+      <p style="font-size: 0.74rem; color:#5B7FA6; line-height:1.6; text-align:center; margin-top:0.75rem;">Din data krypteras och lagras säkert. <a href="disclaimer.html" style="color:#5B7FA6; text-decoration:underline; text-underline-offset:2px;">Läs hur →</a></p>
+
+      <div class="form-divider">eller</div>
+
+      <button class="magic-btn" onclick="handleMagicLink()">Skicka inloggningslänk via email</button>
+
+      <div class="form-footer">
+        <a href="#" onclick="showForgot()">Glömt lösenordet?</a>
+        &nbsp;·&nbsp;
+        <a href="#" onclick="switchTab('register', document.querySelectorAll('.form-tab')[1])">Skapa konto</a>
+      </div>
+    </div>
+
+    <!-- REGISTER SCREEN -->
+    <div class="form-screen" id="registerScreen">
+      <h2 class="form-heading">Det börjar<br><em>här.</em></h2>
+      <p class="form-subheading">Skapa ditt konto. Onboardingen bygger din modell.</p>
+
+      <div class="field">
+        <label class="field-label">Email</label>
+        <input type="email" id="regEmail" placeholder="din@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label class="field-label">Lösenord</label>
+        <div class="field-row">
+          <input type="password" id="regPassword" placeholder="Minst 8 tecken" autocomplete="new-password">
+          <span class="field-toggle" onclick="togglePassword('regPassword', this)">Visa</span>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Bekräfta lösenord</label>
+        <div class="field-row">
+          <input type="password" id="regPasswordConfirm" placeholder="Samma lösenord igen" autocomplete="new-password">
+        </div>
+      </div>
+
+      <button class="submit-btn" onclick="handleRegister()" id="registerBtn">Skapa konto</button>
+      <p style="font-size: 0.74rem; color:#5B7FA6; line-height:1.6; text-align:center; margin-top:0.75rem;">Din data krypteras och lagras säkert. <a href="disclaimer.html" style="color:#5B7FA6; text-decoration:underline; text-underline-offset:2px;">Läs hur →</a></p>
+
+      <div class="form-footer">
+        Redan ett konto?
+        <a href="#" onclick="switchTab('login', document.querySelectorAll('.form-tab')[0])">Logga in</a>
+        <br>
+        <span style="margin-top:0.4rem; display:block; font-size: 0.68rem;">Genom att skapa ett konto godkänner du att din data lagras krypterat och aldrig säljs.</span>
+      </div>
+    </div>
+
+    <!-- FORGOT PASSWORD SCREEN -->
+    <div class="form-screen" id="forgotScreen">
+      <h2 class="form-heading">Återställ<br><em>lösenordet.</em></h2>
+      <p class="form-subheading">Vi skickar en länk till din email.</p>
+
+      <div class="field">
+        <label class="field-label">Email</label>
+        <input type="email" id="forgotEmail" placeholder="din@email.com" autocomplete="email">
+      </div>
+
+      <button class="submit-btn" onclick="handleForgot()" id="forgotBtn">Skicka återställningslänk</button>
+
+      <div class="form-footer">
+        <a href="#" onclick="switchTab('login', document.querySelectorAll('.form-tab')[0])">← Tillbaka till inloggning</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script>
+// ── ?next= helpers (return to /app/ or other local path after login) ──
+function getNextParam() {
+  const raw = new URLSearchParams(window.location.search).get('next');
+  if (!raw) return null;
+  // Only allow local paths — prevent open-redirect
+  if (!raw.startsWith('/') || raw.startsWith('//') || raw.includes('://')) return null;
+  return raw;
+}
+async function doRedirectAfterAuth() {
+  const next = getNextParam();
+  if (next) { window.location.replace(next); return; }
+  await redirectAfterLogin();
+}
+async function redirectIfLoggedInOrNext() {
+  if (!isLoggedIn()) return false;
+  const next = getNextParam();
+  if (next) { window.location.replace(next); return true; }
+  return await redirectIfLoggedIn();
+}
+
+// Handle Supabase email confirmation — token arrives in hash fragment
+(async () => {
+  const frag = parseAuthFragment();
+  if (frag && frag.access_token) {
+    _setSession(frag.access_token, frag.refresh_token);
+    await doRedirectAfterAuth();
+    return;
+  }
+  await redirectIfLoggedInOrNext();
+})();
+
+// ── TABS ──
+function switchTab(tab, btn) {
+  document.querySelectorAll('.form-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.form-screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(tab + 'Screen').classList.add('active');
+  hideMsg();
+}
+
+function showForgot() {
+  document.querySelectorAll('.form-screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('forgotScreen').classList.add('active');
+  document.querySelectorAll('.form-tab').forEach(t => t.classList.remove('active'));
+}
+
+// ── PASSWORD TOGGLE ──
+function togglePassword(id, btn) {
+  const input = document.getElementById(id);
+  input.type = input.type === 'password' ? 'text' : 'password';
+  btn.textContent = input.type === 'password' ? 'Visa' : 'Dölj';
+}
+
+// ── MESSAGES ──
+function showMsg(text, type) {
+  const el = document.getElementById('formMsg');
+  el.textContent = text;
+  el.className = 'form-msg ' + type + ' visible';
+}
+function hideMsg() {
+  document.getElementById('formMsg').className = 'form-msg';
+}
+
+// ── LOGIN ──
+async function handleLogin() {
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn      = document.getElementById('loginBtn');
+
+  if (!email || !password) return showMsg('Fyll i email och lösenord.', 'error');
+
+  btn.textContent = 'Loggar in…';
+  btn.classList.add('loading');
+  hideMsg();
+
+  const result = await login(email, password);
+  if (result.error) {
+    showMsg(result.error, 'error');
+    btn.textContent = 'Logga in';
+    btn.classList.remove('loading');
+    return;
+  }
+  btn.textContent = 'Hämtar din profil…';
+  await doRedirectAfterAuth();
+}
+
+// ── REGISTER ──
+async function handleRegister() {
+  const email    = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const confirm  = document.getElementById('regPasswordConfirm').value;
+  const btn      = document.getElementById('registerBtn');
+
+  if (!email || !password) return showMsg('Fyll i email och lösenord.', 'error');
+  if (password.length < 8) return showMsg('Lösenordet måste vara minst 8 tecken.', 'error');
+  if (password !== confirm)  return showMsg('Lösenorden matchar inte.', 'error');
+
+  btn.textContent = 'Skapar konto…';
+  btn.classList.add('loading');
+  hideMsg();
+
+  const result = await register(email, password);
+  if (result.error) {
+    showMsg(result.error, 'error');
+    btn.textContent = 'Skapa konto';
+    btn.classList.remove('loading');
+    return;
+  }
+  if (result.confirmed) {
+    // Auto-confirmed — send welcome email then redirect
+    btn.textContent = 'Skickar välkomstmail…';
+    fetch('/api/send-welcome', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    }).catch(() => {}); // fire-and-forget
+    btn.textContent = 'Hämtar din profil…';
+    await doRedirectAfterAuth();
+    return;
+  }
+  // Needs email confirmation (Supabase confirm email ON)
+  showMsg('Konto skapat! Kolla din email och klicka på bekräftelselänken.', 'success');
+  btn.textContent = 'Skapa konto';
+  btn.classList.remove('loading');
+}
+
+// ── MAGIC LINK ──
+async function handleMagicLink() {
+  const email = document.getElementById('loginEmail').value.trim();
+  if (!email) return showMsg('Ange din email först.', 'error');
+  hideMsg();
+  const result = await sendMagicLink(email);
+  if (result.ok) showMsg('Inloggningslänk skickad till ' + email + '. Kolla din inbox.', 'success');
+  else showMsg(result.error || 'Kunde inte skicka länken.', 'error');
+}
+
+// ── FORGOT PASSWORD ──
+async function handleForgot() {
+  const email = document.getElementById('forgotEmail').value.trim();
+  const btn   = document.getElementById('forgotBtn');
+
+  if (!email) return showMsg('Ange din email.', 'error');
+
+  btn.textContent = 'Skickar…';
+  btn.classList.add('loading');
+  hideMsg();
+
+  const result = await sendPasswordReset(email);
+  if (result.ok) {
+    showMsg('Återställningslänk skickad till ' + email + '. Kolla din inbox.', 'success');
+    btn.textContent = 'Skickat ✓';
+    btn.classList.remove('loading');
+  } else {
+    showMsg(result.error || 'Kunde inte skicka länken.', 'error');
+    btn.textContent = 'Skicka återställningslänk';
+    btn.classList.remove('loading');
+  }
+}
+
+// ── FLOATING DATA POINTS ──
+const container = document.getElementById('dataPoints');
+if (container) {
+  const configs = [
+    { top: '15%', left: '20%', dur: '7s', op: 0.5, dy: '-30px', dx: '15px' },
+    { top: '25%', left: '60%', dur: '9s', op: 0.3, dy: '-20px', dx: '-10px' },
+    { top: '45%', left: '15%', dur: '6s', op: 0.4, dy: '-25px', dx: '20px' },
+    { top: '55%', left: '75%', dur: '8s', op: 0.25, dy: '-15px', dx: '-15px' },
+    { top: '70%', left: '35%', dur: '10s', op: 0.35, dy: '-20px', dx: '8px' },
+    { top: '30%', left: '80%', dur: '7s', op: 0.2, dy: '-35px', dx: '-12px' },
+    { top: '80%', left: '55%', dur: '9s', op: 0.3, dy: '-18px', dx: '16px' },
+    { top: '20%', left: '45%', dur: '6s', op: 0.4, dy: '-28px', dx: '-8px' },
+    { top: '60%', left: '25%', dur: '8s', op: 0.25, dy: '-22px', dx: '12px' },
+    { top: '40%', left: '88%', dur: '7s', op: 0.3, dy: '-16px', dx: '-20px' },
+    { top: '85%', left: '18%', dur: '11s', op: 0.2, dy: '-25px', dx: '10px' },
+    { top: '12%', left: '72%', dur: '8s', op: 0.35, dy: '-30px', dx: '-5px' },
+  ];
+  configs.forEach(c => {
+    const dot = document.createElement('div');
+    dot.className = 'dp';
+    dot.style.cssText = `top:${c.top};left:${c.left};--dur:${c.dur};--op:${c.op};--dy:${c.dy};--dx:${c.dx};animation-delay:${Math.random()*3}s`;
+    container.appendChild(dot);
+  });
+}
+
+// ── AUTO-TAB FROM URL PARAM ──
+// landing.html skickar ?tab=register för nya användare
+(function() {
+  const tab = new URLSearchParams(window.location.search).get('tab');
+  if (tab === 'register') {
+    switchTab('register', document.querySelectorAll('.form-tab')[1]);
+  }
+})();
+
+// ── KEYBOARD ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const active = document.querySelector('.form-screen.active');
+    if (active?.id === 'loginScreen') handleLogin();
+    else if (active?.id === 'registerScreen') handleRegister();
+    else if (active?.id === 'forgotScreen') handleForgot();
+  }
+});
+</script>
+<footer style="padding: 2rem; text-align: center; border-top: 1px solid var(--border); margin-top: 3rem;">
+  <p style="font-size: 0.68rem; color: var(--fg4); line-height: 1.7; max-width: 480px; margin: 0 auto 0.5rem;">Forsyne är ett verktyg för självförståelse och prestation. Systemets insikter ersätter inte råd från läkare, psykolog eller annan vårdgivare — de kompletterar dem. <a href="disclaimer.html" style="color:var(--fg3); text-decoration:none;">Läs mer</a></p>
+  <p style="font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg4);"><a href="manifesto.html" style="color:var(--fg4); text-decoration:none;">Manifesto</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Disclaimer</a> · © 2026 Forsyne</p>
+</footer>
+</body>
+</html>

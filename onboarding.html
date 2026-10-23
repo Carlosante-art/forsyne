@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Forsyne — Bygg din modell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --ink:    #0F1210;
+  --fg:     #F2F0EA;
+  --fg2:    #CCC9BF;
+  --fg3:    #8A8E89;
+  --accent: #8FAE8A;
+  --trust:  #5B7FA6;
+  --beige:  #D6CFC0;
+  --serif:  'Cormorant Garamond', Georgia, serif;
+  --sans:   'Jost', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; height: auto; }
+body {
+  background: var(--ink);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-weight: 300;
+  line-height: 1.7;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* dvh = dynamic viewport height, hanterar iOS Safaris URL-bar korrekt;
+     100vh-fallback för äldre browsers. */
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.5rem clamp(1.5rem, 4vw, 3.5rem);
+  backdrop-filter: blur(32px) saturate(1.5);
+  background: rgba(15,18,16,0.72);
+  border-bottom: 1px solid rgba(143,174,138,0.06);
+}
+.logo {
+  font-family: var(--serif); font-size: 1.25rem; font-weight: 400;
+  letter-spacing: 0.14em; color: var(--fg); text-decoration: none;
+}
+.nav-progress {
+  font-size: 0.74rem; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--fg3);
+}
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; z-index: 200;
+  height: 2px; background: var(--accent);
+  transition: width 0.5s ease;
+  width: 0%;
+}
+
+/* ── MAIN LAYOUT ── */
+.onboarding {
+  max-width: 640px;
+  margin: 0 auto;
+  /* Top: clear fixed nav. Bottom: safe-area-inset för iPhone home-indicator
+     + extra rymd så CTA-knappar aldrig hamnar under home-bar. */
+  padding: 8rem 2rem calc(6rem + env(safe-area-inset-bottom, 0px));
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* iOS viewport-meta tillåter zoom på input-fokus om font-size < 16px.
+   Säkrar att inputs är 16px+ så iOS inte zoomar in. */
+input, select, textarea {
+  font-size: max(16px, 1em);
+}
+
+/* ── SCREEN ── */
+.screen {
+  display: none;
+  animation: fadeUp 0.5s ease forwards;
+}
+.screen.active { display: block; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── INTRO SCREEN ── */
+.intro-label {
+  font-size: 0.74rem; letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--accent); opacity: 0.8;
+  display: flex; align-items: center; gap: 0.85rem;
+  margin-bottom: 2.5rem;
+}
+.intro-label::before {
+  content: ''; width: 20px; height: 1px;
+  background: var(--accent); opacity: 0.55;
+}
+.intro-title {
+  font-family: var(--serif);
+  font-size: clamp(2.4rem, 5vw, 3.8rem);
+  font-weight: 300; line-height: 1.12;
+  color: var(--fg); margin-bottom: 2rem;
+}
+.intro-title em { font-style: italic; color: var(--accent); }
+.intro-body {
+  font-size: 1rem; color: var(--fg2);
+  line-height: 1.85; max-width: 480px;
+  margin-bottom: 3rem;
+}
+.intro-body p { margin-bottom: 1.2rem; }
+.intro-body strong { color: var(--fg); font-weight: 400; }
+
+/* ── BLOCK HEADER ── */
+.block-label {
+  font-size: 0.68rem; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 0.6rem;
+  display: flex; align-items: center; gap: 0.7rem;
+}
+.block-label::before {
+  content: ''; width: 16px; height: 1px;
+  background: var(--accent); opacity: 0.55;
+}
+.block-title {
+  font-family: var(--serif);
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 300; line-height: 1.2;
+  color: var(--fg); margin-bottom: 0.6rem;
+}
+.block-title em { font-style: italic; color: var(--accent); }
+.block-desc {
+  font-size: 0.88rem; color: var(--fg3);
+  line-height: 1.75; margin-bottom: 2.8rem;
+  font-style: italic;
+  border-left: 1px solid rgba(143,174,138,0.2);
+  padding-left: 1rem;
+}
+
+/* ── QUESTION ── */
+.question {
+  margin-bottom: 2.2rem;
+}
+.question-text {
+  font-size: 0.95rem; color: var(--fg2);
+  line-height: 1.75; margin-bottom: 0.9rem;
+}
+.question-text em { color: var(--fg3); font-style: normal; font-size: 0.82rem; }
+
+/* ── INPUTS ── */
+input[type="text"],
+input[type="number"],
+textarea,
+select {
+  width: 100%;
+  background: rgba(242,240,234,0.04);
+  border: 1px solid rgba(143,174,138,0.15);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 300;
+  padding: 0.85rem 1.1rem;
+  outline: none;
+  transition: border-color 0.3s;
+  border-radius: 0;
+  -webkit-appearance: none;
+}
+input[type="text"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(143,174,138,0.5);
+  background: rgba(242,240,234,0.06);
+}
+textarea { resize: vertical; min-height: 100px; }
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238A8E89' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+select option { background: #1a1f1b; color: var(--fg); }
+
+/* ── RADIO / CHECKBOX OPTIONS ── */
+.options {
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.options.row { flex-direction: row; flex-wrap: wrap; gap: 0.5rem; }
+
+.opt {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.75rem 1.1rem;
+  border: 1px solid rgba(143,174,138,0.12);
+  cursor: pointer;
+  transition: all 0.25s;
+  font-size: 0.88rem; color: var(--fg2);
+  user-select: none;
+}
+.opt:hover { border-color: rgba(143,174,138,0.3); color: var(--fg); }
+.opt.selected {
+  border-color: var(--accent);
+  color: var(--fg);
+  background: rgba(143,174,138,0.06);
+}
+.opt input { display: none; }
+.opt-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 1px solid rgba(143,174,138,0.3);
+  flex-shrink: 0; transition: all 0.25s;
+}
+.opt.selected .opt-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.opt-sq {
+  width: 14px; height: 14px;
+  border: 1px solid rgba(143,174,138,0.3);
+  flex-shrink: 0; transition: all 0.25s;
+}
+.opt.selected .opt-sq {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ── SCALE ── */
+.scale {
+  display: flex; gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.scale-btn {
+  width: 44px; height: 44px;
+  border: 1px solid rgba(143,174,138,0.12);
+  background: none; color: var(--fg3);
+  font-family: var(--sans); font-size: 0.82rem;
+  cursor: pointer; transition: all 0.25s;
+}
+.scale-btn:hover { border-color: rgba(143,174,138,0.3); color: var(--fg); }
+.scale-btn.selected {
+  border-color: var(--accent);
+  color: var(--fg);
+  background: rgba(143,174,138,0.08);
+}
+
+/* ── BLOCK CLOSE ── */
+.block-close {
+  font-family: var(--serif); font-style: italic;
+  font-size: 1rem; color: var(--fg3);
+  margin-top: 0.5rem; margin-bottom: 2.5rem;
+  padding-left: 1rem;
+  border-left: 1px solid rgba(143,174,138,0.2);
+  line-height: 1.7;
+}
+
+/* ── BUTTONS ── */
+.btn-row {
+  display: flex; gap: 1rem; align-items: center;
+  margin-top: 2.5rem;
+}
+.btn-next {
+  background: var(--beige); color: var(--ink);
+  font-family: var(--sans); font-size: 0.88rem;
+  font-weight: 500; letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 1rem 2.8rem;
+  border: none; cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-next:hover { background: #C4BDB0; transform: translateY(-2px); }
+.btn-back {
+  background: none; color: var(--fg3);
+  font-family: var(--sans); font-size: 0.78rem;
+  font-weight: 400; letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.5rem 0;
+  border: none; cursor: pointer;
+  transition: color 0.3s;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.btn-back:hover { color: var(--fg2); }
+.btn-skip {
+  margin-left: auto;
+  background: none; color: var(--fg3);
+  font-family: var(--sans); font-size: 0.74rem;
+  font-weight: 300; letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.5rem 0;
+  border: none; cursor: pointer;
+  transition: color 0.3s;
+}
+.btn-skip:hover { color: var(--fg2); }
+
+/* ── CONDITIONAL ── */
+.conditional { display: none; }
+.conditional.visible { display: block; }
+
+/* ── DONE SCREEN ── */
+.done-screen {
+  text-align: center;
+  padding: 4rem 0;
+}
+.done-icon {
+  font-size: 2.5rem; margin-bottom: 2rem;
+  opacity: 0.6;
+}
+.done-title {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 300; line-height: 1.2;
+  color: var(--fg); margin-bottom: 1.5rem;
+}
+.done-title em { font-style: italic; color: var(--accent); }
+.done-body {
+  font-size: 0.95rem; color: var(--fg2);
+  line-height: 1.85; max-width: 440px;
+  margin: 0 auto 3rem;
+}
+.done-body p { margin-bottom: 1rem; }
+.done-divider {
+  width: 1px; height: 60px;
+  background: linear-gradient(to bottom, var(--accent), transparent);
+  margin: 0 auto 2rem;
+  opacity: 0.4;
+}
+
+
+/* ── AI BLOCK CLOSE — dynamisk ── */
+.block-close-wrap {
+  min-height: 3rem;
+  margin: 2rem 0 1.5rem;
+  position: relative;
+}
+.block-close {
+  font-size: 0.9rem; color: var(--fg2);
+  line-height: 1.8; font-style: italic;
+  border-left: 2px solid rgba(143,174,138,0.2);
+  padding-left: 1rem;
+  transition: opacity 0.4s ease;
+}
+.block-close.loading { opacity: 0.3; }
+.ai-dots {
+  display: none; align-items: center; gap: 5px;
+  padding-left: 1rem; margin-bottom: 1rem;
+}
+.ai-dots.visible { display: flex; }
+.ai-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--accent); opacity: 0.4;
+  animation: aiPulse 1.4s ease infinite;
+}
+.ai-dot:nth-child(2) { animation-delay: 0.2s; }
+.ai-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes aiPulse { 0%,100%{opacity:0.2;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 480px) {
+  .onboarding { padding: 6rem 1.4rem 4rem; }
+  .scale-btn { width: 38px; height: 38px; }
+}
+
+
+/* ── FORSYNE DESIGN UPGRADE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+/* Topbar glow line */
+.topbar, nav {
+  border-bottom: 1px solid rgba(143,174,138,0.1) !important;
+  box-shadow: 0 1px 0 rgba(143,174,138,0.04);
+}
+/* Metric cards hover glow */
+.metric-card, .panel, .card, .data-card, .insight-card {
+  transition: box-shadow 0.3s ease;
+}
+.metric-card:hover, .panel:hover, .card:hover, .data-card:hover, .insight-card:hover {
+  box-shadow: 0 0 0 1px rgba(143,174,138,0.1), 0 4px 20px rgba(0,0,0,0.3);
+}
+
+/* ── POV OPENING ── */
+.pov-opening {
+  position: fixed; inset: 0; z-index: 900;
+  overflow: hidden;
+  pointer-events: none;
+}
+.pov-opening.done { display: none; }
+
+.pov-bg {
+  position: absolute; inset: 0;
+  background-image: url('images/Ljusspår_i_mörkret.png');
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.22) saturate(0.3);
+  animation: povZoom 2.8s ease forwards;
+}
+.pov-label-wrap {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.pov-label-text {
+  font-family: var(--sans);
+  font-size: 0.68rem; letter-spacing: 0.42em;
+  text-transform: uppercase; color: var(--accent);
+  animation: povLabelPulse 2.8s ease forwards;
+}
+.pov-veil {
+  position: absolute; inset: 0;
+  background: var(--ink);
+  animation: povVeilFade 2.8s ease forwards;
+}
+
+@keyframes povZoom {
+  0%   { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+@keyframes povLabelPulse {
+  0%   { opacity: 0; }
+  25%  { opacity: 0.7; }
+  65%  { opacity: 0.7; }
+  90%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes povVeilFade {
+  0%   { opacity: 1; }
+  18%  { opacity: 0; }
+  72%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* ── BACKGROUND CROSSFADE LAYERS ── */
+.bg-layer {
+  position: fixed; inset: 0; z-index: -1;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 0.75s ease;
+}
+.bg-layer::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(15,18,16,0.80);
+}
+</style>
+</head>
+<body>
+
+<!-- BACKGROUND LAYERS (crossfade) -->
+<div class="bg-layer" id="bgA"></div>
+<div class="bg-layer" id="bgB" style="opacity:0;"></div>
+
+<!-- POV OPENING -->
+<div class="pov-opening" id="povOpening">
+  <div class="pov-bg"></div>
+  <div class="pov-label-wrap">
+    <span class="pov-label-text">Systemet initierar</span>
+  </div>
+  <div class="pov-veil"></div>
+</div>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<nav>
+  <a href="landing.html" class="logo">Forsyne</a>
+  <span class="nav-progress" id="navProgress">Block 1 av 11</span>
+</nav>
+
+<main class="onboarding">
+
+  <!-- ── INTRO ── -->
+  <div class="screen active" id="screen-intro">
+    <span class="intro-label">Det mänskliga operativsystemet</span>
+    <h1 class="intro-title">Välkommen.<br><em>Det börjar här.</em></h1>
+    <div class="intro-body">
+      <p>Det här är inte ett test. Det finns inga rätta svar.</p>
+      <p>Forsyne bygger en levande modell av hur du fungerar — och den förändras med dig. Systemet anpassar sig efter var du är just nu: om ingenting funkar, om du är på väg uppåt, eller om du redan presterar och vill ta nästa steg.</p>
+      <p><strong>Det du svarar nu styr vad systemet fokuserar på för dig.</strong> Inte för genomsnittet. Inte för någon annan. För dig — exakt som du är idag.</p>
+      <p>Varje svar gör modellen skarpare. Om sex månader ser den annorlunda ut — för du gör det.</p>
+      <p style="color: var(--fg3); font-size: 0.8rem; margin-top: 1.5rem;">Det tar 15–20 minuter. Varje svar du ger är något systemet inte kan gissa sig till — det är därför vi frågar.</p>
+    </div>
+    <p style="color:var(--fg3); font-size: 0.7rem; font-style:italic; margin-top:1.2rem; line-height:1.6;">Allt du delar är krypterat och tillhör bara dig.</p>
+    <div class="btn-row">
+      <button class="btn-next" onclick="goTo('screen-1')">Börja</button>
+    </div>
+  </div>
+
+  <!-- ── BLOCK 1 — VARFÖR DU ÄR HÄR ── -->
+  <div class="screen" id="screen-1">
+    <span class="block-label">Block 1 av 11</span>
+    <h2 class="block-title">Varför du<br><em>är här.</em></h2>
+    <p class="block-desc">Inga rätta svar. Systemet behöver bara veta var du är just nu — inte var du borde vara.</p>
+
+    <div class="question">
+      <p class="question-text">Hur fungerar det just nu — ärligt?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_0a', 'radio')"><input type="radio" name="q1_0a"><div class="opt-dot"></div>Ingenting fungerar. Jag förstår inte varför.</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_0a', 'radio')"><input type="radio" name="q1_0a"><div class="opt-dot"></div>Vissa saker fungerar, andra inte. Mönstret är oklart.</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_0a', 'radio')"><input type="radio" name="q1_0a"><div class="opt-dot"></div>Det fungerar — men inte konsekvent.</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_0a', 'radio')"><input type="radio" name="q1_0a"><div class="opt-dot"></div>Det fungerar bra. Jag vill förstå varför och göra mer av det.</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_0a', 'radio')"><input type="radio" name="q1_0a"><div class="opt-dot"></div>Allt fungerar. Jag vill nå nästa nivå.</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vad vill du att systemet ska hjälpa dig med?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_0b', 'radio')"><input type="radio" name="q1_0b"><div class="opt-dot"></div>Förstå varför jag mår som jag gör</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_0b', 'radio')"><input type="radio" name="q1_0b"><div class="opt-dot"></div>Hitta stabilitet och hålla den</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_0b', 'radio')"><input type="radio" name="q1_0b"><div class="opt-dot"></div>Optimera det som redan funkar</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_0b', 'radio')"><input type="radio" name="q1_0b"><div class="opt-dot"></div>Prestera på en högre nivå</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_0b', 'radio')"><input type="radio" name="q1_0b"><div class="opt-dot"></div>Se hela bilden — koppla ihop allt</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Berätta mer — vad är det som faktiskt händer just nu?</p>
+      <textarea id="q1_1" placeholder="Berätta fritt — det finns inga rätta svar..."></textarea>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur länge har det känts såhär?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_2', 'radio')"><input type="radio" name="q1_2"><div class="opt-dot"></div>Några veckor</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_2', 'radio')"><input type="radio" name="q1_2"><div class="opt-dot"></div>Några månader</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_2', 'radio')"><input type="radio" name="q1_2"><div class="opt-dot"></div>Över ett år</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_2', 'radio')"><input type="radio" name="q1_2"><div class="opt-dot"></div>Så länge jag kan minnas</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vad har du redan provat? <em>(Välj allt som stämmer)</em></p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_3', 'check')"><input type="checkbox"><div class="opt-sq"></div>Appar & trackers</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_3', 'check')"><input type="checkbox"><div class="opt-sq"></div>Dieter & kostplaner</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_3', 'check')"><input type="checkbox"><div class="opt-sq"></div>Träningsprogram</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_3', 'check')"><input type="checkbox"><div class="opt-sq"></div>Coach eller PT</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_3', 'check')"><input type="checkbox"><div class="opt-sq"></div>Böcker & podcasts</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_3', 'check')"><input type="checkbox"><div class="opt-sq"></div>Sömnrutiner</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_3', 'check')"><input type="checkbox"><div class="opt-sq"></div>Ingenting ännu</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Varför tror du att det inte höll?</p>
+      <textarea id="q1_4" placeholder="Var ärlig — det hjälper oss förstå dig bättre..."></textarea>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Om allt fungerade — hur skulle din vardag se ut om 6 månader?</p>
+      <textarea id="q1_5" placeholder="Beskriv känslan, inte bara målen..."></textarea>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vad är viktigast för dig just nu?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_6', 'radio')"><input type="radio" name="q1_6"><div class="opt-dot"></div>Mer energi i vardagen</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_6', 'radio')"><input type="radio" name="q1_6"><div class="opt-dot"></div>Bättre återhämtning</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_6', 'radio')"><input type="radio" name="q1_6"><div class="opt-dot"></div>Högre prestation</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_6', 'radio')"><input type="radio" name="q1_6"><div class="opt-dot"></div>Mental klarhet</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q1_6', 'radio')"><input type="radio" name="q1_6"><div class="opt-dot"></div>Allt på en gång</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">En sak — vad vill du att systemet ska hjälpa dig förstå först?</p>
+      <input type="text" id="q1_7" placeholder="T.ex. varför jag alltid kraschar på fredagar...">
+    </div>
+
+    <div class="block-close-wrap">
+      <div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>
+      <p class="block-close">Bra. Nu vet vi vart vi är på väg. Resten av det här handlar om att förstå varifrån.</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goTo('screen-intro')">Tillbaka</button>
+      <button class="btn-next" onclick="saveAndGoWithInsight('screen-1', 'screen-2', 1)">Nästa</button>
+    </div>
+  </div>
+
+  <!-- ── BLOCK 2 — PSYKOLOGI & ENERGI ── -->
+  <div class="screen" id="screen-2">
+    <span class="block-label">Block 2 av 11</span>
+    <h2 class="block-title">Din psykologi<br><em>& energi.</em></h2>
+    <p class="block-desc">Det här är grunden. Hjärnan styr allt annat — kroppen följer efter.</p>
+
+    <div class="question">
+      <p class="question-text">När på dagen är du som skarpast?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_1', 'radio')"><input type="radio" name="q2_1"><div class="opt-dot"></div>Tidig morgon</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_1', 'radio')"><input type="radio" name="q2_1"><div class="opt-dot"></div>Förmiddag</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_1', 'radio')"><input type="radio" name="q2_1"><div class="opt-dot"></div>Eftermiddag</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_1', 'radio')"><input type="radio" name="q2_1"><div class="opt-dot"></div>Kväll</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_1', 'radio')"><input type="radio" name="q2_1"><div class="opt-dot"></div>Det varierar helt</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vilket stämmer bäst på dig biologiskt?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_kronotyp', 'radio')"><input type="radio" name="q2_kronotyp"><div class="opt-dot"></div>Morgonmänniska — naturligt vaken tidigt, varvar ned tidigt</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_kronotyp', 'radio')"><input type="radio" name="q2_kronotyp"><div class="opt-dot"></div>Mellanting — ingen extrem, fungerar under hela dagen</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_kronotyp', 'radio')"><input type="radio" name="q2_kronotyp"><div class="opt-dot"></div>Kvällsmänniska — vaknar sent om jag får, blir pigg på kvällen</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vilken tid vaknar du normalt? <em>(Skriv klockan, t.ex. 06:30)</em></p>
+      <input type="text" id="q2_wake_time" placeholder="06:30">
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vilken tid lägger du dig normalt?</p>
+      <input type="text" id="q2_sleep_time" placeholder="23:00">
+    </div>
+
+    <div class="question">
+      <p class="question-text">Har du ett tydligt energifall under dagen — och när händer det?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_2', 'radio')"><input type="radio" name="q2_2"><div class="opt-dot"></div>Ja, på förmiddagen</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_2', 'radio')"><input type="radio" name="q2_2"><div class="opt-dot"></div>Ja, efter lunch</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_2', 'radio')"><input type="radio" name="q2_2"><div class="opt-dot"></div>Ja, på eftermiddagen</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_2', 'radio')"><input type="radio" name="q2_2"><div class="opt-dot"></div>Nej, det är ganska jämnt</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_2', 'radio')"><input type="radio" name="q2_2"><div class="opt-dot"></div>Konstant låg energi</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vad tömmer dig mest? <em>(Välj upp till tre)</em></p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_3', 'check')"><input type="checkbox"><div class="opt-sq"></div>Sociala situationer</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_3', 'check')"><input type="checkbox"><div class="opt-sq"></div>Många beslut</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_3', 'check')"><input type="checkbox"><div class="opt-sq"></div>Skärmar</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_3', 'check')"><input type="checkbox"><div class="opt-sq"></div>Konflikter</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_3', 'check')"><input type="checkbox"><div class="opt-sq"></div>Prestationskrav</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_3', 'check')"><input type="checkbox"><div class="opt-sq"></div>Ostrukturerade dagar</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_3', 'check')"><input type="checkbox"><div class="opt-sq"></div>För lite rörelse</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vad fyller dig? <em>(Välj upp till tre)</em></p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_4', 'check')"><input type="checkbox"><div class="opt-sq"></div>Ensamhet & tystnad</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_4', 'check')"><input type="checkbox"><div class="opt-sq"></div>Rörelse & träning</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_4', 'check')"><input type="checkbox"><div class="opt-sq"></div>Natur & utomhus</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_4', 'check')"><input type="checkbox"><div class="opt-sq"></div>Kreativitet</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_4', 'check')"><input type="checkbox"><div class="opt-sq"></div>Djupa samtal</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_4', 'check')"><input type="checkbox"><div class="opt-sq"></div>Prestation & resultat</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_4', 'check')"><input type="checkbox"><div class="opt-sq"></div>Sömn & återhämtning</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Är du introvert eller extrovert när det gäller energi?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_5', 'radio')"><input type="radio" name="q2_5"><div class="opt-dot"></div>Introvert — folk tar energi, ensamhet ger</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_5', 'radio')"><input type="radio" name="q2_5"><div class="opt-dot"></div>Extrovert — folk ger energi, ensamhet tar</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_5', 'radio')"><input type="radio" name="q2_5"><div class="opt-dot"></div>Blandat — beror helt på situation</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur hanterar du stress när den verkligen trycker?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_6', 'radio')"><input type="radio" name="q2_6"><div class="opt-dot"></div>Tränar bort den</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_6', 'radio')"><input type="radio" name="q2_6"><div class="opt-dot"></div>Jobbar bort den — mer, inte mindre</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_6', 'radio')"><input type="radio" name="q2_6"><div class="opt-dot"></div>Äter eller dricker bort den</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_6', 'radio')"><input type="radio" name="q2_6"><div class="opt-dot"></div>Stänger ner helt</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_6', 'radio')"><input type="radio" name="q2_6"><div class="opt-dot"></div>Pratar med någon</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_6', 'radio')"><input type="radio" name="q2_6"><div class="opt-dot"></div>Vet inte riktigt</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur ofta känner du att du presterar på riktigt topp?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_7', 'radio')"><input type="radio" name="q2_7"><div class="opt-dot"></div>Nästan aldrig</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_7', 'radio')"><input type="radio" name="q2_7"><div class="opt-dot"></div>Sällan</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_7', 'radio')"><input type="radio" name="q2_7"><div class="opt-dot"></div>Ibland</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_7', 'radio')"><input type="radio" name="q2_7"><div class="opt-dot"></div>Ofta</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_7', 'radio')"><input type="radio" name="q2_7"><div class="opt-dot"></div>Nästan alltid</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Märker du mönster i humöret?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_8', 'radio')"><input type="radio" name="q2_8"><div class="opt-dot"></div>Svänger med veckan</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_8', 'radio')"><input type="radio" name="q2_8"><div class="opt-dot"></div>Svänger med månaden</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_8', 'radio')"><input type="radio" name="q2_8"><div class="opt-dot"></div>Säsongsbaserat</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_8', 'radio')"><input type="radio" name="q2_8"><div class="opt-dot"></div>Oförutsägbart</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_8', 'radio')"><input type="radio" name="q2_8"><div class="opt-dot"></div>Ser inget mönster</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur är din relation till vila?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_9', 'radio')"><input type="radio" name="q2_9"><div class="opt-dot"></div>Vilar med gott samvete — det är nödvändigt</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_9', 'radio')"><input type="radio" name="q2_9"><div class="opt-dot"></div>Vilar men känner mig lat</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_9', 'radio')"><input type="radio" name="q2_9"><div class="opt-dot"></div>Vila känns som slöseri med tid</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_9', 'radio')"><input type="radio" name="q2_9"><div class="opt-dot"></div>Kan inte vila även när jag försöker</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur var du för ett år sedan jämfört med nu?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_10', 'radio')"><input type="radio" name="q2_10"><div class="opt-dot"></div>Bättre</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_10', 'radio')"><input type="radio" name="q2_10"><div class="opt-dot"></div>Ungefär likadant</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_10', 'radio')"><input type="radio" name="q2_10"><div class="opt-dot"></div>Sämre</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q2_10', 'radio')"><input type="radio" name="q2_10"><div class="opt-dot"></div>Mycket sämre</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vad tror du förändrade det?</p>
+      <textarea id="q2_11" placeholder="Jobbet, relationer, hälsa, livsstil — vad som helst..."></textarea>
+    </div>
+
+    <div class="block-close-wrap">
+      <div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>
+      <p class="block-close">Det du just beskrev är kärnan i din psykologiska profil. Det är mer än de flesta någonsin förstår om sig själva.</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goTo('screen-1')">Tillbaka</button>
+      <button class="btn-next" onclick="saveAndGoWithInsight('screen-2', 'screen-3', 2)">Nästa</button>
+    </div>
+  </div>
+
+  <!-- ── BLOCK 3 — VEM DU ÄR ── -->
+  <div class="screen" id="screen-3">
+    <span class="block-label">Block 3 av 11</span>
+    <h2 class="block-title">Vem<br><em>du är.</em></h2>
+    <p class="block-desc">Lite grunddata. Inget spännande — men nödvändigt för att allt annat ska bli exakt.</p>
+
+    <div class="question">
+      <p class="question-text">Vad heter du?</p>
+      <input type="text" id="q3_1" placeholder="Förnamn räcker...">
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur gammal är du?</p>
+      <input type="number" id="q3_2" placeholder="År" min="16" max="99">
+    </div>
+
+    <div class="question">
+      <p class="question-text">Biologiskt kön? <em>(påverkar hur vi tolkar din biologi)</em></p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_3', 'radio')"><input type="radio" name="q3_3"><div class="opt-dot"></div>Man</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_3', 'radio')"><input type="radio" name="q3_3"><div class="opt-dot"></div>Kvinna</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_3', 'radio')"><input type="radio" name="q3_3"><div class="opt-dot"></div>Föredrar att inte ange</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur lång är du? <em>(cm)</em></p>
+      <input type="number" id="q3_4" placeholder="T.ex. 180" min="140" max="220">
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vad väger du ungefär? <em>(kg)</em></p>
+      <input type="number" id="q3_5" placeholder="T.ex. 75" min="40" max="200">
+    </div>
+
+    <div class="question">
+      <p class="question-text">Har du några av dessa tillstånd? <em>(välj allt som stämmer)</em></p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Säsongsallergi — pollen, damm, djur</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Astma</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Hypothyreos (underfunktion sköldkörtel)</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Hypertyreos (överfunktion sköldkörtel)</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Typ 1 diabetes</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Typ 2 diabetes / insulinresistens</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>ADHD / ADD</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Depression</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Ångest / panikattacker</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>IBD — Crohns eller Ulcerös kolit</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Reumatoid artrit eller annat autoimmunt</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Endometrios / PCOS</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Sömnstörningar / sömnapné</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Migrän / återkommande huvudvärk</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Hjärt- och kärlproblem</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Inget av ovanstående</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Något annat vi bör känna till? <em>(operationer, skador, tillstånd som inte fanns i listan)</em></p>
+      <textarea id="q3_6_other" placeholder="Lämna tomt om inget stämmer..."></textarea>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Är något av dessa tillstånd säsongsbetonat — påverkar det dig mer under en viss tid på året?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6_seasonal', 'radio')"><input type="radio" name="q3_6_seasonal"><div class="opt-dot"></div>Nej, det är konstant</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6_seasonal', 'radio')"><input type="radio" name="q3_6_seasonal"><div class="opt-dot"></div>Ja, under pollensäsongen (vår)</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6_seasonal', 'radio')"><input type="radio" name="q3_6_seasonal"><div class="opt-dot"></div>Ja, på hösten</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6_seasonal', 'radio')"><input type="radio" name="q3_6_seasonal"><div class="opt-dot"></div>Ja, på vintern / mörka månader</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6_seasonal', 'radio')"><input type="radio" name="q3_6_seasonal"><div class="opt-dot"></div>Ja, varierar — svårt att säga</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_6_seasonal', 'radio')"><input type="radio" name="q3_6_seasonal"><div class="opt-dot"></div>Inga tillstånd att tala om</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Tar du några mediciner regelbundet?</p>
+      <textarea id="q3_7" placeholder="Namn och dosering om du vet — annars ungefär vad det är för..."></textarea>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vet du några av dina biologiska markörer redan? <em>(testosteron, kortisol, D-vitamin, järn, TSH)</em></p>
+      <textarea id="q3_8" placeholder="Ange gärna värden om du vet dem — annars hoppa över..."></textarea>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Har du gjort ett DNA-test?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_9', 'radio')"><input type="radio" name="q3_9"><div class="opt-dot"></div>Ja — 23andMe</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_9', 'radio')"><input type="radio" name="q3_9"><div class="opt-dot"></div>Ja — Ancestry</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_9', 'radio')"><input type="radio" name="q3_9"><div class="opt-dot"></div>Ja — annat</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q3_9', 'radio')"><input type="radio" name="q3_9"><div class="opt-dot"></div>Nej</label>
+      </div>
+    </div>
+
+    <div class="block-close-wrap">
+      <div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>
+      <p class="block-close">Perfekt. Nu har vi baslinjen. Härifrån börjar bilden ta form.</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goTo('screen-2')">Tillbaka</button>
+      <button class="btn-next" onclick="saveAndGoWithInsight('screen-3', 'screen-4', 3)">Nästa</button>
+    </div>
+  </div>
+
+  <!-- ── BLOCK 4 — VARDAG & LIV ── -->
+  <div class="screen" id="screen-4">
+    <span class="block-label">Block 4 av 11</span>
+    <h2 class="block-title">Din vardag<br><em>& ditt liv.</em></h2>
+    <p class="block-desc">Stress kommer sällan från ett ställe. Den byggs upp överallt — och vi behöver se hela bilden.</p>
+
+    <div class="question">
+      <p class="question-text">Hur ser din vardag ut?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_1', 'radio')"><input type="radio" name="q4_1"><div class="opt-dot"></div>Kontorsarbete — stillasittande</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_1', 'radio')"><input type="radio" name="q4_1"><div class="opt-dot"></div>Fysiskt arbete</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_1', 'radio')"><input type="radio" name="q4_1"><div class="opt-dot"></div>Jobbar hemifrån</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_1', 'radio')"><input type="radio" name="q4_1"><div class="opt-dot"></div>Skiftarbete</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_1', 'radio')"><input type="radio" name="q4_1"><div class="opt-dot"></div>Blandat</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur många timmar jobbar du ungefär per vecka?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_2', 'radio')"><input type="radio" name="q4_2"><div class="opt-dot"></div>Under 40h</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_2', 'radio')"><input type="radio" name="q4_2"><div class="opt-dot"></div>40–50h</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_2', 'radio')"><input type="radio" name="q4_2"><div class="opt-dot"></div>50–60h</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_2', 'radio')"><input type="radio" name="q4_2"><div class="opt-dot"></div>Över 60h</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Har du barn eller andra stora ansvarsområden utanför jobbet?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_3', 'radio')"><input type="radio" name="q4_3"><div class="opt-dot"></div>Ja, barn</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_3', 'radio')"><input type="radio" name="q4_3"><div class="opt-dot"></div>Ja, annat ansvar</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_3', 'radio')"><input type="radio" name="q4_3"><div class="opt-dot"></div>Nej</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur mycket reser du?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_4', 'radio')"><input type="radio" name="q4_4"><div class="opt-dot"></div>Nästan aldrig</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_4', 'radio')"><input type="radio" name="q4_4"><div class="opt-dot"></div>Ibland</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_4', 'radio')"><input type="radio" name="q4_4"><div class="opt-dot"></div>Ofta — med tidszoner</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_4', 'radio')"><input type="radio" name="q4_4"><div class="opt-dot"></div>Konstant</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur många beslut tar du ungefär per dag?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_5', 'radio')"><input type="radio" name="q4_5"><div class="opt-dot"></div>Få</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_5', 'radio')"><input type="radio" name="q4_5"><div class="opt-dot"></div>Lagom</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_5', 'radio')"><input type="radio" name="q4_5"><div class="opt-dot"></div>Många</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_5', 'radio')"><input type="radio" name="q4_5"><div class="opt-dot"></div>Konstant</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur mycket skärmtid har du totalt per dag — ärligt?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_6', 'radio')"><input type="radio" name="q4_6"><div class="opt-dot"></div>Under 4h</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_6', 'radio')"><input type="radio" name="q4_6"><div class="opt-dot"></div>4–8h</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_6', 'radio')"><input type="radio" name="q4_6"><div class="opt-dot"></div>8–12h</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_6', 'radio')"><input type="radio" name="q4_6"><div class="opt-dot"></div>Över 12h</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur är ditt liv just nu?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_7', 'radio')"><input type="radio" name="q4_7"><div class="opt-dot"></div>Lugnt</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_7', 'radio')"><input type="radio" name="q4_7"><div class="opt-dot"></div>Balanserat</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_7', 'radio')"><input type="radio" name="q4_7"><div class="opt-dot"></div>Stressigt</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q4_7', 'radio')"><input type="radio" name="q4_7"><div class="opt-dot"></div>Kaotiskt</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vad är den största energitjuven i din vardag just nu?</p>
+      <input type="text" id="q4_8" placeholder="Jobbet, relationer, ekonomi, hälsa...">
+    </div>
+
+    <div class="block-close-wrap">
+      <div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>
+      <p class="block-close">Du lever under ett visst tryck. Det påverkar allt vi mäter — och nu vet vi det.</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goTo('screen-3')">Tillbaka</button>
+      <button class="btn-next" onclick="saveAndGoWithInsight('screen-4', 'screen-5', 4)">Nästa</button>
+    </div>
+  </div>
+
+  <!-- ── BLOCK 5 — MILJÖ & DYGNSRYTM ── -->
+  <div class="screen" id="screen-5">
+    <span class="block-label">Block 5 av 11</span>
+    <h2 class="block-title">Miljö &<br><em>dygnsrytm.</em></h2>
+    <p class="block-desc">Det här är det ingen annan frågar om. Men det påverkar din biologi mer än du tror.</p>
+
+    <div class="question">
+      <p class="question-text">Får du naturligt ljus på morgonen — och hur snabbt efter att du vaknat?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_1', 'radio')"><input type="radio" name="q5_1"><div class="opt-dot"></div>Ja, inom 30 minuter</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_1', 'radio')"><input type="radio" name="q5_1"><div class="opt-dot"></div>Ja, men senare på dagen</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_1', 'radio')"><input type="radio" name="q5_1"><div class="opt-dot"></div>Sällan</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_1', 'radio')"><input type="radio" name="q5_1"><div class="opt-dot"></div>Nästan aldrig</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur mycket tid spenderar du utomhus per dag?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_2', 'radio')"><input type="radio" name="q5_2"><div class="opt-dot"></div>Under 30 min</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_2', 'radio')"><input type="radio" name="q5_2"><div class="opt-dot"></div>30–60 min</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_2', 'radio')"><input type="radio" name="q5_2"><div class="opt-dot"></div>1–3 timmar</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_2', 'radio')"><input type="radio" name="q5_2"><div class="opt-dot"></div>Över 3 timmar</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur ser ljuset ut i din arbetsmiljö?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_3', 'radio')"><input type="radio" name="q5_3"><div class="opt-dot"></div>Mörkt kontor</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_3', 'radio')"><input type="radio" name="q5_3"><div class="opt-dot"></div>Naturligt ljus</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_3', 'radio')"><input type="radio" name="q5_3"><div class="opt-dot"></div>Blandat</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_3', 'radio')"><input type="radio" name="q5_3"><div class="opt-dot"></div>Varierar</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur varmt eller kallt sover du?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_4', 'radio')"><input type="radio" name="q5_4"><div class="opt-dot"></div>Kallt rum, öppet fönster</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_4', 'radio')"><input type="radio" name="q5_4"><div class="opt-dot"></div>Svalt</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_4', 'radio')"><input type="radio" name="q5_4"><div class="opt-dot"></div>Varmt</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_4', 'radio')"><input type="radio" name="q5_4"><div class="opt-dot"></div>Varierar</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur mycket skärmtid har du sista timmen innan du sover?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_5', 'radio')"><input type="radio" name="q5_5"><div class="opt-dot"></div>Ingen alls</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_5', 'radio')"><input type="radio" name="q5_5"><div class="opt-dot"></div>Lite</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_5', 'radio')"><input type="radio" name="q5_5"><div class="opt-dot"></div>En hel del</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_5', 'radio')"><input type="radio" name="q5_5"><div class="opt-dot"></div>Somnar med skärmen</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Utsätts du för mycket buller eller störningar i vardagen?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_6', 'radio')"><input type="radio" name="q5_6"><div class="opt-dot"></div>Sällan</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_6', 'radio')"><input type="radio" name="q5_6"><div class="opt-dot"></div>Ibland</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_6', 'radio')"><input type="radio" name="q5_6"><div class="opt-dot"></div>Ofta</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q5_6', 'radio')"><input type="radio" name="q5_6"><div class="opt-dot"></div>Konstant</label>
+      </div>
+    </div>
+
+    <div class="block-close-wrap">
+      <div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>
+      <p class="block-close">Miljön du lever i formar din biologi varje dag. Nu har vi den bilden.</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goTo('screen-4')">Tillbaka</button>
+      <button class="btn-next" onclick="saveAndGoWithInsight('screen-5', 'screen-6', 5)">Nästa</button>
+    </div>
+  </div>
+
+  <!-- ── BLOCK 6 — SÖMN & ÅTERHÄMTNING ── -->
+  <div class="screen" id="screen-6">
+    <span class="block-label">Block 6 av 11</span>
+    <h2 class="block-title">Sömn &<br><em>återhämtning.</em></h2>
+    <p class="block-desc">Sömn är inte vila. Det är när kroppen bygger om sig själv. Var ärlig här — det är viktigare än du tror.</p>
+
+    <div class="question">
+      <p class="question-text">Hur många timmar sover du på en vanlig natt?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_1', 'radio')"><input type="radio" name="q6_1"><div class="opt-dot"></div>Under 5h</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_1', 'radio')"><input type="radio" name="q6_1"><div class="opt-dot"></div>5–6h</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_1', 'radio')"><input type="radio" name="q6_1"><div class="opt-dot"></div>6–7h</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_1', 'radio')"><input type="radio" name="q6_1"><div class="opt-dot"></div>7–8h</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_1', 'radio')"><input type="radio" name="q6_1"><div class="opt-dot"></div>Över 8h</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur många timmar sömn per natt är ditt mål?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_sleep_goal', 'radio')"><input type="radio" name="q6_sleep_goal"><div class="opt-dot"></div>6h</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_sleep_goal', 'radio')"><input type="radio" name="q6_sleep_goal"><div class="opt-dot"></div>7h</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_sleep_goal', 'radio')"><input type="radio" name="q6_sleep_goal"><div class="opt-dot"></div>8h</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_sleep_goal', 'radio')"><input type="radio" name="q6_sleep_goal"><div class="opt-dot"></div>9h+</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_sleep_goal', 'radio')"><input type="radio" name="q6_sleep_goal"><div class="opt-dot"></div>Vet inte</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vaknar du utvilad?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_2', 'radio')"><input type="radio" name="q6_2"><div class="opt-dot"></div>Ja, nästan alltid</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_2', 'radio')"><input type="radio" name="q6_2"><div class="opt-dot"></div>Ibland</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_2', 'radio')"><input type="radio" name="q6_2"><div class="opt-dot"></div>Sällan</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_2', 'radio')"><input type="radio" name="q6_2"><div class="opt-dot"></div>Aldrig — känns som att jag aldrig återhämtar mig</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Somnar du lätt?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_3', 'radio')"><input type="radio" name="q6_3"><div class="opt-dot"></div>Ja, direkt</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_3', 'radio')"><input type="radio" name="q6_3"><div class="opt-dot"></div>Tar 15–30 min</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_3', 'radio')"><input type="radio" name="q6_3"><div class="opt-dot"></div>Ligger och snurrar länge</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_3', 'radio')"><input type="radio" name="q6_3"><div class="opt-dot"></div>Det varierar</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vaknar du på natten?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_4', 'radio')"><input type="radio" name="q6_4"><div class="opt-dot"></div>Sällan</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_4', 'radio')"><input type="radio" name="q6_4"><div class="opt-dot"></div>1–2 gånger</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_4', 'radio')"><input type="radio" name="q6_4"><div class="opt-dot"></div>Ofta</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_4', 'radio')"><input type="radio" name="q6_4"><div class="opt-dot"></div>Nästan varje natt</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Har du fasta sömnrutiner?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_5', 'radio')"><input type="radio" name="q6_5"><div class="opt-dot"></div>Ja, ganska fasta</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_5', 'radio')"><input type="radio" name="q6_5"><div class="opt-dot"></div>Ibland</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_5', 'radio')"><input type="radio" name="q6_5"><div class="opt-dot"></div>Nej, varierar helt</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vad stör din sömn mest?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Stress & tankar</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Skärmar</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Alkohol</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Ljud eller ljus</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_6', 'check')"><input type="checkbox"><div class="opt-sq"></div>Inget — sover som en sten</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Använder du något för att förbättra sömnen?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_7', 'check')"><input type="checkbox"><div class="opt-sq"></div>Magnesium</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_7', 'check')"><input type="checkbox"><div class="opt-sq"></div>Melatonin</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_7', 'check')"><input type="checkbox"><div class="opt-sq"></div>Sömnrutiner</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_7', 'check')"><input type="checkbox"><div class="opt-sq"></div>Inget</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Dricker du kaffe eller annat med koffein?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_caffeine', 'radio')"><input type="radio" name="q6_caffeine"><div class="opt-dot"></div>Nej</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_caffeine', 'radio')"><input type="radio" name="q6_caffeine"><div class="opt-dot"></div>Ja, bara på morgonen</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_caffeine', 'radio')"><input type="radio" name="q6_caffeine"><div class="opt-dot"></div>Ja, fram till lunch</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_caffeine', 'radio')"><input type="radio" name="q6_caffeine"><div class="opt-dot"></div>Ja, hela dagen</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Dricker du alkohol?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_alcohol', 'radio')"><input type="radio" name="q6_alcohol"><div class="opt-dot"></div>Aldrig</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_alcohol', 'radio')"><input type="radio" name="q6_alcohol"><div class="opt-dot"></div>Sällan</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_alcohol', 'radio')"><input type="radio" name="q6_alcohol"><div class="opt-dot"></div>1–2 ggr/vecka</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_alcohol', 'radio')"><input type="radio" name="q6_alcohol"><div class="opt-dot"></div>3+ ggr/vecka</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Har du en sömntracker?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_8', 'radio')"><input type="radio" name="q6_8"><div class="opt-dot"></div>Oura</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_8', 'radio')"><input type="radio" name="q6_8"><div class="opt-dot"></div>Whoop</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_8', 'radio')"><input type="radio" name="q6_8"><div class="opt-dot"></div>Garmin</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_8', 'radio')"><input type="radio" name="q6_8"><div class="opt-dot"></div>Apple Watch</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_8', 'radio')"><input type="radio" name="q6_8"><div class="opt-dot"></div>Nej</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Använder du aktiv återhämtning?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_9', 'check')"><input type="checkbox"><div class="opt-sq"></div>Bastu</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_9', 'check')"><input type="checkbox"><div class="opt-sq"></div>Kall dusch / kallbad</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_9', 'check')"><input type="checkbox"><div class="opt-sq"></div>Stretching</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_9', 'check')"><input type="checkbox"><div class="opt-sq"></div>Massage</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q6_9', 'check')"><input type="checkbox"><div class="opt-sq"></div>Inget speciellt</label>
+      </div>
+    </div>
+
+    <div class="block-close-wrap">
+      <div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>
+      <p class="block-close">Sömnen berättar mer om dig än nästan något annat. Det vi just fick är värdefullt.</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goTo('screen-5')">Tillbaka</button>
+      <button class="btn-next" onclick="saveAndGoWithInsight('screen-6', 'screen-7', 6)">Nästa</button>
+    </div>
+  </div>
+
+  <!-- ── BLOCK 7 — TRÄNING ── -->
+  <div class="screen" id="screen-7">
+    <span class="block-label">Block 7 av 11</span>
+    <h2 class="block-title">Träning &<br><em>rörelse.</em></h2>
+    <p class="block-desc">Inte för att bedöma hur mycket du tränar — utan för att förstå hur du belastar och återhämtar kroppen.</p>
+
+    <div class="question">
+      <p class="question-text">Hur många gånger tränar du per vecka ungefär?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_1', 'radio')"><input type="radio" name="q7_1"><div class="opt-dot"></div>0–1</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_1', 'radio')"><input type="radio" name="q7_1"><div class="opt-dot"></div>2–3</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_1', 'radio')"><input type="radio" name="q7_1"><div class="opt-dot"></div>4–5</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_1', 'radio')"><input type="radio" name="q7_1"><div class="opt-dot"></div>6+</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur många gånger per vecka är ditt mål att träna?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_training_goal', 'radio')"><input type="radio" name="q7_training_goal"><div class="opt-dot"></div>1–2</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_training_goal', 'radio')"><input type="radio" name="q7_training_goal"><div class="opt-dot"></div>3–4</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_training_goal', 'radio')"><input type="radio" name="q7_training_goal"><div class="opt-dot"></div>5–6</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_training_goal', 'radio')"><input type="radio" name="q7_training_goal"><div class="opt-dot"></div>Tränar inte — vill börja</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_training_goal', 'radio')"><input type="radio" name="q7_training_goal"><div class="opt-dot"></div>Inget mål</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vad tränar du? <em>(Välj allt som stämmer)</em></p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_2', 'check')"><input type="checkbox"><div class="opt-sq"></div>Styrketräning</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_2', 'check')"><input type="checkbox"><div class="opt-sq"></div>Kondition / cardio</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_2', 'check')"><input type="checkbox"><div class="opt-sq"></div>Yoga / rörlighet</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_2', 'check')"><input type="checkbox"><div class="opt-sq"></div>Sport</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_2', 'check')"><input type="checkbox"><div class="opt-sq"></div>Promenader</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_2', 'check')"><input type="checkbox"><div class="opt-sq"></div>Tränar inte</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur hårt tränar du på en skala 1–10? <em>(1 = lugn promenad, 10 = du mår illa efteråt)</em></p>
+      <div class="scale" id="scale-q7_3">
+        <button class="scale-btn" onclick="selectScale(this, 'q7_3', '1')">1</button>
+        <button class="scale-btn" onclick="selectScale(this, 'q7_3', '2')">2</button>
+        <button class="scale-btn" onclick="selectScale(this, 'q7_3', '3')">3</button>
+        <button class="scale-btn" onclick="selectScale(this, 'q7_3', '4')">4</button>
+        <button class="scale-btn" onclick="selectScale(this, 'q7_3', '5')">5</button>
+        <button class="scale-btn" onclick="selectScale(this, 'q7_3', '6')">6</button>
+        <button class="scale-btn" onclick="selectScale(this, 'q7_3', '7')">7</button>
+        <button class="scale-btn" onclick="selectScale(this, 'q7_3', '8')">8</button>
+        <button class="scale-btn" onclick="selectScale(this, 'q7_3', '9')">9</button>
+        <button class="scale-btn" onclick="selectScale(this, 'q7_3', '10')">10</button>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur känner du dig dagen efter ett hårt pass?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_4', 'radio')"><input type="radio" name="q7_4"><div class="opt-dot"></div>Pigg</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_4', 'radio')"><input type="radio" name="q7_4"><div class="opt-dot"></div>Okej</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_4', 'radio')"><input type="radio" name="q7_4"><div class="opt-dot"></div>Utmattad</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_4', 'radio')"><input type="radio" name="q7_4"><div class="opt-dot"></div>Det varierar</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Har du märkt att träningen ibland gör dig tröttare istället för piggare?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_5', 'radio')"><input type="radio" name="q7_5"><div class="opt-dot"></div>Ja, ofta</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_5', 'radio')"><input type="radio" name="q7_5"><div class="opt-dot"></div>Ibland</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_5', 'radio')"><input type="radio" name="q7_5"><div class="opt-dot"></div>Sällan</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_5', 'radio')"><input type="radio" name="q7_5"><div class="opt-dot"></div>Aldrig</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">När tränar du helst?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_6', 'radio')"><input type="radio" name="q7_6"><div class="opt-dot"></div>Morgon</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_6', 'radio')"><input type="radio" name="q7_6"><div class="opt-dot"></div>Lunch</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_6', 'radio')"><input type="radio" name="q7_6"><div class="opt-dot"></div>Eftermiddag</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_6', 'radio')"><input type="radio" name="q7_6"><div class="opt-dot"></div>Kväll</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_6', 'radio')"><input type="radio" name="q7_6"><div class="opt-dot"></div>Varierar</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Har du skador eller begränsningar som påverkar träningen?</p>
+      <textarea id="q7_7" placeholder="Beskriv om ja — annars skriv 'nej'..."></textarea>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vad är ditt träningsmål just nu?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_8', 'radio')"><input type="radio" name="q7_8"><div class="opt-dot"></div>Prestation</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_8', 'radio')"><input type="radio" name="q7_8"><div class="opt-dot"></div>Hälsa & livslängd</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_8', 'radio')"><input type="radio" name="q7_8"><div class="opt-dot"></div>Utseende</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_8', 'radio')"><input type="radio" name="q7_8"><div class="opt-dot"></div>Stresshantering</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q7_8', 'radio')"><input type="radio" name="q7_8"><div class="opt-dot"></div>Inget specifikt mål</label>
+      </div>
+    </div>
+
+    <div class="block-close-wrap">
+      <div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>
+      <p class="block-close">Kroppen du tränar är samma kropp som ska prestera, sova och hantera stress. Nu förstår vi hur du använder den.</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goTo('screen-6')">Tillbaka</button>
+      <button class="btn-next" onclick="saveAndGoWithInsight('screen-7', 'screen-8', 7)">Nästa</button>
+    </div>
+  </div>
+
+  <!-- ── BLOCK 8 — KOST ── -->
+  <div class="screen" id="screen-8">
+    <span class="block-label">Block 8 av 11</span>
+    <h2 class="block-title">Kost &<br><em>näring.</em></h2>
+    <p class="block-desc">Vi frågar inte för att du ska äta perfekt. Vi frågar för att förstå vad kroppen faktiskt får jobba med.</p>
+
+    <div class="question">
+      <p class="question-text">Hur många gånger om dagen äter du ungefär?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_1', 'radio')"><input type="radio" name="q8_1"><div class="opt-dot"></div>1–2</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_1', 'radio')"><input type="radio" name="q8_1"><div class="opt-dot"></div>3</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_1', 'radio')"><input type="radio" name="q8_1"><div class="opt-dot"></div>4–5</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_1', 'radio')"><input type="radio" name="q8_1"><div class="opt-dot"></div>Oregelbundet</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hoppar du över måltider?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_2', 'radio')"><input type="radio" name="q8_2"><div class="opt-dot"></div>Ofta</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_2', 'radio')"><input type="radio" name="q8_2"><div class="opt-dot"></div>Ibland</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_2', 'radio')"><input type="radio" name="q8_2"><div class="opt-dot"></div>Sällan</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_2', 'radio')"><input type="radio" name="q8_2"><div class="opt-dot"></div>Aldrig</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur känner du dig efter mat?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_3', 'radio')"><input type="radio" name="q8_3"><div class="opt-dot"></div>Pigg och fokuserad</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_3', 'radio')"><input type="radio" name="q8_3"><div class="opt-dot"></div>Trög och dåsig</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_3', 'radio')"><input type="radio" name="q8_3"><div class="opt-dot"></div>Beror helt på vad jag ätit</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_3', 'radio')"><input type="radio" name="q8_3"><div class="opt-dot"></div>Har inte tänkt på det</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Dricker du kaffe — och när på dagen?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_4', 'radio')"><input type="radio" name="q8_4"><div class="opt-dot"></div>Nej</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_4', 'radio')"><input type="radio" name="q8_4"><div class="opt-dot"></div>Ja, bara på morgonen</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_4', 'radio')"><input type="radio" name="q8_4"><div class="opt-dot"></div>Ja, hela dagen</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_4', 'radio')"><input type="radio" name="q8_4"><div class="opt-dot"></div>Ja, även på kvällen</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur är din relation till alkohol?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_5', 'radio')"><input type="radio" name="q8_5"><div class="opt-dot"></div>Aldrig</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_5', 'radio')"><input type="radio" name="q8_5"><div class="opt-dot"></div>Socialt</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_5', 'radio')"><input type="radio" name="q8_5"><div class="opt-dot"></div>Regelbundet</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_5', 'radio')"><input type="radio" name="q8_5"><div class="opt-dot"></div>Dagligen</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Röker du eller snusar?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_6', 'radio')"><input type="radio" name="q8_6"><div class="opt-dot"></div>Nej</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_6', 'radio')"><input type="radio" name="q8_6"><div class="opt-dot"></div>Snusar</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_6', 'radio')"><input type="radio" name="q8_6"><div class="opt-dot"></div>Röker</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_6', 'radio')"><input type="radio" name="q8_6"><div class="opt-dot"></div>Ibland</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Använder du CBD, adaptogener eller nootropics?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_7', 'radio')"><input type="radio" name="q8_7"><div class="opt-dot"></div>Ja</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_7', 'radio')"><input type="radio" name="q8_7"><div class="opt-dot"></div>Nej</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_7', 'radio')"><input type="radio" name="q8_7"><div class="opt-dot"></div>Har testat</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Tar du kosttillskott regelbundet?</p>
+      <textarea id="q8_8" placeholder="T.ex. D-vitamin, magnesium, protein, kreatin..."></textarea>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Följer du någon kostprincip?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_9', 'radio')"><input type="radio" name="q8_9"><div class="opt-dot"></div>Inget speciellt</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_9', 'radio')"><input type="radio" name="q8_9"><div class="opt-dot"></div>LCHF / Keto</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_9', 'radio')"><input type="radio" name="q8_9"><div class="opt-dot"></div>Intermittent fasta</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_9', 'radio')"><input type="radio" name="q8_9"><div class="opt-dot"></div>Veganskt</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_9', 'radio')"><input type="radio" name="q8_9"><div class="opt-dot"></div>Vegetariskt</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_9', 'radio')"><input type="radio" name="q8_9"><div class="opt-dot"></div>Annat</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Har du koll på hur kost påverkar din energi?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_10', 'radio')"><input type="radio" name="q8_10"><div class="opt-dot"></div>Ja, tydlig koppling</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_10', 'radio')"><input type="radio" name="q8_10"><div class="opt-dot"></div>Lite koll</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q8_10', 'radio')"><input type="radio" name="q8_10"><div class="opt-dot"></div>Nej, det är ett mysterium</label>
+      </div>
+    </div>
+
+    <div class="block-close-wrap">
+      <div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>
+      <p class="block-close">Kosten är bränslet. Nu vet vi vad du tankar med.</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goTo('screen-7')">Tillbaka</button>
+      <button class="btn-next" onclick="saveAndGoWithInsight('screen-8', 'screen-9', 8)">Nästa</button>
+    </div>
+  </div>
+
+  <!-- ── BLOCK 9 — HORMONER ── -->
+  <div class="screen" id="screen-9">
+    <span class="block-label">Block 9 av 11</span>
+    <h2 class="block-title">Hormoner &<br><em>biologi.</em></h2>
+    <p class="block-desc">Det här påverkar allt — energi, humör, återhämtning, prestation. Och nästan ingen pratar om det.</p>
+
+    <div class="question">
+      <p class="question-text">Märker du förändringar i energi eller återhämtning som du inte kan förklara?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q9_1', 'radio')"><input type="radio" name="q9_1"><div class="opt-dot"></div>Ja, ofta</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q9_1', 'radio')"><input type="radio" name="q9_1"><div class="opt-dot"></div>Ibland</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q9_1', 'radio')"><input type="radio" name="q9_1"><div class="opt-dot"></div>Sällan</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q9_1', 'radio')"><input type="radio" name="q9_1"><div class="opt-dot"></div>Nej</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Har du märkt förändringar i libido, motivation eller humör utan tydlig orsak?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q9_2', 'radio')"><input type="radio" name="q9_2"><div class="opt-dot"></div>Ja</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q9_2', 'radio')"><input type="radio" name="q9_2"><div class="opt-dot"></div>Ibland</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q9_2', 'radio')"><input type="radio" name="q9_2"><div class="opt-dot"></div>Nej</label>
+      </div>
+    </div>
+
+    <!-- CONDITIONAL — visas bara för kvinnor -->
+    <div class="conditional" id="female-block">
+      <div class="question">
+        <p class="question-text">Följer du din menscykel?</p>
+        <div class="options row">
+          <label class="opt" onclick="selectOpt.call(this, event, 'q9_3', 'radio')"><input type="radio" name="q9_3"><div class="opt-dot"></div>Ja, aktivt</label>
+          <label class="opt" onclick="selectOpt.call(this, event, 'q9_3', 'radio')"><input type="radio" name="q9_3"><div class="opt-dot"></div>Lite grann</label>
+          <label class="opt" onclick="selectOpt.call(this, event, 'q9_3', 'radio')"><input type="radio" name="q9_3"><div class="opt-dot"></div>Nej</label>
+        </div>
+      </div>
+      <div class="question">
+        <p class="question-text">Anpassar du träning eller kost efter cykeln?</p>
+        <div class="options row">
+          <label class="opt" onclick="selectOpt.call(this, event, 'q9_4', 'radio')"><input type="radio" name="q9_4"><div class="opt-dot"></div>Ja</label>
+          <label class="opt" onclick="selectOpt.call(this, event, 'q9_4', 'radio')"><input type="radio" name="q9_4"><div class="opt-dot"></div>Ibland</label>
+          <label class="opt" onclick="selectOpt.call(this, event, 'q9_4', 'radio')"><input type="radio" name="q9_4"><div class="opt-dot"></div>Nej</label>
+        </div>
+      </div>
+      <div class="question">
+        <p class="question-text">Använder du hormonell preventivmedel eller behandling?</p>
+        <div class="options row">
+          <label class="opt" onclick="selectOpt.call(this, event, 'q9_5', 'radio')"><input type="radio" name="q9_5"><div class="opt-dot"></div>Ja</label>
+          <label class="opt" onclick="selectOpt.call(this, event, 'q9_5', 'radio')"><input type="radio" name="q9_5"><div class="opt-dot"></div>Nej</label>
+        </div>
+      </div>
+      <div class="question">
+        <p class="question-text">Märker du tydliga energi- eller humörsvängningar kopplade till cykeln?</p>
+        <div class="options row">
+          <label class="opt" onclick="selectOpt.call(this, event, 'q9_6', 'radio')"><input type="radio" name="q9_6"><div class="opt-dot"></div>Ja, tydligt</label>
+          <label class="opt" onclick="selectOpt.call(this, event, 'q9_6', 'radio')"><input type="radio" name="q9_6"><div class="opt-dot"></div>Lite</label>
+          <label class="opt" onclick="selectOpt.call(this, event, 'q9_6', 'radio')"><input type="radio" name="q9_6"><div class="opt-dot"></div>Nej</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="block-close-wrap">
+      <div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>
+      <p class="block-close">Det du just delat är information som förändrar hur vi tolkar resten av din data.</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goTo('screen-8')">Tillbaka</button>
+      <button class="btn-next" onclick="saveAndGoWithInsight('screen-9', 'screen-10', 9)">Nästa</button>
+    </div>
+  </div>
+
+  <!-- ── BLOCK 10 — DIN EXTERNA PLAN ── -->
+  <div class="screen" id="screen-10">
+    <span class="block-label">Block 10 av 11</span>
+    <h2 class="block-title">Din externa<br><em>plan.</em></h2>
+    <p class="block-desc">Om du arbetar med en PT, dietist eller annan coach — berätta mer. Det hjälper systemet förstå hur din plan ser ut och var du är i den.</p>
+
+    <div class="question">
+      <p class="question-text">Jobbar du med en PT eller dietist just nu?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q10_1', 'radio')"><input type="radio" name="q10_1"><div class="opt-dot"></div>Ja, PT</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q10_1', 'radio')"><input type="radio" name="q10_1"><div class="opt-dot"></div>Ja, dietist</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q10_1', 'radio')"><input type="radio" name="q10_1"><div class="opt-dot"></div>Ja, båda</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q10_1', 'radio')"><input type="radio" name="q10_1"><div class="opt-dot"></div>Nej, men har gjort det</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q10_1', 'radio')"><input type="radio" name="q10_1"><div class="opt-dot"></div>Nej</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Vad är fokus i planen?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q10_2', 'radio')"><input type="radio" name="q10_2"><div class="opt-dot"></div>Fettförbränning</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q10_2', 'radio')"><input type="radio" name="q10_2"><div class="opt-dot"></div>Muskelmassa</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q10_2', 'radio')"><input type="radio" name="q10_2"><div class="opt-dot"></div>Prestation</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q10_2', 'radio')"><input type="radio" name="q10_2"><div class="opt-dot"></div>Återhämtning</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q10_2', 'radio')"><input type="radio" name="q10_2"><div class="opt-dot"></div>Kost & näring</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q10_2', 'radio')"><input type="radio" name="q10_2"><div class="opt-dot"></div>Ingen plan just nu</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur länge har du följt planen?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q10_3', 'radio')"><input type="radio" name="q10_3"><div class="opt-dot"></div>Under 1 månad</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q10_3', 'radio')"><input type="radio" name="q10_3"><div class="opt-dot"></div>1–3 månader</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q10_3', 'radio')"><input type="radio" name="q10_3"><div class="opt-dot"></div>Mer än 3 månader</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q10_3', 'radio')"><input type="radio" name="q10_3"><div class="opt-dot"></div>Har ingen plan</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur väl följer du planen?</p>
+      <div class="scale">
+        <button class="scale-btn" onclick="selectScale(this,'q10_4',1)">1</button>
+        <button class="scale-btn" onclick="selectScale(this,'q10_4',2)">2</button>
+        <button class="scale-btn" onclick="selectScale(this,'q10_4',3)">3</button>
+        <button class="scale-btn" onclick="selectScale(this,'q10_4',4)">4</button>
+        <button class="scale-btn" onclick="selectScale(this,'q10_4',5)">5</button>
+      </div>
+      <div class="scale-labels"><span>Inte alls</span><span>Till punkt och pricka</span></div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Specifika mål som din coach har satt? (valfritt)</p>
+      <textarea id="q10_5" rows="3" placeholder="T.ex. 'gå ner 5 kg', '3 pass/vecka', 'äta 160 g protein/dag'..." style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(242,240,234,0.12); color:var(--fg); border-radius:6px; padding:0.75rem; font-family:var(--sans); font-size: 0.9rem; resize:vertical;"></textarea>
+    </div>
+
+    <div class="block-close-wrap">
+      <div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>
+      <p class="block-close">Din externa plan är nu en del av din modell. Systemet väger den mot dina egna signaler.</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goTo('screen-9')">Tillbaka</button>
+      <button class="btn-next" onclick="saveAndGoWithInsight('screen-10', 'screen-11', 10)">Nästa</button>
+    </div>
+  </div>
+
+  <!-- ── BLOCK 11 — KRONISKA TILLSTÅND ── -->
+  <div class="screen" id="screen-11">
+    <span class="block-label">Block 11 av 11</span>
+    <h2 class="block-title">Biologisk<br><em>kontext.</em></h2>
+    <p class="block-desc">Kroniska tillstånd och mediciner förändrar hur systemet tolkar dina signaler. Det här är inte medicinsk rådgivning — det är information systemet behöver för att inte dra fel slutsatser.</p>
+
+    <div class="question">
+      <p class="question-text">Har du några av följande tillstånd? <em>(Välj allt som stämmer)</em></p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_1', 'checkbox')"><input type="checkbox" name="q11_1"><div class="opt-dot"></div>Säsongsallergier (pollen, damm, etc.)</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_1', 'checkbox')"><input type="checkbox" name="q11_1"><div class="opt-dot"></div>Astma eller luftvägsproblem</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_1', 'checkbox')"><input type="checkbox" name="q11_1"><div class="opt-dot"></div>Sköldkörtel (hypo- eller hypertyreos)</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_1', 'checkbox')"><input type="checkbox" name="q11_1"><div class="opt-dot"></div>Autoimmunt tillstånd (t.ex. RA, Crohn, psoriasis, MS)</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_1', 'checkbox')"><input type="checkbox" name="q11_1"><div class="opt-dot"></div>Kronisk smärta eller fibromyalgi</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_1', 'checkbox')"><input type="checkbox" name="q11_1"><div class="opt-dot"></div>Diabetes typ 1 eller typ 2</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_1', 'checkbox')"><input type="checkbox" name="q11_1"><div class="opt-dot"></div>ADHD eller annan neuropsykiatrisk diagnos</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_1', 'checkbox')"><input type="checkbox" name="q11_1"><div class="opt-dot"></div>Hjärt- eller kärlsjukdom</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_1', 'checkbox')"><input type="checkbox" name="q11_1"><div class="opt-dot"></div>ME/CFS eller kronisk trötthet</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_1', 'checkbox')"><input type="checkbox" name="q11_1"><div class="opt-dot"></div>Inget av ovanstående</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Tar du mediciner regelbundet?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_2', 'radio'); document.getElementById('meds-details').classList.add('visible')"><input type="radio" name="q11_2"><div class="opt-dot"></div>Ja</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_2', 'radio'); document.getElementById('meds-details').classList.remove('visible')"><input type="radio" name="q11_2"><div class="opt-dot"></div>Nej</label>
+      </div>
+    </div>
+
+    <div class="conditional" id="meds-details">
+      <div class="question">
+        <p class="question-text">Vilka mediciner? <em>(Valfritt — systemet behöver veta om det påverkar energi, sömn eller stress)</em></p>
+        <textarea id="q11_3" rows="3" placeholder="T.ex. 'Levaxin', 'antidepressiva', 'blodtrycksmedicin', 'kortison'..." style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(242,240,234,0.12); color:var(--fg); padding:0.75rem; font-family:var(--sans); font-size:0.9rem; resize:vertical;"></textarea>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Hur mycket påverkar det din dagliga funktion?</p>
+      <div class="options">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_4', 'radio')"><input type="radio" name="q11_4"><div class="opt-dot"></div>Mycket — det sätter tonen för hela dagen</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_4', 'radio')"><input type="radio" name="q11_4"><div class="opt-dot"></div>Ibland — speciellt under dåliga perioder</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_4', 'radio')"><input type="radio" name="q11_4"><div class="opt-dot"></div>Sällan — det är i bakgrunden</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_4', 'radio')"><input type="radio" name="q11_4"><div class="opt-dot"></div>Påverkar inte den dagliga funktionen</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p class="question-text">Är det säsongsbaserat eller kontinuerligt?</p>
+      <div class="options row">
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_5', 'radio')"><input type="radio" name="q11_5"><div class="opt-dot"></div>Säsongsbaserat</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_5', 'radio')"><input type="radio" name="q11_5"><div class="opt-dot"></div>Kontinuerligt</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_5', 'radio')"><input type="radio" name="q11_5"><div class="opt-dot"></div>Båda</label>
+        <label class="opt" onclick="selectOpt.call(this, event, 'q11_5', 'radio')"><input type="radio" name="q11_5"><div class="opt-dot"></div>Inte relevant</label>
+      </div>
+    </div>
+
+    <div class="block-close-wrap">
+      <div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>
+      <p class="block-close">Det här är biologisk kontext. Systemet väger det mot dina signaler — utan att anta mer än vad du berättat.</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goTo('screen-10')">Tillbaka</button>
+      <button class="btn-next" onclick="saveScreen('screen-11'); calculateProfile(); saveProfileToServer(); fetchFinalInsight(); goTo('screen-done')">Avsluta</button>
+    </div>
+  </div>
+
+  <!-- ── DONE ── -->
+  <div class="screen" id="screen-done">
+    <div class="done-screen">
+      <div class="done-icon">◎</div>
+      <h2 class="done-title">Du är klar.<br><em>Modellen börjar nu.</em></h2>
+      <div class="done-divider"></div>
+      <div class="done-body" id="doneBody">
+        <div class="ai-dots visible" id="doneDots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>
+        <p id="doneInsight" style="opacity:0; transition:opacity 0.6s ease; font-style:italic; color:var(--fg2); line-height:1.85;"></p>
+        <p style="margin-top:1rem;"><strong>Inte baserat på genomsnitt.<br>Baserat på dig.</strong></p>
+      </div>
+      <a href="dashboard.html" class="btn-next" id="doneBtn" style="display:none; text-decoration:none;" onclick="event.preventDefault(); _redirect('dashboard.html')">Gå till din dashboard</a>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── POV OPENING ──
+(function() {
+  const pov = document.getElementById('povOpening');
+  if (!pov) return;
+  // Remove after animation completes
+  setTimeout(() => pov.classList.add('done'), 2850);
+})();
+
+// ── STATE ──
+const data = JSON.parse(localStorage.getItem('forsyne_onboarding') || '{}');
+const screens = ['screen-intro','screen-1','screen-2','screen-3','screen-4','screen-5','screen-6','screen-7','screen-8','screen-9','screen-10','screen-11','screen-done'];
+const blockNames = ['','Block 1 av 11','Block 2 av 11','Block 3 av 11','Block 4 av 11','Block 5 av 11','Block 6 av 11','Block 7 av 11','Block 8 av 11','Block 9 av 11','Block 10 av 11','Block 11 av 11','Klar'];
+
+// ── BACKGROUND CROSSFADE ──
+let _bgActive = 'A';
+
+const screenImages = {
+  'screen-intro': 'images/Ljusspår_i_mörkret.png',
+  'screen-1':     'images/Ensam_i_dimman.png',
+  'screen-2':     'images/Glödande_mänsklig_hjärna_i_mörker.png',
+  'screen-3':     "images/DALL·E 2026-04-11 15.31.41 - An abstract, minimal scene using dark portrait-style lighting with no people. A single object or form—such as a sculptural shape, draped fabric, or si.webp",
+  'screen-4':     'images/Ensamma_på_stationen_vid_gryningen.png',
+  'screen-5':     'images/Morgonljus_över_stadsutsikt.png',
+  'screen-6':     'images/Mörk_sovrum_under_månens_sken.png',
+  'screen-7':     'images/Kraftfullt_grepp_i_gymmet.png',
+  'screen-8':     'images/Kvinna_på_producentmarknad_i_kvällsljus.png',
+  'screen-9':     "images/DALL·E 2026-04-11 15.59.28 - A dark, minimal laboratory environment focused on blood testing and hormones. A clean, clinical workspace emerges from deep shadow, illuminated by a s.webp",
+  'screen-10':    'images/Ensam_vid_fönstret_i_skymning.png',
+  'screen-11':    "images/DALL·E 2026-04-11 15.59.28 - A dark, minimal laboratory environment focused on blood testing and hormones. A clean, clinical workspace emerges from deep shadow, illuminated by a s.webp",
+  'screen-done':  'images/Ensam_vandrande_mot_ljuset.png',
+};
+
+// Promise-based preload cache — each image fetched once, then instantly resolved
+const _imgCache = {};
+function preloadImage(src) {
+  if (_imgCache[src]) return _imgCache[src];
+  _imgCache[src] = new Promise(resolve => {
+    const img = new Image();
+    img.onload  = () => resolve(src);
+    img.onerror = () => resolve(src); // never block on failure
+    img.src = src;
+  });
+  return _imgCache[src];
+}
+
+// Eagerly preload first 3 screens — these must be instant
+['screen-intro', 'screen-1', 'screen-2'].forEach(id => {
+  if (screenImages[id]) preloadImage(screenImages[id]);
+});
+// Rest load in background after a short delay so they don't compete
+setTimeout(() => {
+  Object.entries(screenImages).forEach(([id, src]) => {
+    if (!['screen-intro','screen-1','screen-2'].includes(id)) preloadImage(src);
+  });
+}, 800);
+
+async function crossfadeBg(imgUrl) {
+  const layerA = document.getElementById('bgA');
+  const layerB = document.getElementById('bgB');
+  const next   = _bgActive === 'A' ? layerB : layerA;
+  const prev   = _bgActive === 'A' ? layerA : layerB;
+
+  if (!imgUrl) {
+    prev.style.opacity = '0';
+    next.style.opacity = '0';
+    return;
+  }
+
+  // Wait until the image is in browser cache before fading in
+  await preloadImage(imgUrl);
+
+  next.style.backgroundImage = `url('${imgUrl}')`;
+  next.style.backgroundAttachment = 'fixed';
+  next.getBoundingClientRect(); // force reflow
+  next.style.opacity = '1';
+  prev.style.opacity = '0';
+  _bgActive = _bgActive === 'A' ? 'B' : 'A';
+}
+
+// ── NAVIGATION ──
+function goTo(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(screenId);
+  target.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  updateProgress(screenId);
+
+  // Background crossfade (waits for image cache before fading)
+  const img = screenImages[screenId];
+  crossfadeBg(img || null);
+
+  // Look-ahead: preload next screen's image now so it's ready
+  const idx = screens.indexOf(screenId);
+  const nextId = screens[idx + 1];
+  if (nextId && screenImages[nextId]) preloadImage(screenImages[nextId]);
+
+  // Show female block conditionally
+  if (screenId === 'screen-9') {
+    const gender = data['q3_3'];
+    if (gender === 'Kvinna') {
+      document.getElementById('female-block').classList.add('visible');
+    }
+  }
+}
+
+function saveAndGo(currentId, nextId) {
+  saveScreen(currentId);
+  goTo(nextId);
+}
+
+// ── PROGRESS ──
+function updateProgress(screenId) {
+  const idx = screens.indexOf(screenId);
+  const pct = idx === 0 ? 0 : Math.round((idx / (screens.length - 1)) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  const label = blockNames[idx] || '';
+  document.getElementById('navProgress').textContent = label;
+}
+
+// ── SAVE ──
+function saveScreen(screenId) {
+  const screen = document.getElementById(screenId);
+  // Text inputs & textareas
+  screen.querySelectorAll('input[type=text], input[type=number], textarea').forEach(el => {
+    if (el.id) data[el.id] = el.value;
+  });
+  localStorage.setItem('forsyne_onboarding', JSON.stringify(data));
+}
+
+// ── SELECT OPTIONS ──
+function selectOpt(event, key, type) {
+  event.preventDefault();
+  const el = this;
+  if (type === 'radio') {
+    const parent = el.closest('.options');
+    parent.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    data[key] = el.textContent.trim();
+  } else {
+    el.classList.toggle('selected');
+    const parent = el.closest('.options');
+    const selected = [...parent.querySelectorAll('.opt.selected')].map(o => o.textContent.trim());
+    data[key] = selected;
+  }
+  localStorage.setItem('forsyne_onboarding', JSON.stringify(data));
+}
+
+function selectScale(btn, key, val) {
+  const container = btn.closest('.scale');
+  container.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  data[key] = val;
+  localStorage.setItem('forsyne_onboarding', JSON.stringify(data));
+}
+
+// ── PROFIL-IDENTIFIERING ──
+// Systemet viktar svaren och bestämmer profil tyst — personen ser aldrig detta
+// Tre profiler: prestation | transformation | medveten
+// Profilen uppdateras efter 30 dagars data
+
+function calculateProfile() {
+  const scores = { prestation: 0, transformation: 0, medveten: 0 };
+
+  // ── AXel 1 — Fungerar det? (tyngst viktad — styr systemets fokus)
+  const funkar = {
+    'Ingenting fungerar. Jag förstår inte varför.': { transformation: 4 },
+    'Vissa saker fungerar, andra inte. Mönstret är oklart.': { transformation: 2, medveten: 2 },
+    'Det fungerar — men inte konsekvent.': { medveten: 3, transformation: 1 },
+    'Det fungerar bra. Jag vill förstå varför och göra mer av det.': { medveten: 2, prestation: 2 },
+    'Allt fungerar. Jag vill nå nästa nivå.': { prestation: 4 }
+  };
+  if (data.q1_0a && funkar[data.q1_0a]) Object.entries(funkar[data.q1_0a]).forEach(([k,v]) => scores[k] += v);
+
+  // ── Axel 2 — Vad vill du? (styr vad systemet prioriterar)
+  const vill = {
+    'Förstå varför jag mår som jag gör': { transformation: 3 },
+    'Hitta stabilitet och hålla den': { transformation: 2, medveten: 1 },
+    'Optimera det som redan funkar': { medveten: 3 },
+    'Prestera på en högre nivå': { prestation: 3 },
+    'Se hela bilden — koppla ihop allt': { medveten: 2, transformation: 1 }
+  };
+  if (data.q1_0b && vill[data.q1_0b]) Object.entries(vill[data.q1_0b]).forEach(([k,v]) => scores[k] += v);
+
+  // ── Kompletterande signaler (lägre vikt)
+  const priorities = {
+    'Högre prestation': { prestation: 2 },
+    'Bättre återhämtning': { prestation: 1, medveten: 1 },
+    'Mer energi i vardagen': { transformation: 1, medveten: 1 },
+    'Mental klarhet': { transformation: 1, medveten: 1 },
+    'Allt på en gång': { transformation: 1, medveten: 1, prestation: 1 }
+  };
+  if (data.q1_6 && priorities[data.q1_6]) Object.entries(priorities[data.q1_6]).forEach(([k,v]) => scores[k] += v);
+
+  const stress = {
+    'Tränar bort den': { prestation: 2 },
+    'Jobbar bort den — mer, inte mindre': { prestation: 2, transformation: 1 },
+    'Äter eller dricker bort den': { transformation: 2 },
+    'Stänger ner helt': { transformation: 2 },
+    'Pratar med någon': { transformation: 1, medveten: 1 },
+    'Vet inte riktigt': { transformation: 2 }
+  };
+  if (data.q2_6 && stress[data.q2_6]) Object.entries(stress[data.q2_6]).forEach(([k,v]) => scores[k] += v);
+
+  const perf = {
+    'Nästan alltid': { prestation: 3 },
+    'Ofta': { prestation: 2, medveten: 1 },
+    'Ibland': { medveten: 2 },
+    'Sällan': { transformation: 2 },
+    'Nästan aldrig': { transformation: 3 }
+  };
+  if (data.q2_7 && perf[data.q2_7]) Object.entries(perf[data.q2_7]).forEach(([k,v]) => scores[k] += v);
+
+  const rest = {
+    'Vilar med gott samvete — det är nödvändigt': { medveten: 2, prestation: 1 },
+    'Vilar men känner mig lat': { transformation: 1, medveten: 1 },
+    'Vila känns som slöseri med tid': { prestation: 2, transformation: 1 },
+    'Kan inte vila även när jag försöker': { transformation: 3 }
+  };
+  if (data.q2_9 && rest[data.q2_9]) Object.entries(rest[data.q2_9]).forEach(([k,v]) => scores[k] += v);
+
+  const yearAgo = {
+    'Bättre': { transformation: 2 },
+    'Ungefär likadant': { medveten: 1 },
+    'Sämre': { transformation: 1, medveten: 1 },
+    'Mycket sämre': { transformation: 3 }
+  };
+  if (data.q2_10 && yearAgo[data.q2_10]) Object.entries(yearAgo[data.q2_10]).forEach(([k,v]) => scores[k] += v);
+
+  const tried = data.q1_3 || [];
+  if (tried.includes('Ingenting ännu')) scores.transformation += 2;
+  else if (tried.length >= 4) { scores.prestation += 1; scores.medveten += 1; }
+  else if (tried.length >= 2) scores.medveten += 2;
+
+  const life = {
+    'Kaotiskt': { transformation: 2 },
+    'Stressigt': { transformation: 1, medveten: 1 },
+    'Balanserat': { medveten: 2 },
+    'Lugnt': { medveten: 1, prestation: 1 }
+  };
+  if (data.q4_7 && life[data.q4_7]) Object.entries(life[data.q4_7]).forEach(([k,v]) => scores[k] += v);
+
+  const profile = Object.entries(scores).sort((a,b) => b[1] - a[1])[0][0];
+  data['_profile'] = profile;
+  data['_profile_scores'] = scores;
+  data['_profile_axel1'] = data.q1_0a || '';
+  data['_profile_axel2'] = data.q1_0b || '';
+  data['_profile_calculated'] = new Date().toISOString();
+  data['_profile_version'] = 1;
+  // Derived interpretation fields for agents
+  if (data.q2_kronotyp) data['_kronotyp'] = data.q2_kronotyp.includes('Morgon') ? 'Morgontyp' : data.q2_kronotyp.includes('Kväll') ? 'Kvällstyp' : 'Mellantyp';
+  if (data.q2_wake_time) data['_wake_time'] = data.q2_wake_time;
+  if (data.q2_sleep_time) data['_bedtime'] = data.q2_sleep_time;
+  if (data.q6_sleep_goal) data['_sleep_goal'] = data.q6_sleep_goal;
+  if (data.q6_caffeine) data['_caffeine'] = data.q6_caffeine;
+  if (data.q6_alcohol) data['_alcohol'] = data.q6_alcohol;
+  if (data.q7_training_goal) data['_training_goal'] = data.q7_training_goal;
+  localStorage.setItem('forsyne_onboarding', JSON.stringify(data));
+  return profile;
+}
+
+
+// ── KONTINUERLIG PROFILUPPDATERING ──
+function updateProfileContinuously() {
+  calculateProfile();
+}
+
+// ── API — BLOCK INSIGHT ──
+async function fetchBlockInsight(blockNum, screenId) {
+  const wrap = document.querySelector('#' + screenId + ' .block-close-wrap');
+  if (!wrap) return;
+  
+  const dots = wrap.querySelector('.ai-dots');
+  const closeEl = wrap.querySelector('.block-close');
+  
+  if (dots) dots.classList.add('visible');
+  if (closeEl) closeEl.classList.add('loading');
+
+  try {
+    const response = await fetch('/api/block-insight', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        block: blockNum,
+        answers: data,
+        profile: {
+          current: data._profile || 'okänd',
+          scores: data._profile_scores || {},
+          axel1: data.q1_1 || '',
+          axel2: data.q1_2 || ''
+        }
+      })
+    });
+
+    if (!response.ok) throw new Error('API error');
+    const result = await response.json();
+    
+    if (dots) dots.classList.remove('visible');
+    if (closeEl) {
+      closeEl.classList.remove('loading');
+      closeEl.style.opacity = '0';
+      closeEl.textContent = result.insight;
+      setTimeout(() => { closeEl.style.opacity = '1'; closeEl.style.transition = 'opacity 0.5s ease'; }, 50);
+    }
+  } catch (err) {
+    // Fallback — visa original text om API misslyckas
+    if (dots) dots.classList.remove('visible');
+    if (closeEl) closeEl.classList.remove('loading');
+  }
+}
+
+// ── SAVE, UPDATE PROFILE & FETCH INSIGHT ──
+async function saveAndGoWithInsight(currentId, nextId, blockNum) {
+  saveScreen(currentId);
+  updateProfileContinuously();
+  goTo(nextId);
+  // Hämta insikt för det block vi lämnade — visas när man scrollar upp
+  fetchBlockInsight(blockNum, currentId);
+}
+
+// ── INIT — sätt intro-bakgrund direkt ──
+(async function() {
+  const img = screenImages['screen-intro'];
+  if (img) {
+    const layerA = document.getElementById('bgA');
+    if (layerA) {
+      await preloadImage(img);
+      layerA.style.backgroundImage = `url('${img}')`;
+      layerA.style.backgroundAttachment = 'fixed';
+      layerA.style.backgroundSize = 'cover';
+      layerA.style.opacity = '1';
+    }
+  }
+})();
+
+// ── SAVE PROFILE TO SERVER ──
+async function saveProfileToServer() {
+  const token = localStorage.getItem('prv_token');
+  if (!token) return;
+  try {
+    const profileData = { ...data, _onboarding_complete: true };
+    await fetch('/api/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ data: profileData, analysis: null })
+    });
+  } catch (e) { /* silent — localStorage fallback still works */ }
+}
+
+// ── FINAL INSIGHT PÅ DONE-SKÄRMEN ──
+async function fetchFinalInsight() {
+  try {
+    const response = await fetch('/api/block-insight', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        block: 'final',
+        answers: data,
+        profile: {
+          current: data._profile || 'okänd',
+          scores: data._profile_scores || {},
+          axel1: data.q1_1 || '',
+          axel2: data.q1_2 || '',
+          name: data.q3_1 || ''
+        }
+      })
+    });
+
+    if (!response.ok) throw new Error('API error');
+    const result = await response.json();
+
+    const dots = document.getElementById('doneDots');
+    const insightEl = document.getElementById('doneInsight');
+    const btn = document.getElementById('doneBtn');
+
+    if (dots) dots.classList.remove('visible');
+    if (insightEl) {
+      insightEl.textContent = result.insight;
+      insightEl.style.opacity = '1';
+    }
+    if (btn) btn.style.display = 'inline-block';
+
+  } catch (err) {
+    // Fallback om API misslyckas
+    const dots = document.getElementById('doneDots');
+    const insightEl = document.getElementById('doneInsight');
+    const btn = document.getElementById('doneBtn');
+    if (dots) dots.classList.remove('visible');
+    if (insightEl) {
+      insightEl.textContent = 'Modellen är byggd. Det börjar nu.';
+      insightEl.style.opacity = '1';
+    }
+    if (btn) btn.style.display = 'inline-block';
+  }
+}
+
+</script>
+<script>checkAuth();</script>
+<footer style="padding: 2rem; text-align: center; border-top: 1px solid var(--border); margin-top: 3rem;">
+  <p style="font-size: 0.68rem; color: var(--fg4); line-height: 1.7; max-width: 480px; margin: 0 auto 0.5rem;">Forsyne är ett verktyg för självförståelse och prestation. Systemets insikter ersätter inte råd från läkare, psykolog eller annan vårdgivare — de kompletterar dem. <a href="disclaimer.html" style="color:var(--fg3); text-decoration:none;">Läs mer</a></p>
+  <p style="font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg4);"><a href="manifesto.html" style="color:var(--fg4); text-decoration:none;">Manifesto</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Disclaimer</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Integritet</a> · © 2026 Forsyne</p>
+</footer>
+</body>
+</html>

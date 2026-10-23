@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Profil</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<script src="components.js"></script>
+<style>
+:root{--ink:#0F1210;--ink2:#131714;--ink3:#171c18;--fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;--accent:#8FAE8A;--warn:#C4875A;--danger:#A85C5C;--trust:#5B7FA6;--serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;--border:rgba(242,240,234,0.06);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;line-height:1.7;min-height:100vh;overflow-x:hidden;}
+.page-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;}
+.page-bg-img{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.18) saturate(0.4);}
+.page-bg-veil{position:absolute;inset:0;background:linear-gradient(to bottom,var(--ink) 0%,rgba(15,18,16,0.72) 9%,rgba(15,18,16,0.06) 26%,rgba(15,18,16,0.06) 74%,rgba(15,18,16,0.72) 91%,var(--ink) 100%);}
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(2rem,5vw,4rem);height:64px;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.85);backdrop-filter:blur(32px);}
+.logo{font-family:var(--serif);font-size:1.1rem;font-weight:400;letter-spacing:0.18em;color:var(--fg);text-decoration:none;}
+.nav-center{font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+.nav-meta{display:flex;align-items:center;gap:1.5rem;}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(143,174,138,0.6);animation:pulse 2.5s ease infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.nav-date{font-family:var(--serif);font-size:0.9rem;color:var(--fg2);}
+.nav-user{font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg3);text-decoration:none;}
+.nav-signal{display:none;font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--danger);text-decoration:none;align-items:center;gap:0.4rem;}
+.nav-signal::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);animation:sig-pulse 1.6s ease infinite;}
+.nav-signal.show{display:flex;}
+@keyframes sig-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(168,92,92,0.6)}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(168,92,92,0)}}
+.content-wrap{display:flex;align-items:flex-start;height:calc(100vh - 64px);overflow:hidden;}
+.sidebar{width:210px;height:100%;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:rgba(15,18,16,0.4);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;z-index:50;padding:2.5rem 0 1.8rem;}
+.sidebar::-webkit-scrollbar{display:none;}
+.ng{margin-bottom:0;}
+.ngl{font-size:0.44rem;letter-spacing:0.32em;text-transform:uppercase;color:var(--fg4);padding:0.7rem 1.8rem 0.2rem;}
+.nl{display:block;padding:0.22rem 1.8rem;font-size:0.76rem;letter-spacing:0.06em;color:var(--fg3);text-decoration:none;transition:color 0.2s,border-left-color 0.2s;border-left:1px solid transparent;cursor:pointer;}
+.nl:hover{color:var(--fg2);}
+.nl.active{color:var(--fg);border-left-color:var(--accent);background:rgba(143,174,138,0.04);}
+.nl.signal-link{color:var(--danger);display:flex;align-items:center;gap:0.5rem;}
+.nl.signal-link::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+.selvitas-wrap{margin-top:auto;padding-top:0.5rem;border-top:1px solid var(--border);}.selvitas-nav{display:block;padding:0.6rem 1.8rem 0.3rem;font-family:var(--serif);font-style:italic;font-size:0.78rem;letter-spacing:0.08em;color:var(--fg3);text-decoration:none;transition:color 0.2s;}.selvitas-nav:hover{color:var(--fg2);}
+main{position:relative;z-index:1;flex:1;min-width:0;overflow-y:auto;height:100%;}
+
+/* HERO */
+.s-intro{min-height:60vh;display:flex;flex-direction:column;justify-content:flex-start;padding:clamp(4rem,7vw,6rem) clamp(2rem,6vw,5rem) clamp(3.5rem,6vw,5rem);border-bottom:1px solid var(--border);}
+.w-eyebrow{font-size:0.54rem;letter-spacing:0.36em;text-transform:uppercase;color:var(--fg4);margin-bottom:2rem;display:flex;align-items:center;gap:0.7rem;}
+.w-eyebrow::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+.w-heading{font-family:var(--serif);font-size:clamp(2.6rem,5vw,4.4rem);font-weight:300;font-style:italic;line-height:1.15;color:var(--fg);text-shadow:0 2px 40px rgba(15,18,16,0.9);max-width:820px;margin-bottom:2rem;}
+.w-intro{font-size:clamp(0.88rem,1.4vw,1rem);color:var(--fg2);line-height:1.85;max-width:560px;margin-bottom:2.5rem;}
+.w-features{display:flex;flex-direction:column;gap:0;}
+.w-feature{display:flex;align-items:baseline;gap:1.2rem;padding:0.65rem 0;border-top:1px solid var(--border);opacity:0;transform:translateY(6px);transition:opacity 0.4s ease,transform 0.4s ease;}
+.w-feature.vis{opacity:1;transform:translateY(0);}
+.w-feature-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);opacity:0.5;flex-shrink:0;margin-top:0.1rem;}
+.w-feature-txt{font-size:0.82rem;color:var(--fg3);letter-spacing:0.04em;}
+.w-feature-sub{font-size:0.7rem;color:var(--fg4);letter-spacing:0.04em;margin-left:auto;}
+
+/* SEKTIONER */
+.s-section{padding:clamp(2.5rem,4vw,3.5rem) clamp(2rem,6vw,5rem);border-bottom:1px solid var(--border);}
+.s-ey{font-size:0.56rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.5rem;display:flex;align-items:center;gap:0.7rem;}
+.s-ey::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+
+/* PROFIL-KORT (tvåkolumns grid som dev-grid) */
+.p-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:0;}
+.p-grid.full{grid-template-columns:1fr;}
+.p-card{background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);padding:1.8rem 1.6rem;position:relative;}
+.p-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--accent);opacity:0.25;}
+.p-card-lbl{font-size:0.56rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.4rem;}
+.profile-initial{width:48px;height:48px;border-radius:50%;background:rgba(143,174,138,0.08);border:1px solid rgba(143,174,138,0.18);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:1.5rem;font-weight:300;color:var(--accent);margin-bottom:1.2rem;}
+.profile-name{font-family:var(--serif);font-size:1.7rem;font-weight:300;margin-bottom:0.25rem;}
+.profile-email{font-size:0.7rem;color:var(--fg3);letter-spacing:0.06em;margin-bottom:1rem;}
+.profile-meta{display:flex;gap:0.8rem;flex-wrap:wrap;}
+.pm-tag{font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg3);border:1px solid var(--border);padding:0.22rem 0.6rem;}
+
+/* FÄLT */
+.field-row{display:flex;justify-content:space-between;align-items:baseline;padding:0.65rem 0;border-bottom:1px solid var(--border);gap:1rem;}
+.field-row:last-child{border-bottom:none;}
+.field-lbl{font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg3);flex-shrink:0;}
+.field-val{font-size:0.8rem;color:var(--fg2);line-height:1.5;text-align:right;max-width:280px;}
+.field-val.empty{color:var(--fg4);font-style:italic;}
+
+/* KONTO-ACTIONS */
+.action-list{display:flex;flex-direction:column;gap:0.7rem;}
+.action-btn{display:inline-flex;align-items:center;gap:0.6rem;font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg3);background:none;border:1px solid var(--border);padding:0.6rem 1.1rem;cursor:pointer;font-family:var(--sans);transition:all 0.2s;text-decoration:none;}
+.action-btn:hover{color:var(--fg2);border-color:rgba(242,240,234,0.15);}
+.action-btn.danger{color:var(--danger);border-color:rgba(168,92,92,0.2);}
+.action-btn.danger:hover{border-color:rgba(168,92,92,0.45);}
+
+/* ONBOARDING */
+.ob-q{display:flex;gap:1rem;padding:0.55rem 0;border-bottom:1px solid var(--border);}
+.ob-q:last-child{border-bottom:none;}
+.ob-q-label{font-size:0.64rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg3);flex-shrink:0;min-width:140px;line-height:1.6;}
+.ob-q-answer{font-family:var(--serif);font-size:0.95rem;color:var(--fg2);line-height:1.5;}
+
+/* FOOTER */
+.s-footer{padding:clamp(2rem,4vw,3rem) clamp(2rem,6vw,5rem);border-bottom:none;}
+.s-footer p{font-size:0.72rem;color:var(--fg4);line-height:1.7;max-width:640px;margin-bottom:0.4rem;}
+.s-footer p.trust{color:var(--trust);}
+.s-footer .links{font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg4);margin-top:0.6rem;}
+.s-footer .links a{color:var(--fg4);text-decoration:none;}
+
+/* DELETE MODAL */
+.delete-modal{display:none;position:fixed;inset:0;background:rgba(15,18,16,0.92);z-index:1000;align-items:center;justify-content:center;}
+.delete-modal.open{display:flex;}
+.delete-box{background:var(--ink2);border:1px solid rgba(168,92,92,0.25);padding:2.5rem;max-width:480px;width:90%;}
+.delete-title{font-family:var(--serif);font-size:1.6rem;font-weight:300;font-style:italic;margin-bottom:0.8rem;color:var(--danger);}
+.delete-body{font-size:0.78rem;color:var(--fg3);line-height:1.7;margin-bottom:1.6rem;}
+.delete-actions{display:flex;gap:0.8rem;}
+.btn-cancel{font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg3);border:1px solid var(--border);padding:0.6rem 1.1rem;cursor:pointer;background:none;font-family:var(--sans);}
+.btn-confirm-delete{font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:#F2F0EA;background:var(--danger);border:none;padding:0.6rem 1.3rem;cursor:pointer;font-family:var(--sans);}
+
+@media(max-width:860px){
+  .sidebar{display:none!important;}
+  .content-wrap,.page-wrap,.layout-wrap{display:block!important;}
+  #main,.main-content,.page-content{width:100%!important;max-height:none!important;overflow-y:auto!important;}
+  .mg,.pred-grid,.today-plan-grid,.bio-grid,.src-grid,.prof-grid{grid-template-columns:1fr 1fr!important;}
+  .pred-grid,.prof-grid{grid-template-columns:1fr!important;}
+}
+</style>
+</head>
+<body>
+<script>checkAuth();</script>
+<div class="page-bg">
+  <div class="page-bg-img" style="background-image:url('images/Glödande_mänsklig_hjärna_i_mörker.png')"></div>
+  <div class="page-bg-veil"></div>
+</div>
+<nav>
+  <a href="dashboard.html" class="logo">Forsyne</a>
+  <span class="nav-center">Profil & konto</span>
+  <div class="nav-meta">
+    <div class="nav-dot"></div>
+    <span class="nav-date" id="topDate"></span>
+    <a class="nav-user" id="topUser" href="profile.html"></a>
+  </div>
+</nav>
+<div class="content-wrap">
+<aside class="sidebar">
+  <div class="ng">
+    <div class="ngl">Idag</div>
+    <a class="nl" href="dashboard.html">Dashboard</a>
+    <a class="nl" href="checkin.html">Check-in</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Mönster</div>
+    <a class="nl" href="sleep.html">Sömn</a>
+    <a class="nl" href="energy.html">Energi</a>
+    <a class="nl" href="stress.html">Stress</a>
+    <a class="nl" href="training.html">Träning</a>
+    <a class="nl" href="kostlogg.html">Kost</a>
+    <a class="nl" href="wearables.html">Wearables</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Djupet</div>
+    <a class="nl" href="biologi.html">Biologi</a>
+    <a class="nl" href="dna.html">DNA</a>
+    <a class="nl" href="journal.html">Journal</a>
+    <a class="nl" href="analys.html">Analys</a>
+    <a class="nl" href="coach.html">Coach</a>
+  </div>
+</aside>
+<main>
+
+  <!-- HERO -->
+  <section class="s-intro">
+    <div class="w-eyebrow">Profil · Ditt konto</div>
+    <h1 class="w-heading">Din modell —<br><em>allt systemet vet om dig.</em></h1>
+    <p class="w-intro">Onboarding-svar, kontoinfo och modellstatus. Det systemet bygger sin förståelse av dig på.</p>
+    <div class="w-features" id="w-features">
+      <div class="w-feature"><span class="w-feature-dot"></span><span class="w-feature-txt" id="feat-checkins">Laddar check-in-historik...</span><span class="w-feature-sub">Daglig data</span></div>
+      <div class="w-feature"><span class="w-feature-dot"></span><span class="w-feature-txt">Onboarding — biologisk profil</span><span class="w-feature-sub">Startpunkt</span></div>
+      <div class="w-feature"><span class="w-feature-dot"></span><span class="w-feature-txt">Energi, sömn och stressmönster</span><span class="w-feature-sub">Mönster</span></div>
+      <div class="w-feature"><span class="w-feature-dot"></span><span class="w-feature-txt">Aktiva datakällor och integrationer</span><span class="w-feature-sub">Källor</span></div>
+    </div>
+  </section>
+
+  <!-- KONTO -->
+  <section class="s-section">
+    <div class="s-ey">Konto</div>
+    <div class="p-grid">
+      <div class="p-card">
+        <div class="p-card-lbl">Identitet</div>
+        <div class="profile-initial" id="profileInitial">—</div>
+        <div class="profile-name" id="profileName">—</div>
+        <div class="profile-email" id="profileEmail">—</div>
+        <div class="profile-meta" id="profileMeta"></div>
+      </div>
+      <div class="p-card">
+        <div class="p-card-lbl">Inställningar</div>
+        <div class="action-list">
+          <a href="checkin.html" class="action-btn">→ Ny check-in</a>
+          <a href="onboarding.html" class="action-btn">→ Uppdatera onboarding</a>
+          <button class="action-btn" onclick="handleLogout()">→ Logga ut</button>
+          <button class="action-btn danger" onclick="openDeleteModal()">→ Radera konto permanent</button>
+        </div>
+        <p style="font-size:0.58rem;color:var(--fg4);line-height:1.7;margin-top:1.4rem;">Kontoradering är permanent och kan inte ångras. All din data raderas omedelbart.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODELLSTATUS + GRUNDDATA -->
+  <section class="s-section">
+    <div class="s-ey">Modell & grunddata</div>
+    <div class="p-grid">
+      <div class="p-card">
+        <div class="p-card-lbl">Modellstatus</div>
+        <div class="field-row"><span class="field-lbl">Check-ins</span><span class="field-val" id="statCheckins">—</span></div>
+        <div class="field-row"><span class="field-lbl">Aktiv sedan</span><span class="field-val" id="statSince">—</span></div>
+        <div class="field-row"><span class="field-lbl">Senaste check-in</span><span class="field-val" id="statLast">—</span></div>
+        <div class="field-row"><span class="field-lbl">Datakällor</span><span class="field-val" id="statSources">Daglig check-in</span></div>
+      </div>
+      <div class="p-card">
+        <div class="p-card-lbl">Grunddata</div>
+        <div class="field-row"><span class="field-lbl">Namn</span><span class="field-val" id="dataName">—</span></div>
+        <div class="field-row"><span class="field-lbl">Ålder</span><span class="field-val" id="dataAge">—</span></div>
+        <div class="field-row"><span class="field-lbl">Kön</span><span class="field-val" id="dataGender">—</span></div>
+        <div class="field-row"><span class="field-lbl">Livssituation</span><span class="field-val" id="dataLife">—</span></div>
+        <div class="field-row"><span class="field-lbl">Energimönster</span><span class="field-val" id="dataEnergy">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ONBOARDING-SVAR -->
+  <section class="s-section">
+    <div class="s-ey">Onboarding-svar · Vad systemet bygger modellen på</div>
+    <div class="p-grid full">
+      <div class="p-card">
+        <div id="obSummary"><p style="font-size:0.78rem;color:var(--fg4);">Laddar...</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="s-footer">
+    <p class="trust">Din data är krypterad, privat och tillhör bara dig. Forsyne säljer aldrig data.</p>
+    <p>Systemets insikter ersätter inte råd från läkare, psykolog eller annan vårdgivare.</p>
+    <p class="links"><a href="manifesto.html">Manifesto</a> · <a href="disclaimer.html">Disclaimer</a> · <a href="disclaimer.html">Integritet</a> · © 2026 Forsyne</p>
+  </footer>
+
+</main>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="delete-modal" id="deleteModal">
+  <div class="delete-box">
+    <div class="delete-title">Radera konto permanent</div>
+    <div class="delete-body">Det här kan inte ångras. Alla dina check-ins, insikter och profildata raderas permanent och omedelbart. Din modell försvinner.<br><br>Är du helt säker?</div>
+    <div class="delete-actions">
+      <button class="btn-cancel" onclick="closeDeleteModal()">Avbryt</button>
+      <button class="btn-confirm-delete" id="confirmDeleteBtn" onclick="confirmDelete()">Ja, radera permanent</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Sidebar: auto-active baserat på URL ──
+(function(){
+  const page = location.pathname.split('/').pop() || 'dashboard.html';
+  document.querySelectorAll('.sidebar a.nl').forEach(a => {
+    if (a.getAttribute('href') === page) a.classList.add('active');
+  });
+})();
+
+const DAYS=['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+const MONTHS=['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+
+const d=new Date();
+document.getElementById('topDate').textContent=DAYS[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()];
+
+const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+const u=API.user();
+const name=ob.q3_1||(u?.email?.split('@')[0]||'Okänt');
+
+document.getElementById('topUser').textContent=name.toUpperCase();
+document.getElementById('profileInitial').textContent=name.charAt(0).toUpperCase();
+document.getElementById('profileName').textContent=name;
+document.getElementById('profileEmail').textContent=u?.email||'—';
+
+const meta=[];
+if(ob.q3_2)meta.push(ob.q3_2+' år');
+if(ob.q3_3)meta.push(ob.q3_3);
+if(ob.q4_1)meta.push(ob.q4_1.split(',')[0]);
+document.getElementById('profileMeta').innerHTML=meta.map(t=>`<span class="pm-tag">${t}</span>`).join('');
+
+const set=(id,val)=>{const el=document.getElementById(id);if(el){el.textContent=val||'—';if(!val)el.classList.add('empty');}};
+set('dataName',ob.q3_1);
+set('dataAge',ob.q3_2?ob.q3_2+' år':null);
+set('dataGender',ob.q3_3);
+set('dataLife',ob.q4_1);
+set('dataEnergy',ob.q2_1);
+
+// OB_LABELS laddas från components.js — redigera aldrig listan här.
+const obKeys=Object.keys(ob).filter(k=>k!=='completed'&&OB_LABELS[k]);
+document.getElementById('obSummary').innerHTML=obKeys.length
+  ?obKeys.map(k=>`<div class="ob-q"><span class="ob-q-label">${OB_LABELS[k]}</span><span class="ob-q-answer">${ob[k]}</span></div>`).join('')
+  :'<p style="font-size:0.78rem;color:var(--fg4);">Ingen onboarding-data sparad lokalt. Koppla profilen via onboarding.</p>';
+
+// Animera features
+document.querySelectorAll('.w-feature').forEach((f,i)=>setTimeout(()=>f.classList.add('vis'),400+i*100));
+
+function handleLogout(){if(typeof API!=='undefined'&&API.logout){API.logout();}else{localStorage.clear();window.location.href='login.html';}}
+function openDeleteModal(){document.getElementById('deleteModal').classList.add('open');}
+function closeDeleteModal(){document.getElementById('deleteModal').classList.remove('open');}
+
+async function confirmDelete(){
+  const btn=document.getElementById('confirmDeleteBtn');
+  btn.textContent='Raderar...';btn.disabled=true;
+  try{const r=await fetch('/api/user/delete',{method:'DELETE',headers:{'Authorization':'Bearer '+API.token()}});
+    if(r.ok){localStorage.clear();window.location.href='login.html';}
+    else{btn.textContent='Fel — försök igen';btn.disabled=false;}}
+  catch(e){btn.textContent='Fel — försök igen';btn.disabled=false;}
+}
+
+(async()=>{
+  try{
+    const checkins=await API.getCheckins()||[];
+    const n=checkins.length;
+    const featEl=document.getElementById('feat-checkins');
+    if(featEl)featEl.textContent=n+' check-in'+(n!==1?'s':'')+' registrerade';
+    document.getElementById('statCheckins').textContent=n;
+    if(n>0){
+      const sorted=[...checkins].sort((a,b)=>a.date<b.date?-1:1);
+      const first=new Date(sorted[0].date);
+      const last=new Date(sorted[sorted.length-1].date);
+      document.getElementById('statSince').textContent=first.getDate()+' '+MONTHS[first.getMonth()]+' '+first.getFullYear();
+      document.getElementById('statLast').textContent=last.getDate()+' '+MONTHS[last.getMonth()]+' '+last.getFullYear();
+    }
+  }catch(e){}
+})();
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

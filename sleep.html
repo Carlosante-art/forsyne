@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Sömn</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<script src="cache.js"></script>
+<style>
+:root {
+  --ink:#0F1210;--ink2:#131714;
+  --fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;
+  --accent:#8FAE8A;--warn:#C4875A;--danger:#A85C5C;--trust:#5B7FA6;
+  --serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;
+  --border:rgba(242,240,234,0.06);
+  --pad:clamp(3rem,5vw,5rem);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;line-height:1.7;overflow-x:hidden;}
+
+/* ── BAKGRUND ── */
+.page-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;}
+.page-bg-img{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.28) saturate(0.55);}
+.page-bg-veil{position:absolute;inset:0;background:linear-gradient(to bottom,var(--ink) 0%,rgba(15,18,16,0.72) 9%,rgba(15,18,16,0.06) 26%,rgba(15,18,16,0.06) 74%,rgba(15,18,16,0.72) 91%,var(--ink) 100%);}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(2rem,5vw,4rem);height:64px;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.85);backdrop-filter:blur(32px);}
+.logo{font-family:var(--serif);font-size:1.1rem;font-weight:400;letter-spacing:0.18em;color:var(--fg);text-decoration:none;}
+.nav-center{font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+.nav-meta{display:flex;align-items:center;gap:1.5rem;}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(143,174,138,0.6);animation:pulse 2.5s ease infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.nav-date{font-family:var(--serif);font-size:0.9rem;color:var(--fg2);}
+.nav-user{font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg3);text-decoration:none;}
+.nav-signal{font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--danger);display:none;align-items:center;gap:0.4rem;text-decoration:none;}
+.nav-signal.show{display:flex;}
+.nav-signal::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+@keyframes sig-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(168,92,92,0.6)}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(168,92,92,0)}}
+
+/* ── MAIN ── */
+main{position:relative;z-index:1;flex:1;min-width:0;overflow-y:auto;height:100%;}
+
+/* ── PAGE HEADER ── */
+.page-header{padding:1.8rem 2rem 1.4rem;border-bottom:1px solid var(--border);max-width:100%;}
+.page-header-title{font-family:var(--serif);font-size:1.8rem;font-weight:300;line-height:1.1;color:var(--fg);margin-bottom:0.3rem;}
+.page-header-sub{font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);}
+
+/* ── MANUELL SÖMN-LOG ── */
+.msleep-row{display:flex;align-items:center;flex-wrap:wrap;gap:0.7rem;padding:1rem 2rem;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.4);}
+.msleep-lbl{font-size:0.6rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--fg3);}
+.msleep-row input{background:transparent;border:1px solid var(--border);color:var(--fg);font-family:var(--sans);font-size:0.95rem;padding:0.45rem 0.7rem;border-radius:0;font-weight:300;color-scheme:dark;min-width:0;}
+.msleep-row input[type="date"]{min-width:140px;}
+.msleep-row input[type="number"]{width:110px;}
+.msleep-row input:focus{outline:none;border-color:var(--accent);}
+.msleep-unit{font-size:0.85rem;color:var(--fg3);margin-left:-0.3rem;}
+.msleep-row button{background:var(--accent);color:var(--ink);border:none;padding:0.55rem 1.4rem;font-family:var(--sans);font-size:0.7rem;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:400;transition:opacity 0.2s ease;}
+.msleep-row button:hover{opacity:0.85;}
+.msleep-row button:disabled{opacity:0.4;cursor:not-allowed;}
+.msleep-msg{font-size:0.78rem;color:var(--fg3);margin-left:0.3rem;}
+.msleep-msg.ok{color:var(--accent);}
+.msleep-msg.err{color:var(--danger);}
+
+/* ── AKT 2 — DATA ── */
+.s-data{padding:2rem clamp(2rem,6vw,5rem);max-width:1000px;margin:0 auto;}
+.cg{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:1.5rem;}
+.ci{background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);padding:0.9rem 1rem;}
+.cl{font-size:0.56rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--fg4);margin-bottom:0.5rem;}
+.cv{font-family:var(--serif);font-size:1.6rem;font-weight:300;line-height:1;color:var(--fg);margin-bottom:0.2rem;}
+.cv small{font-size:0.45em;color:var(--fg3);font-family:var(--sans);}
+.cd{font-size:0.68rem;color:var(--fg3);}
+.cd.up{color:var(--accent);}.cd.dn{color:var(--danger);}.cd.wn{color:var(--warn);}
+.dl-wrap{display:flex;flex-direction:column;}
+.dr{display:grid;grid-template-columns:100px 1fr 70px;align-items:center;gap:1.2rem;padding:0.5rem 0;border-bottom:1px solid var(--border);position:relative;opacity:0;transform:translateX(-10px);}
+.dr:last-child{border-bottom:none;}
+.dr.vis{opacity:1;transform:translateX(0);transition:opacity 0.45s ease,transform 0.45s ease;}
+.dd{font-size:0.7rem;color:var(--fg3);letter-spacing:0.05em;white-space:nowrap;}
+.dbw{height:2px;background:rgba(242,240,234,0.05);position:relative;}
+.db{height:100%;width:0%;transition:width 0.65s ease;position:absolute;left:0;top:0;}
+.dv{font-family:var(--serif);font-size:0.95rem;font-weight:300;color:var(--fg2);text-align:right;opacity:0;transition:opacity 0.3s ease 0.6s;}
+.dr.vis .dv{opacity:1;}
+.dtt{position:absolute;left:0;bottom:calc(100% + 6px);background:rgba(15,18,16,0.95);border:1px solid rgba(143,174,138,0.1);padding:0.45rem 0.8rem;font-family:var(--serif);font-style:italic;font-size:0.78rem;color:var(--fg3);line-height:1.5;pointer-events:none;opacity:0;transition:opacity 0.18s ease;z-index:20;max-width:320px;}
+.dr:hover .dtt{opacity:1;}
+.dr.empty .db{width:12%!important;background:rgba(242,240,234,0.08)!important;}
+.dr.empty .dv{color:var(--fg4);font-style:italic;}
+
+/* ── AKT 3 — INSIKT ── */
+.s-insight{padding:var(--pad) clamp(2rem,6vw,5rem);max-width:800px;margin:0 auto;opacity:0;transform:translateY(16px);transition:opacity 0.6s ease,transform 0.6s ease;}
+.s-insight.vis{opacity:1;transform:translateY(0);}
+.s-insikt{font-family:var(--serif);font-size:clamp(1.5rem,2.8vw,2.2rem);font-weight:300;line-height:1.22;color:var(--fg);max-width:680px;margin-bottom:1.5rem;text-shadow:0 1px 20px rgba(15,18,16,0.85);}
+.s-items{display:flex;flex-direction:column;gap:0.75rem;max-width:580px;}
+.di{display:flex;gap:0.8rem;align-items:flex-start;opacity:0;transform:translateY(8px);transition:opacity 0.4s ease,transform 0.4s ease;font-size:clamp(0.95rem,1.8vw,1.08rem);color:var(--fg2);line-height:1.7;text-shadow:0 1px 10px rgba(15,18,16,0.95);}
+.di.vis{opacity:1;transform:translateY(0);}
+.dm{font-size:1.2rem;line-height:1;margin-top:0.1rem;flex-shrink:0;}
+
+/* ── GAP-SEKTION ── */
+.gap-row{padding:1.6rem clamp(2rem,6vw,5rem);max-width:1000px;margin:0 auto;border-bottom:1px solid var(--border);display:none;}
+.gap-lbl{font-size:0.52rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--warn);margin-bottom:1rem;display:flex;align-items:center;gap:0.6rem;}
+.gap-lbl::before{content:'';width:10px;height:1px;background:var(--warn);}
+.gap-cols{display:grid;grid-template-columns:1fr auto 1fr;gap:1.5rem;align-items:center;margin-bottom:0.8rem;}
+.gap-side{display:flex;flex-direction:column;gap:0.2rem;}
+.gap-source{font-size:0.54rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg4);}
+.gap-val{font-family:var(--serif);font-size:1.4rem;font-weight:300;color:var(--fg2);}
+.gap-badge{font-family:var(--serif);font-size:1rem;color:var(--warn);text-align:center;font-style:italic;}
+.gap-tolkning{font-family:var(--serif);font-style:italic;font-size:0.88rem;color:var(--fg3);line-height:1.7;}
+
+/* ── AKT 4 — VALIDERING ── */
+.s-validation{padding:var(--pad) clamp(2rem,6vw,5rem);max-width:800px;margin:0 auto;}
+.val-label{font-size:0.56rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.2rem;display:flex;align-items:center;gap:0.7rem;}
+.val-label::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+.val-intro{font-size:0.54rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.2rem;}
+.val-p{font-family:var(--serif);font-size:clamp(0.9rem,1.4vw,1.05rem);font-weight:300;font-style:italic;line-height:1.9;color:var(--fg2);max-width:560px;margin-bottom:2rem;text-shadow:0 1px 18px rgba(15,18,16,0.9);}
+.val-question{font-family:var(--serif);font-size:clamp(1.5rem,2.5vw,2.1rem);font-weight:300;font-style:italic;color:var(--fg);margin-bottom:1.8rem;line-height:1.15;}
+.val-btns{display:flex;gap:1rem;flex-wrap:wrap;}
+.val-btn{background:none;border:1px solid var(--border);color:var(--fg3);font-family:var(--sans);font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.65rem 1.5rem;cursor:pointer;transition:all 0.2s;}
+.val-btn:hover{border-color:rgba(242,240,234,0.15);color:var(--fg2);}
+.val-btn.ja{border-color:rgba(143,174,138,0.35);color:var(--accent);}
+.val-btn.nej{border-color:rgba(168,92,92,0.35);color:var(--danger);}
+.val-fritext{display:none;margin-top:1.4rem;}
+.val-textarea{display:block;width:100%;max-width:500px;background:rgba(15,18,16,0.7);backdrop-filter:blur(8px);border:1px solid var(--border);color:var(--fg2);font-family:var(--sans);font-size:0.82rem;padding:0.8rem 1rem;resize:vertical;margin-bottom:0.8rem;outline:none;}
+.val-textarea:focus{border-color:rgba(143,174,138,0.25);}
+.val-skicka{background:none;border:1px solid rgba(143,174,138,0.3);color:var(--accent);font-family:var(--sans);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;padding:0.55rem 1.3rem;cursor:pointer;transition:all 0.2s;}
+.val-skicka:hover{background:rgba(143,174,138,0.06);}
+.val-tack{display:none;font-family:var(--serif);font-style:italic;color:var(--fg3);font-size:0.9rem;margin-top:1rem;}
+
+/* ── BIO + REK ── */
+.s-bio{padding:var(--pad) clamp(2rem,6vw,5rem);max-width:1000px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:3rem;}
+.s-bio-label{font-size:0.54rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1rem;display:flex;align-items:center;gap:0.6rem;}
+.s-bio-label::before{content:'';width:10px;height:1px;background:var(--accent);opacity:0.4;}
+.bio-marker{display:flex;justify-content:space-between;align-items:baseline;padding:0.4rem 0;border-bottom:1px solid var(--border);}
+.bio-marker:last-child{border-bottom:none;}
+.bm-name{font-size:0.68rem;color:var(--fg3);letter-spacing:0.03em;line-height:1.4;}
+.bm-right{text-align:right;}
+.bm-val{font-family:var(--serif);font-size:1.05rem;font-weight:300;line-height:1;}
+.bm-status{font-size:0.54rem;letter-spacing:0.14em;text-transform:uppercase;margin-top:0.2rem;}
+.bm-ok{color:var(--accent);}.bm-warn{color:var(--warn);}.bm-bad{color:var(--danger);}
+.rek-step{padding:0.55rem 0;border-bottom:1px solid var(--border);opacity:0;transform:translateY(6px);transition:opacity 0.4s ease,transform 0.4s ease;}
+.rek-step:last-child{border-bottom:none;}
+.rek-step.vis{opacity:1;transform:translateY(0);}
+.rek-atgard{font-family:var(--serif);font-size:0.9rem;font-weight:300;color:var(--fg);line-height:1.5;margin-bottom:0.3rem;}
+.rek-varfor{font-size:0.7rem;color:var(--fg3);line-height:1.6;padding-left:0.75rem;border-left:1px solid var(--border);}
+
+/* ── FOOTER ── */
+.s-footer{border-top:1px solid rgba(143,174,138,0.06);padding:2.5rem clamp(2rem,6vw,5rem);display:flex;align-items:center;justify-content:space-between;}
+.s-footer-quote{font-family:var(--serif);font-style:italic;font-size:0.72rem;color:var(--fg4);line-height:1.8;}
+.s-footer-back{font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg3);text-decoration:none;transition:color 0.2s;}
+.s-footer-back:hover{color:var(--fg2);}
+
+/* ── DOTS ── */
+.dots{display:flex;gap:0.4rem;}
+.dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:dp 1.4s ease infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.load-row{display:flex;align-items:center;gap:0.8rem;}
+.load-txt{font-size:0.6rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+.content-wrap{display:flex;align-items:flex-start;height:calc(100vh - 64px);overflow:hidden;}
+.sidebar{width:210px;height:100%;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:rgba(15,18,16,0.4);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;z-index:50;padding:2.5rem 0 1.8rem;}
+.sidebar::-webkit-scrollbar{display:none;}
+.ng{margin-bottom:0;}
+.ngl{font-size:0.44rem;letter-spacing:0.32em;text-transform:uppercase;color:var(--fg4);padding:0.7rem 1.8rem 0.2rem;}
+.nl{display:block;padding:0.22rem 1.8rem;font-size:0.76rem;letter-spacing:0.06em;color:var(--fg3);text-decoration:none;transition:color 0.2s,border-left-color 0.2s;border-left:1px solid transparent;cursor:pointer;}
+.nl:hover{color:var(--fg2);}
+.nl.active{color:var(--fg);border-left-color:var(--accent);background:rgba(143,174,138,0.04);}
+.nl.signal-link{color:var(--danger);display:flex;align-items:center;gap:0.5rem;}
+.nl.signal-link::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+.selvitas-wrap{margin-top:auto;padding-top:0.5rem;border-top:1px solid var(--border);}.selvitas-nav{display:block;padding:0.6rem 1.8rem 0.3rem;font-family:var(--serif);font-style:italic;font-size:0.78rem;letter-spacing:0.08em;color:var(--fg3);text-decoration:none;transition:color 0.2s;}.selvitas-nav:hover{color:var(--fg2);}
+
+@media(max-width:860px){
+  .sidebar{display:none!important;}
+  .content-wrap,.page-wrap,.layout-wrap{display:block!important;}
+  #main,.main-content,.page-content{width:100%!important;max-height:none!important;overflow-y:auto!important;}
+  .mg,.pred-grid,.today-plan-grid,.bio-grid,.src-grid,.prof-grid{grid-template-columns:1fr 1fr!important;}
+  .pred-grid,.prof-grid{grid-template-columns:1fr!important;}
+}
+</style>
+</head>
+<body>
+<script>checkAuth();</script>
+<div class="page-bg">
+  <div class="page-bg-img" style="background-image:url('images/DALL·E 2026-04-11 15.27.35 - A dark, minimal bedroom at night illuminated only by soft moonlight filtering through sheer curtains. The room is still and quiet, with deep blue and .webp')"></div>
+  <div class="page-bg-veil"></div>
+</div>
+
+<nav>
+  <a href="dashboard.html" class="logo">Forsyne</a>
+  <span class="nav-center">Sömn &amp; återhämtning</span>
+  <div class="nav-meta">
+    <div class="nav-dot"></div>
+    <span class="nav-date" id="topDate"></span>
+    <a class="nav-user" id="topUser" href="profile.html"></a>
+  </div>
+</nav>
+
+<div class="content-wrap">
+<aside class="sidebar">
+  <div class="ng">
+    <div class="ngl">Idag</div>
+    <a class="nl" href="dashboard.html">Dashboard</a>
+    <a class="nl" href="checkin.html">Check-in</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Mönster</div>
+    <a class="nl" href="sleep.html">Sömn</a>
+    <a class="nl" href="energy.html">Energi</a>
+    <a class="nl" href="stress.html">Stress</a>
+    <a class="nl" href="training.html">Träning</a>
+    <a class="nl" href="kostlogg.html">Kost</a>
+    <a class="nl" href="wearables.html">Wearables</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Djupet</div>
+    <a class="nl" href="biologi.html">Biologi</a>
+    <a class="nl" href="dna.html">DNA</a>
+    <a class="nl" href="journal.html">Journal</a>
+    <a class="nl" href="analys.html">Analys</a>
+    <a class="nl" href="coach.html">Coach</a>
+  </div>
+</aside>
+
+<main>
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-header-title">Sömn</div>
+    <div class="page-header-sub">Sömn &amp; återhämtning · Biologiska markörer</div>
+  </div>
+
+  <!-- MANUAL SLEEP LOG (temporär — tills Garmin Connect-import är på plats) -->
+  <div class="msleep-row">
+    <span class="msleep-lbl">Logga manuellt</span>
+    <input type="date" id="msleep-date">
+    <input type="number" id="msleep-h" min="0.5" max="14" step="0.25" placeholder="t.ex. 7.5">
+    <span class="msleep-unit">h</span>
+    <button id="msleep-btn" type="button">Spara</button>
+    <span class="msleep-msg" id="msleep-msg"></span>
+  </div>
+
+  <!-- AKT 2 -->
+  <section class="s-data" id="a2" style="opacity:0;transition:opacity 0.5s ease;">
+    <div class="load-row" id="a2-load">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Hämtar sömndata</span>
+    </div>
+    <div class="cg" id="cg" style="display:none;">
+      <div class="ci">
+        <div class="cl">Snitt sömn · 14 dagar</div>
+        <div class="cv" id="cv-avg">—<small>h</small></div>
+        <div class="cd" id="cd-avg"></div>
+      </div>
+      <div class="ci">
+        <div class="cl">Stress → sömn</div>
+        <div class="cv" id="cv-corr">—</div>
+        <div class="cd" id="cd-corr"></div>
+      </div>
+      <div class="ci">
+        <div class="cl">Senaste natt</div>
+        <div class="cv" id="cv-last">—<small>h</small></div>
+        <div class="cd" id="cd-last"></div>
+      </div>
+      <div class="ci">
+        <div class="cl">Check-ins totalt</div>
+        <div class="cv" id="cv-total">—</div>
+        <div class="cd">loggade nätter</div>
+      </div>
+    </div>
+    <div class="dl-wrap" id="dl" style="display:none;"></div>
+  </section>
+
+  <!-- GAP -->
+  <div class="gap-row" id="gap-row">
+    <div class="gap-lbl">Avvikelse detekterad</div>
+    <div class="gap-cols">
+      <div class="gap-side">
+        <div class="gap-source">Du rapporterade</div>
+        <div class="gap-val" id="gap-subj">—</div>
+      </div>
+      <div class="gap-badge" id="gap-badge">—</div>
+      <div class="gap-side">
+        <div class="gap-source">Garmin mätte</div>
+        <div class="gap-val" id="gap-obj">—</div>
+      </div>
+    </div>
+    <div class="gap-tolkning" id="gap-tolkning"></div>
+  </div>
+
+  <!-- AKT 3 -->
+  <section class="s-insight" id="a3">
+    <div class="load-row" id="a3-load">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Systemet analyserar</span>
+    </div>
+    <div id="a3-body" style="display:none;">
+      <div class="s-insikt" id="a3-dom"></div>
+      <div class="s-items" id="a3-items"></div>
+    </div>
+  </section>
+
+  <!-- AKT 4 -->
+  <section class="s-validation">
+    <div class="val-label">Validering</div>
+    <div class="load-row" id="a4-load">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Systemet formulerar ett påstående</span>
+    </div>
+    <div id="a4-body" style="display:none;">
+      <div class="val-intro">Systemet säger såhär:</div>
+      <div class="val-p" id="val-stmt"></div>
+      <div class="val-question">Känner du igen dig?</div>
+      <div class="val-btns" id="val-btns">
+        <button class="val-btn ja" onclick="svara('ja')">Ja, stämmer</button>
+        <button class="val-btn nej" onclick="svara('nej')">Nej, stämmer inte</button>
+      </div>
+      <div class="val-fritext" id="val-fritext">
+        <textarea class="val-textarea" id="val-text" rows="3" placeholder="Berätta mer — systemet lyssnar."></textarea>
+        <button class="val-skicka" onclick="skicka()">Skicka</button>
+      </div>
+      <div class="val-tack" id="val-tack">Tack. Systemet uppdaterar sin modell av dig.</div>
+    </div>
+  </section>
+
+  <!-- Bio + Rek -->
+  <section class="s-bio">
+    <div>
+      <div class="s-bio-label">Biologiska markörer</div>
+      <div id="bio-markers">
+        <div class="load-row"><span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></div>
+      </div>
+    </div>
+    <div>
+      <div class="s-bio-label">Systemets rekommendation</div>
+      <div class="load-row" id="rek-load">
+        <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+        <span class="load-txt">Analyserar</span>
+      </div>
+      <div id="rek-steps" style="display:none;"></div>
+    </div>
+  </section>
+
+  <footer class="s-footer">
+    <div class="s-footer-quote">Inte baserat på genomsnitt.<br>Baserat på dig.</div>
+    <a href="dashboard.html" class="s-footer-back">← Dashboard</a>
+  </footer>
+
+</main>
+</div>
+
+<script>
+// ── UTILS ──
+function tw(el, text, ms, cb) {
+  let i = 0; el.textContent = '';
+  const t = () => { if (i < text.length) { el.textContent += text[i++]; setTimeout(t, ms); } else if (cb) cb(); };
+  t();
+}
+function pearsonCorr(xs, ys) {
+  const n = xs.length; if (n < 3) return null;
+  const mx = xs.reduce((a,b)=>a+b,0)/n, my = ys.reduce((a,b)=>a+b,0)/n;
+  let num=0,dx2=0,dy2=0;
+  for (let i=0;i<n;i++){const dx=xs[i]-mx,dy=ys[i]-my;num+=dx*dy;dx2+=dx*dx;dy2+=dy*dy;}
+  const den=Math.sqrt(dx2*dy2); return den===0?null:num/den;
+}
+function sleepColor(h){return h>=7?'var(--accent)':h>=6?'var(--warn)':'var(--danger)';}
+function sleepComment(h,stress){
+  if(!h||h===0) return 'Ingen data loggad denna natt.';
+  if(h>=8) return 'Optimal återhämtning. Kroppen fick vad den behöver.';
+  if(h>=7){if(stress&&stress>=7) return 'Bra sömn trots hög stress — ett positivt tecken.'; return 'Tillräckligt för återhämtning. Systemet noterar detta som stabilt.';}
+  if(h>=6){if(stress&&stress>=7) return 'Hög stress och begränsad sömn — HPA-axeln aktiveras imorgon.'; return 'Marginellt. Under 7h ackumuleras ett underskott kroppen inte ser.';}
+  if(h>=5) return 'Under 6h. Kortisol stiger, återhämtning uteblir.';
+  return 'Kritiskt lågt. Under 5h påverkar kognition, immunförsvar och metabol reglering.';
+}
+
+// ── PRED ACC ──
+function predAcc(sorted,key,thr){let hits=0,n=0;for(let i=7;i<sorted.length;i++){const win=sorted.slice(i-7,i).filter(c=>parseFloat(c[key])>0);if(win.length<4)continue;const pred=win.reduce((s,c)=>s+parseFloat(c[key]),0)/win.length;const actual=parseFloat(sorted[i][key]);if(actual>0){n++;if(Math.abs(pred-actual)<=thr)hits++;}}return n>=3?Math.round(hits/n*100):null;}
+
+// ── ACT 3–4 FALLBACK ──
+function computePd(c14) {
+  const sl=c14.filter(c=>c.sleep>0);
+  if(sl.length<3) return null;
+  const avg=sl.reduce((s,c)=>s+parseFloat(c.sleep),0)/sl.length;
+  const rev=[...sl].reverse();
+  let streak=0;for(const c of rev){if(parseFloat(c.sleep)<6)streak++;else break;}
+  let goodStreak=0;for(const c of rev){if(parseFloat(c.sleep)>=7)goodStreak++;else break;}
+  const pairs=c14.filter(c=>c.sleep>0&&c.stress>0);
+  const corrVal=pairs.length>=3?pearsonCorr(pairs.map(c=>c.stress),pairs.map(c=>parseFloat(c.sleep))):null;
+  const debt=sl.slice(-7).reduce((s,c)=>s+Math.max(0,7-parseFloat(c.sleep)),0);
+  const sl3=sl.slice(-3),sl3p=sl.slice(-6,-3);
+  const trend=(sl3.length&&sl3p.length)?(sl3.reduce((s,c)=>s+parseFloat(c.sleep),0)/sl3.length)-(sl3p.reduce((s,c)=>s+parseFloat(c.sleep),0)/sl3p.length):null;
+  let insikt,styrka,risk,rekommendation,validation,steg;
+  if(streak>=3) insikt=`${streak} nätter i rad under 6h — kortisol stiger systematiskt och återhämtning är biologiskt omöjlig. Det är inte trötthet, det är en fysiologisk skuld.`;
+  else if(corrVal!==null&&Math.abs(corrVal)>0.6) insikt=`Korrelationen sömn–stress är ${(-corrVal).toFixed(2)} i din data — ett av de starkaste mönstren systemet kan mäta. Stressen driver sömnbristen som driver stressen.`;
+  else if(avg<5.5) insikt=`Snitt ${avg.toFixed(1)}h de senaste ${sl.length} nätterna — under återhämtningsgränsen. Kroppen kompenserar med kortisol varje dag.`;
+  else if(goodStreak>=3) insikt=`${goodStreak} nätter i rad på 7h eller mer — systemet registrerar stabilitet. Det är ovanligt nog att notera.`;
+  else if(trend!==null&&trend<-0.5) insikt=`Trenden är nedåt — snittet har sjunkit ${Math.abs(trend).toFixed(1)}h de senaste 3 dagarna. Systemet flaggar riktningen.`;
+  else insikt=`Snitt ${avg.toFixed(1)}h. Systemet ser mer i rytmen och variansen än i medelvärdet — det berättar om belastningstolerans.`;
+  if(goodStreak>=2) styrka=`${goodStreak} nätter i rad på 7h eller mer — återhämtningsbufferten är aktiv.`;
+  else if(avg>=6.5) styrka=`Genomsnittet håller sig över 6.5h — marginellt positivt givet stressnivåerna.`;
+  else if(trend!==null&&trend>0.3) styrka=`Sömnlängden har förbättrats ${trend.toFixed(1)}h de senaste 3 dagarna — trenden är positiv.`;
+  else styrka=`Systemet ser dagar med adekvat sömn — de visar att kapaciteten finns när förutsättningarna är rätt.`;
+  if(streak>=2) risk=`${streak} nätter under 6h i rad — immunförsvar och kognitiv funktion är direkt påverkade just nu.`;
+  else if(debt>4) risk=`${debt.toFixed(1)}h sömnunderskott de senaste 7 nätterna — kroppen är inte återhämtad, den kompenserar.`;
+  else if(corrVal!==null&&Math.abs(corrVal)>0.5) risk=`Stress–sömn-kopplingen i din data är stark — när stressen stiger kollapsar sömnkvaliteten.`;
+  else risk=`Variansen i sömnlängden skapar ett cirkadiant kaos kroppen inte kan kompensera för.`;
+  if(streak>=2) rekommendation=`Lägg dig ikväll ${streak>=3?60:45} minuter tidigare än normalt — inget annat ändrar kurvan på kort sikt.`;
+  else if(debt>3) rekommendation=`Lägg till 30 min sömn per natt de närmaste 3 dagarna — inte en natt med 10h, tre dagar med 30 min extra.`;
+  else if(corrVal!==null&&Math.abs(corrVal)>0.5) rekommendation=`Sänk stressnivån aktivt på kvällar — det är den effektivaste vägen till bättre sömn i din specifika data.`;
+  else rekommendation=`Flytta läggdags 30 minuter tidigare tre vardagar i rad — mät om morgonenergin förändras.`;
+  if(streak>=3) validation=`Systemet ser ${streak} nätter under sex timmar i rad. Det brukar inte märkas som sömnbrist — mer som att man fungerar, men att det kostar lite mer än det borde. Att dagen klaras av, men att man inte riktigt laddas om.`;
+  else if(corrVal!==null&&Math.abs(corrVal)>0.6) validation=`Systemet ser att sömn och stress följer varandra i din data. Du märker kanske att tuffa dagar ger sämre nätter — men kanske inte att sämre nätter också gör nästa dag tyngre. Att man inte riktigt hittar en ingång ur det.`;
+  else if(avg<6) validation=`Systemet ser att sömnsnittet är ${avg.toFixed(1)} timmar. Det brukar inte kännas som att man sover för lite — mer som att fokus kräver lite mer ansträngning än det borde. Att man klarar det mesta, men att ingenting riktigt flödar.`;
+  else if(debt>3) validation=`Systemet ser att ett sömnunderskott har byggts upp gradvis den senaste veckan. Den typen av underskott märks sällan som trötthet — mer som att saker tar lite längre tid, att man är lite kortare i tålamodet, att det krävs mer för att vara som vanligt.`;
+  else validation=`Systemet ser att sömnmönstret varierar mer än genomsnittet antyder. Det brukar upplevas som att vissa dagar bara är bättre — utan att man förstår varför. Att det inte verkar hänga ihop med hur mycket man sover.`;
+  steg=[];
+  if(streak>=2) steg.push({atgard:`Lägg dig ${streak>=3?60:45} min tidigare ikväll och stäng alla skärmar 1h innan.`,varfor:`${streak} nätter under 6h i rad — hjärnan är inte i återhämtning, den är i överlevnadsmodus.`});
+  else steg.push({atgard:`Flytta läggdags 30 min tidigare tre vardagar i rad.`,varfor:`Ditt sömnsnitt ${avg.toFixed(1)}h är under återhämtningsgränsen de flesta dagar.`});
+  if(corrVal!==null&&Math.abs(corrVal)>0.5) steg.push({atgard:`Sätt ett aktivt stopp för arbete och skärmar kl 21:00 tre kvällar.`,varfor:`Korrelationen stress→sömnkvalitet är stark i din data — sänk kortisol innan läggdags.`});
+  else steg.push({atgard:`Undvik koffein efter 14:00 denna vecka.`,varfor:`Sen koffein förlänger insomningstiden — effekten är starkare vid sömnunderskott.`});
+  return{insikt,styrka,risk,rekommendation,validation,steg};
+}
+
+// ── OPENING FALLBACK ──
+function computeOpening(c14) {
+  const sl = c14.filter(c => c.sleep > 0);
+  if (sl.length < 3) return 'Sömnen är grunden allt annat vilar på.';
+  const avg = sl.reduce((s,c) => s + c.sleep, 0) / sl.length;
+  const rev = [...sl].reverse();
+  let streak = 0; for (const c of rev) { if (c.sleep < 6) streak++; else break; }
+  if (streak >= 3) return `${streak} nätter under 6h i rad — kroppen är inte återhämtad.`;
+  const combo = c14.filter(c => c.stress >= 7 && c.sleep > 0 && c.sleep < 6);
+  if (combo.length >= 3) return `Stress och kortare sömn sammanfaller ${combo.length} gånger de senaste 14 dagarna.`;
+  let goodStreak = 0; const revG = [...sl].reverse(); for (const c of revG) { if (c.sleep >= 7) goodStreak++; else break; }
+  if (goodStreak >= 3) return `${goodStreak} nätter i rad på 7h eller mer — systemet noterar mönstret.`;
+  if (avg < 5.5) return `Snitt ${avg.toFixed(1)}h de senaste ${sl.length} nätterna — under återhämtningströskeln.`;
+  if (avg >= 7.5) return `${sl.filter(c=>c.sleep>=7).length} av ${sl.length} nätter på 7h eller mer — bufferten håller.`;
+  return `Snitt ${avg.toFixed(1)}h — systemet ser mer i rytmen än i medelvärdet.`;
+}
+
+// ── VALIDATION ──
+let _pageCheckins = [];
+let valAnswer = null;
+function svara(ans) {
+  valAnswer = ans;
+  document.querySelector('.val-btn.ja').style.opacity = ans==='ja'?'1':'0.4';
+  document.querySelector('.val-btn.nej').style.opacity = ans==='nej'?'1':'0.4';
+  document.getElementById('val-fritext').style.display = 'block';
+  const stmt = document.getElementById('val-stmt').textContent;
+  const stored = JSON.parse(localStorage.getItem('forsyne_val_sleep')||'{}');
+  stored.statement = stmt; stored.answer = ans; stored.timestamp = Date.now();
+  localStorage.setItem('forsyne_val_sleep', JSON.stringify(stored));
+}
+async function skicka() {
+  const text = document.getElementById('val-text').value.trim();
+  const stmt = document.getElementById('val-stmt').textContent;
+  const btn = document.querySelector('.val-skicka');
+  btn.textContent='...'; btn.disabled=true;
+  let larda = 'Systemet uppdaterar sin modell av dig.';
+  try {
+    const r = await fetch('/api/agent/validate', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.token()},
+      body:JSON.stringify({kategori:'sleep',paastående:stmt,svar:valAnswer==='ja'?'stämmer':'stämmer inte',kommentar:text||null,datapunkter:_pageCheckins.slice(-7)})
+    });
+    if(r.ok){const d=await r.json();if(d.larda_notering)larda=d.larda_notering;if(d.battre_paastående){const s=JSON.parse(localStorage.getItem('forsyne_val_sleep')||'{}');s.battre=d.battre_paastående;localStorage.setItem('forsyne_val_sleep',JSON.stringify(s));}}
+  } catch(e){}
+  document.getElementById('val-fritext').style.display='none';
+  document.getElementById('val-btns').style.display='none';
+  const tackEl=document.getElementById('val-tack');tackEl.textContent=larda;tackEl.style.display='block';
+}
+
+// ── MAIN ──
+(async () => {
+  const d=new Date();
+  const DAYS=['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+  const MONTHS=['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+  const DS=['Sön','Mån','Tis','Ons','Tor','Fre','Lör'];
+  const MS=['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'];
+  const dateEl=document.getElementById('topDate');
+  const userEl=document.getElementById('topUser');
+  if(dateEl) dateEl.textContent=DAYS[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()];
+  if(userEl){const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');const u=API&&API.user?API.user():null;userEl.textContent=(ob.q3_1||(u?u.email.split('@')[0]:'')||'').toUpperCase();}
+
+  let checkins=[];
+  try {
+    const r=await fetch('/api/checkins',{headers:{'Authorization':'Bearer '+API.token()}});
+    if(r.ok){const data=await r.json();checkins=Array.isArray(data)?data:(data.checkins||[]);}
+  } catch(e){}
+  _pageCheckins = checkins;
+  const last14=checkins.slice(-14);
+  const last30=checkins.slice(-30);
+  const profile=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+
+  // Signal nav
+  try{const signalEl=document.getElementById('nav-signal');const recent=(checkins||[]).slice(-3);if(recent.filter(c=>c.stress>=7&&c.sleep<=5).length>=2&&signalEl)signalEl.classList.add('show');}catch(e){}
+
+  // ── BIOLOGISKA MARKÖRER ──
+  (()=>{
+    const el=document.getElementById('bio-markers');
+    if(!el)return;
+    const ws=last14.filter(c=>c.sleep>0);
+    if(ws.length===0){el.innerHTML='<div style="font-size:0.72rem;color:var(--fg4);font-style:italic;font-family:var(--serif);">Logga fler check-ins för att se markörer.</div>';return;}
+    const last7sl=checkins.slice(-7).filter(c=>c.sleep>0);
+    const prev7sl=checkins.slice(-14,-7).filter(c=>c.sleep>0);
+    const avg7=last7sl.length?(last7sl.reduce((s,c)=>s+parseFloat(c.sleep),0)/last7sl.length):null;
+    const avgPrev7=prev7sl.length?(prev7sl.reduce((s,c)=>s+parseFloat(c.sleep),0)/prev7sl.length):null;
+    const debt=last7sl.reduce((s,c)=>s+Math.max(0,7-parseFloat(c.sleep)),0);
+    const pctGood=ws.length?Math.round(ws.filter(c=>parseFloat(c.sleep)>=7).length/ws.length*100):null;
+    const stressDriven=last14.filter(c=>c.stress>=7&&c.sleep>0&&parseFloat(c.sleep)<6).length;
+    const stressPct=last14.filter(c=>c.stress>0&&c.sleep>0).length>0?Math.round(stressDriven/last14.filter(c=>c.stress>0&&c.sleep>0).length*100):null;
+    const trend=avg7!==null&&avgPrev7!==null?(avg7-avgPrev7):null;
+    const slAcc=predAcc([...checkins].sort((a,b)=>a.date>b.date?1:-1),'sleep',1.0);
+    const markers=[
+      {name:'Sömnunderskott · 7 nätter',val:debt.toFixed(1)+'h',status:debt<2?'ok':debt<5?'warn':'bad',lbl:debt<2?'Ingen skuld':debt<5?'Måttlig skuld':'Kritisk skuld'},
+      {name:'Nätter ≥7h · 14 dagar',val:(pctGood??0)+'%',status:pctGood>=60?'ok':pctGood>=40?'warn':'bad',lbl:pctGood>=60?'Tillräckligt':pctGood>=40?'Marginellt':'Under tröskeln'},
+      {name:'Stressdriven sömnbrist',val:(stressPct??0)+'%',status:stressPct<15?'ok':stressPct<35?'warn':'bad',lbl:stressPct<15?'Låg koppling':stressPct<35?'Märkbar koppling':'Stark koppling'},
+      {name:'Återhämtningstrend',val:trend!==null?(trend>0?'+':'')+trend.toFixed(1)+'h':'—',status:trend===null?'warn':trend>0.3?'ok':trend>-0.3?'warn':'bad',lbl:trend===null?'Otillräcklig data':trend>0.3?'Förbättras':trend>-0.3?'Stabil':'Försämras'},
+      {name:'Prediktionsträff · sömn ±1h',val:slAcc!==null?slAcc+'%':'—',status:slAcc===null?'warn':slAcc>=70?'ok':slAcc>=50?'warn':'bad',lbl:slAcc===null?'Otillräcklig data':slAcc>=70?'Hög precision':slAcc>=50?'Acceptabel':'Låg precision'},
+    ];
+    el.innerHTML=markers.map(m=>`<div class="bio-marker"><span class="bm-name">${m.name}</span><div class="bm-right"><div class="bm-val bm-${m.status}">${m.val}</div><div class="bm-status bm-${m.status}">${m.lbl}</div></div></div>`).join('');
+  })();
+
+  // ── BATCH AI ──
+  const _pdc=computePd(last14)||{};
+  let pd={
+    opening:computeOpening(last14),
+    insikt:_pdc.insikt||'Ditt sömnmönster berättar en historia kroppen redan känner.',
+    styrka:_pdc.styrka||'Helgerna ger faktisk återhämtning när trycket minskar.',
+    risk:_pdc.risk||'Vardagsnätterna ackumulerar ett underskott helgen inte reparerar.',
+    rekommendation:_pdc.rekommendation||'Flytta läggdags 45 minuter tidigare tre vardagar i rad.',
+    validation:_pdc.validation||'Det finns en känsla många känner igen: man sover tillräckligt, men laddas ändå inte om. Att trötthet inte handlar om antalet timmar, utan om något svårare att sätta fingret på.',
+    steg:_pdc.steg||[{atgard:'Flytta läggdags 45 minuter tidigare tre dagar i rad.',varfor:'Ditt sömnsnitt är under återhämtningströskeln — varje kvart räknas.'},{atgard:'Undvik koffein efter 14:00 denna vecka.',varfor:'Sen koffein förlänger insomningstiden när stressen redan är hög.'}]
+  };
+  if(last14.length>=1){
+    try{
+      let _ai=PCache.get('page_sleep');
+      if(!_ai){const r=await fetch('/api/agent/page/generate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.token()},body:JSON.stringify({page:'sleep',checkins:last14,profile})});if(r.ok){_ai=await r.json();PCache.set('page_sleep',_ai);}}
+      if(_ai){
+        Object.keys(_ai).forEach(k=>{if(_ai[k]!=null&&(!Array.isArray(_ai[k])||_ai[k].length>0))pd[k]=_ai[k];});
+        if(_ai.avvikelse?.detekterad){const gr=document.getElementById('gap-row');if(gr){document.getElementById('gap-subj').textContent=_ai.avvikelse.subjektivt;document.getElementById('gap-obj').textContent=_ai.avvikelse.objektivt;document.getElementById('gap-badge').textContent=_ai.avvikelse.gap;document.getElementById('gap-tolkning').textContent=_ai.avvikelse.tolkning;gr.style.display='block';}}
+      }
+    }catch(e){}
+  }
+
+  // Rek
+  const rekLoad=document.getElementById('rek-load');
+  const rekEl=document.getElementById('rek-steps');
+  if(rekLoad)rekLoad.style.display='none';
+  if(rekEl&&pd.steg?.length){
+    rekEl.innerHTML=pd.steg.map(s=>`<div class="rek-step"><div class="rek-atgard">· ${s.atgard}</div><div class="rek-varfor">${s.varfor}</div></div>`).join('');
+    rekEl.style.display='block';
+    rekEl.querySelectorAll('.rek-step').forEach((el,i)=>setTimeout(()=>el.classList.add('vis'),i*160));
+  }
+
+  // ── AKT 2 DIREKT ──
+  {
+        const a2=document.getElementById('a2');
+        a2.style.opacity='1';
+        const a2load=document.getElementById('a2-load');
+        const cgEl=document.getElementById('cg');
+        const dlEl=document.getElementById('dl');
+
+        const withSleep=last14.filter(c=>c.sleep>0);
+        const sleepVals=withSleep.map(c=>parseFloat(c.sleep));
+        const avg14=sleepVals.length?(sleepVals.reduce((a,b)=>a+b,0)/sleepVals.length):null;
+        const lastNight=withSleep.length?withSleep[withSleep.length-1]:null;
+        const pairs=last14.filter(c=>c.sleep>0&&c.stress>0);
+        const corrVal=pairs.length>=3?pearsonCorr(pairs.map(c=>parseFloat(c.stress)),pairs.map(c=>parseFloat(c.sleep))):null;
+
+        if(avg14!==null){
+          document.getElementById('cv-avg').innerHTML=avg14.toFixed(1)+'<small>h</small>';
+          const cls=avg14>=7?'up':avg14>=6?'wn':'dn';
+          document.getElementById('cd-avg').textContent=avg14>=7?'Tillräcklig återhämtning':avg14>=6?'Marginellt under optimal':'Under rekommenderat';
+          document.getElementById('cd-avg').className='cd '+cls;
+        }
+        if(corrVal!==null){
+          document.getElementById('cv-corr').textContent=(-corrVal).toFixed(2);
+          const cls=Math.abs(corrVal)>0.6?'wn':'up';
+          document.getElementById('cd-corr').textContent=Math.abs(corrVal)>0.6?'Stark negativ koppling':'Måttlig koppling';
+          document.getElementById('cd-corr').className='cd '+cls;
+        } else {document.getElementById('cv-corr').textContent='—';document.getElementById('cd-corr').textContent='Otillräcklig data';}
+        if(lastNight){
+          const lh=parseFloat(lastNight.sleep);
+          document.getElementById('cv-last').innerHTML=lh.toFixed(1)+'<small>h</small>';
+          const cls=lh>=7?'up':lh>=6?'wn':'dn';
+          document.getElementById('cd-last').textContent=lh>=7?'Tillräcklig':lh>=6?'Marginell':'Under optimal';
+          document.getElementById('cd-last').className='cd '+cls;
+        }
+        document.getElementById('cv-total').textContent=checkins.length;
+
+        a2load.style.display='none';
+        cgEl.style.display='grid';
+        dlEl.style.display='flex';
+
+        if(last30.length===0){dlEl.innerHTML='<div style="padding:2rem 0;font-family:var(--serif);font-style:italic;font-size:0.82rem;color:var(--fg4);">Inga check-ins loggade ännu. Börja med en check-in så aktiveras sömnanalysen.</div>';return;}
+        last30.forEach((c,i)=>{
+          const h=c.sleep?parseFloat(c.sleep):null;
+          const stress=c.stress?parseFloat(c.stress):null;
+          const date=new Date(c.date||c.created_at);
+          const dateStr=DS[date.getDay()]+' '+date.getDate()+' '+MS[date.getMonth()];
+          const isEmpty=!h||h===0;
+          const pct=isEmpty?0:Math.min((h/10)*100,100);
+          const color=isEmpty?'rgba(242,240,234,0.08)':sleepColor(h);
+          const comment=sleepComment(h,stress);
+          const label=isEmpty?'ingen data':h.toFixed(1)+'h';
+          const row=document.createElement('div');
+          row.className='dr'+(isEmpty?' empty':'');
+          row.dataset.bw=pct;
+          row.innerHTML=`<span class="dd">${dateStr}</span><div class="dbw"><div class="db" style="background:${color};"></div></div><span class="dv" style="color:${isEmpty?'var(--fg4)':color};">${label}</span><div class="dtt">${comment}</div>`;
+          dlEl.appendChild(row);
+          setTimeout(()=>{row.classList.add('vis');const b=row.querySelector('.db');if(b)setTimeout(()=>{b.style.width=pct+'%';},60);},i*50);
+        });
+
+        // AKT 3
+        (()=>{
+          const a3=document.getElementById('a3');
+          document.getElementById('a3-load').style.display='none';
+          document.getElementById('a3-dom').textContent=pd.insikt;
+          document.getElementById('a3-items').innerHTML=`<div class="di"><span class="dm" style="color:var(--accent);">↑</span><span>${pd.styrka}</span></div><div class="di"><span class="dm" style="color:var(--danger);">↓</span><span>${pd.risk}</span></div><div class="di"><span class="dm" style="color:var(--trust);">→</span><span>${pd.rekommendation}</span></div>`;
+          document.getElementById('a3-body').style.display='block';
+          new IntersectionObserver(entries=>{if(entries[0].isIntersecting){a3.classList.add('vis');a3.querySelectorAll('.di').forEach((di,i)=>setTimeout(()=>di.classList.add('vis'),300+i*120));}},{threshold:0.2}).observe(a3);
+        })();
+
+        // AKT 4
+        document.getElementById('a4-load').style.display='none';
+        const _prev=JSON.parse(localStorage.getItem('forsyne_val_sleep')||'null');
+        const _valEl=document.getElementById('val-stmt');
+        if(_prev&&_prev.answer&&(Date.now()-(_prev.timestamp||0))<30*24*60*60*1000){
+          _valEl.textContent=(_prev.answer==='nej'&&_prev.battre)?_prev.battre:pd.validation;
+          const _note=document.createElement('div');
+          _note.style.cssText='font-size:0.54rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--fg4);margin-bottom:1rem;';
+          _note.textContent=_prev.answer==='ja'?'Du kände igen dig här senast.':'Du kände inte igen dig senast — systemet har sökt ett annat mönster.';
+          document.querySelector('#a4-body .val-intro').after(_note);
+        } else { _valEl.textContent=pd.validation; }
+        document.getElementById('a4-body').style.display='block';
+  }
+})();
+</script>
+
+<script>
+// ── MANUELL SÖMN-LOG ──
+(function() {
+  const dateInput = document.getElementById('msleep-date');
+  const hInput    = document.getElementById('msleep-h');
+  const btn       = document.getElementById('msleep-btn');
+  const msg       = document.getElementById('msleep-msg');
+
+  // Default date = today
+  dateInput.value = new Date().toISOString().slice(0, 10);
+
+  function setMsg(text, kind) {
+    msg.textContent = text || '';
+    msg.className = 'msleep-msg' + (kind ? ' ' + kind : '');
+  }
+
+  btn.addEventListener('click', async () => {
+    const date  = dateInput.value;
+    const hours = parseFloat(hInput.value);
+
+    if (!date) { setMsg('Välj datum', 'err'); return; }
+    if (!hours || hours < 0.5 || hours > 14) {
+      setMsg('Timmar 0.5–14', 'err'); return;
+    }
+
+    btn.disabled = true;
+    setMsg('Sparar…');
+
+    try {
+      const token = localStorage.getItem('prv_token');
+      const r = await fetch('/api/sleep/manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ date, hours })
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Fel ' + r.status);
+      setMsg('✓ Sparad — ladda om för att se i grafen', 'ok');
+      hInput.value = '';
+    } catch (e) {
+      setMsg('Fel: ' + e.message, 'err');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+
+<script src="mobile-nav.js"></script>
+</body>
+</html>

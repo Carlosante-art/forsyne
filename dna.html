@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — DNA-profil</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<style>
+:root{--ink:#0F1210;--ink2:#131714;--ink3:#171c18;--fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;--accent:#8FAE8A;--warn:#C4875A;--danger:#A85C5C;--trust:#5B7FA6;--serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;--border:rgba(242,240,234,0.06);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;line-height:1.7;min-height:100vh;overflow-x:hidden;}
+.page-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;}
+.page-bg-img{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.18) saturate(0.4);}
+.page-bg-veil{position:absolute;inset:0;background:linear-gradient(to bottom,var(--ink) 0%,rgba(15,18,16,0.72) 9%,rgba(15,18,16,0.06) 26%,rgba(15,18,16,0.06) 74%,rgba(15,18,16,0.72) 91%,var(--ink) 100%);}
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(2rem,5vw,4rem);height:64px;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.85);backdrop-filter:blur(32px);}
+.logo{font-family:var(--serif);font-size:1.1rem;font-weight:400;letter-spacing:0.18em;color:var(--fg);text-decoration:none;}
+.nav-center{font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+.nav-meta{display:flex;align-items:center;gap:1.5rem;}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(143,174,138,0.6);animation:pulse 2.5s ease infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.nav-date{font-family:var(--serif);font-size:0.9rem;color:var(--fg2);}
+.nav-user{font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg3);text-decoration:none;}
+.nav-signal{display:none;font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--danger);text-decoration:none;align-items:center;gap:0.4rem;}
+.nav-signal::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);animation:sig-pulse 1.6s ease infinite;}
+.nav-signal.show{display:flex;}
+@keyframes sig-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(168,92,92,0.6)}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(168,92,92,0)}}
+main{position:relative;z-index:1;flex:1;min-width:0;overflow-y:auto;height:100%;}
+
+.page-header{padding:1.8rem 2rem 1.4rem;border-bottom:1px solid var(--border);}
+.page-header h1{font-family:var(--serif);font-size:1.8rem;font-weight:300;font-style:italic;line-height:1.2;color:var(--fg);}
+.page-header-sub{font-size:0.62rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);margin-top:0.3rem;}
+
+.s-section{padding:clamp(2.5rem,4vw,3.5rem) clamp(2rem,6vw,5rem);border-bottom:1px solid var(--border);}
+.s-ey{font-size:0.56rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.5rem;display:flex;align-items:center;gap:0.7rem;}
+.s-ey::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+.dots{display:flex;gap:0.4rem;}.dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:dp 1.4s ease infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.load-row{display:flex;align-items:center;gap:0.8rem;}
+.load-txt{font-size:0.6rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+
+.dev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);}
+.dev-card{background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);padding:1.8rem 1.6rem;position:relative;overflow:hidden;transition:background 0.2s;}
+.dev-card:hover{background:rgba(15,18,16,0.75);}
+.dev-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;}
+.dev-card.soon::before{background:var(--trust);}
+.dev-name{font-size:0.82rem;font-weight:400;letter-spacing:0.06em;color:var(--fg);margin-bottom:0.3rem;}
+.dev-desc{font-size:0.78rem;color:var(--fg3);line-height:1.6;margin-bottom:0.8rem;}
+.dev-tag{font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;padding:0.2rem 0.55rem;border:1px solid;display:inline-block;margin-bottom:1rem;}
+.tag-soon{color:var(--trust);border-color:rgba(91,127,166,0.3);}
+.dev-meta{font-size:0.64rem;color:var(--fg4);letter-spacing:0.08em;margin-top:0.5rem;}
+.cov-bar-wrap{height:1px;background:var(--border);margin:1rem 0 0.5rem;max-width:500px;}
+.cov-bar{height:100%;background:var(--trust);width:0%;transition:width 1.4s ease 0.3s;}
+.cov-label{font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg4);}
+.cov-label em{color:var(--trust);font-style:normal;}
+.s-footer{padding:clamp(2rem,4vw,3rem) clamp(2rem,6vw,5rem);font-family:var(--serif);font-style:italic;font-size:0.7rem;color:var(--fg4);}
+.content-wrap{display:flex;align-items:flex-start;height:calc(100vh - 64px);overflow:hidden;}
+.sidebar{width:210px;height:100%;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:rgba(15,18,16,0.4);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;z-index:50;padding:2.5rem 0 1.8rem;}
+.sidebar::-webkit-scrollbar{display:none;}
+.ng{margin-bottom:0;}
+.ngl{font-size:0.44rem;letter-spacing:0.32em;text-transform:uppercase;color:var(--fg4);padding:0.7rem 1.8rem 0.2rem;}
+.nl{display:block;padding:0.22rem 1.8rem;font-size:0.76rem;letter-spacing:0.06em;color:var(--fg3);text-decoration:none;transition:color 0.2s,border-left-color 0.2s;border-left:1px solid transparent;cursor:pointer;}
+.nl:hover{color:var(--fg2);}
+.nl.active{color:var(--fg);border-left-color:var(--accent);background:rgba(143,174,138,0.04);}
+.nl.signal-link{color:var(--danger);display:flex;align-items:center;gap:0.5rem;}
+.nl.signal-link::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+.selvitas-wrap{margin-top:auto;padding-top:0.5rem;border-top:1px solid var(--border);}.selvitas-nav{display:block;padding:0.6rem 1.8rem 0.3rem;font-family:var(--serif);font-style:italic;font-size:0.78rem;letter-spacing:0.08em;color:var(--fg3);text-decoration:none;transition:color 0.2s;}.selvitas-nav:hover{color:var(--fg2);}
+
+@media(max-width:860px){
+  .sidebar{display:none!important;}
+  .content-wrap,.page-wrap,.layout-wrap{display:block!important;}
+  #main,.main-content,.page-content{width:100%!important;max-height:none!important;overflow-y:auto!important;}
+  .mg,.pred-grid,.today-plan-grid,.bio-grid,.src-grid,.prof-grid{grid-template-columns:1fr 1fr!important;}
+  .pred-grid,.prof-grid{grid-template-columns:1fr!important;}
+}
+</style>
+</head>
+<body>
+<script>checkAuth();</script>
+<div class="page-bg">
+  <div class="page-bg-img" style="background-image:url('images/DALL·E 2026-04-11 15.20.51 - A dark, minimal interior room with a single tall window. Soft morning light streams in, casting long, gentle shadows across bare walls and a simple fl.webp')"></div>
+  <div class="page-bg-veil"></div>
+</div>
+<nav>
+  <a href="dashboard.html" class="logo">Forsyne</a>
+  <span class="nav-center">DNA-profil</span>
+  <div class="nav-meta">
+    <div class="nav-dot"></div>
+    <span class="nav-date" id="topDate"></span>
+    <a class="nav-user" id="topUser" href="profile.html"></a>
+  </div>
+</nav>
+<div class="content-wrap">
+<aside class="sidebar">
+  <div class="ng">
+    <div class="ngl">Idag</div>
+    <a class="nl" href="dashboard.html">Dashboard</a>
+    <a class="nl" href="checkin.html">Check-in</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Mönster</div>
+    <a class="nl" href="sleep.html">Sömn</a>
+    <a class="nl" href="energy.html">Energi</a>
+    <a class="nl" href="stress.html">Stress</a>
+    <a class="nl" href="training.html">Träning</a>
+    <a class="nl" href="kostlogg.html">Kost</a>
+    <a class="nl" href="wearables.html">Wearables</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Djupet</div>
+    <a class="nl" href="biologi.html">Biologi</a>
+    <a class="nl" href="dna.html">DNA</a>
+    <a class="nl" href="journal.html">Journal</a>
+    <a class="nl" href="analys.html">Analys</a>
+    <a class="nl" href="coach.html">Coach</a>
+  </div>
+</aside>
+<main>
+
+  <div class="page-header">
+    <h1>DNA &amp; Genetik</h1>
+    <div class="page-header-sub">DNA &amp; Genetik &middot; Predispositioner</div>
+  </div>
+
+  <!-- DNA-tjänster -->
+  <section class="s-section">
+    <div class="s-ey">DNA-tjänster</div>
+    <div class="load-row" id="dev-load"><span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span><span class="load-txt">Hämtar integrationer</span></div>
+    <div class="dev-grid" id="dev-grid" style="display:none;"></div>
+  </section>
+
+  <section class="s-section">
+    <div class="s-ey">Integrationsgrad</div>
+    <div style="font-size:0.78rem;color:var(--fg3);max-width:480px;line-height:1.7;margin-bottom:1.5rem;">DNA-data förstärker modellens precision markant. Systemet kan börja korrelera genetiska tendenser mot ditt faktiska beteende.</div>
+    <div class="cov-bar-wrap"><div class="cov-bar" id="cov-bar"></div></div>
+    <div class="cov-label" id="cov-label">Aktiveras när DNA-test importeras</div>
+  </section>
+
+  <footer class="s-footer">Inte baserat på genomsnitt. Baserat på din DNA.</footer>
+
+</main>
+</div>
+
+<script>
+// ── Sidebar: auto-active baserat på URL ──
+(function(){
+  const page = location.pathname.split('/').pop() || 'dashboard.html';
+  document.querySelectorAll('.sidebar a.nl').forEach(a => {
+    if (a.getAttribute('href') === page) a.classList.add('active');
+  });
+})();
+
+function tw(el,text,ms,cb){let i=0;el.textContent='';const t=()=>{if(i<text.length){el.textContent+=text[i++];setTimeout(t,ms);}else if(cb)cb();};t();}
+
+const SOURCES=[
+  {id:'23andme',name:'23andMe',desc:'Genetiska predispositioner, hälsorisker, träningsrespons och sömnegenskaper.',meta:'Kost · Träning · Sömn · Sjukdomsrisk',status:'soon'},
+  {id:'ancestry',name:'Ancestry DNA',desc:'Hälsopredispositioner och genetiska varianter relevanta för prestation och återhämtning.',meta:'Predispositioner · Varianter',status:'soon'},
+  {id:'myheritage',name:'MyHeritage DNA',desc:'Genetisk hälsoanalys med fokus på metabolism, näringsomsättning och återhämtning.',meta:'Metabolism · Återhämtning',status:'soon'},
+];
+
+(async()=>{
+  const d=new Date();
+  const DAYS=['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+  const MONTHS=['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+  const dateEl=document.getElementById('topDate'),userEl=document.getElementById('topUser');
+  if(dateEl)dateEl.textContent=DAYS[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()];
+  if(userEl){const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');const u=API&&API.user?API.user():null;userEl.textContent=(ob.q3_1||(u?u.email.split('@')[0]:'')||'').toUpperCase();}
+
+  let checkins=[];
+  try{const r=await fetch('/api/checkins',{headers:{'Authorization':'Bearer '+API.token()}});if(r.ok){const data=await r.json();checkins=Array.isArray(data)?data:(data.checkins||[]);}}catch(e){}
+
+  try{const signalEl=document.getElementById('nav-signal');const recent=(checkins||[]).slice(-3);if(recent.filter(c=>c.stress>=7&&c.sleep<=5).length>=2&&signalEl)signalEl.classList.add('show');}catch(e){}
+
+  const grid=document.getElementById('dev-grid');
+  SOURCES.forEach(src=>{
+    const card=document.createElement('div');
+    card.className='dev-card soon';
+    card.innerHTML=`<div class="dev-name">${src.name}</div><div class="dev-desc">${src.desc}</div><span class="dev-tag tag-soon">Kommer snart</span><div class="dev-meta">${src.meta}</div>`;
+    grid.appendChild(card);
+  });
+
+  document.getElementById('dev-load').style.display='none';
+  grid.style.display='grid';
+
+  setTimeout(()=>{document.getElementById('cov-bar').style.width='0%';},400);
+  document.getElementById('cov-label').innerHTML='Ingen DNA-profil importerad ännu — integrationer aktiveras i nästa fas';
+})();
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<script src="transitions.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Välmående</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="system.css">
+<style>
+
+
+/* PAGE HEADER */
+.page-header { margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+.page-eyebrow { font-size: 0.68rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.75rem; }
+.page-eyebrow::before { content: ''; width: 14px; height: 1px; background: var(--accent); opacity: 0.5; }
+.page-heading { font-family: var(--serif); font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 300; line-height: 1.1; color: var(--fg); }
+.page-heading em { font-style: italic; color: var(--fg2); }
+.page-sub { font-size: 0.82rem; color: var(--fg3); line-height: 1.7; max-width: 520px; margin-top: 0.8rem; }
+
+/* OVERALL SCORE */
+.score-section {
+  display: grid; grid-template-columns: auto 1fr;
+  gap: 3rem; align-items: center;
+  background: var(--ink2); border: 1px solid var(--border);
+  padding: 2.5rem 3rem; margin-bottom: 1px;
+}
+.score-left { text-align: center; }
+.score-number {
+  font-family: var(--serif);
+  font-size: 7rem; font-weight: 300; line-height: 1;
+  color: var(--warn); margin-bottom: 0.3rem;
+}
+.score-max { font-size: 1rem; color: var(--fg3); font-family: var(--serif); }
+.score-label { font-size: 0.66rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--fg3); margin-top: 0.5rem; }
+.score-trend { font-size: 0.78rem; color: var(--fg3); margin-top: 0.5rem; }
+.score-trend.dn { color: var(--danger); }
+.score-trend.up { color: var(--accent); }
+.score-right {}
+.score-breakdown { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 1.5rem; }
+.score-item { background: var(--ink3); padding: 1rem 1.2rem; }
+.score-item-lbl { font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg3); margin-bottom: 0.4rem; }
+.score-item-val { font-family: var(--serif); font-size: 1.5rem; font-weight: 300; line-height: 1; margin-bottom: 0.2rem; }
+.score-item-bar { height: 2px; margin-top: 0.4rem; }
+.score-context { font-size: 0.75rem; color: var(--fg2); line-height: 1.75; font-style: italic; border-left: 1px solid rgba(143,174,138,0.2); padding-left: 1rem; }
+.score-context strong { color: var(--fg); font-style: normal; font-weight: 400; }
+
+/* AI ANALYSIS */
+.ai-analysis {
+  background: var(--ink2); border: 1px solid var(--border);
+  border-top: none; padding: 2.5rem 3rem; margin-bottom: 1px;
+  position: relative;
+}
+.ai-label {
+  font-size: 0.62rem; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--fg4); margin-bottom: 2rem;
+  display: flex; align-items: center; gap: 0.75rem;
+}
+.ai-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.ai-label-tag {
+  font-size: 0.5rem; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent); border: 1px solid rgba(143,174,138,0.2);
+  padding: 0.15rem 0.5rem; margin-left: 0.5rem;
+}
+.ai-text {
+  font-family: var(--serif);
+  font-size: clamp(1rem, 1.8vw, 1.15rem);
+  font-weight: 300; line-height: 2;
+  color: var(--fg2); max-width: 860px;
+}
+.ai-text p { margin-bottom: 1.4rem; }
+.ai-text p:last-child { margin-bottom: 0; }
+.ai-text strong { color: var(--fg); font-weight: 400; }
+.ai-text em { font-style: italic; color: var(--fg); }
+
+/* 8-AREA RADAR */
+.areas-grid {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); margin-bottom: 1px;
+}
+.area-card { background: var(--ink2); padding: 1.4rem 1.6rem; }
+.area-name { font-size: 0.64rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--fg3); margin-bottom: 0.8rem; }
+.area-score { font-family: var(--serif); font-size: 2.2rem; font-weight: 300; line-height: 1; margin-bottom: 0.3rem; }
+.area-status { font-size: 0.74rem; margin-bottom: 0.6rem; }
+.area-bar { height: 2px; background: rgba(255,255,255,0.05); margin-bottom: 0.6rem; }
+.area-fill { height: 100%; }
+.area-note { font-size: 0.74rem; color: var(--fg3); line-height: 1.5; }
+
+/* THREE SIGNALS */
+.three-signals {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); margin-bottom: 1px;
+}
+.signal-card { background: var(--ink2); padding: 1.8rem; }
+.signal-card-type { font-size: 0.5rem; letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 0.6rem; }
+.st-down { color: var(--danger); }
+.st-watch { color: var(--warn); }
+.st-up { color: var(--accent); }
+.signal-card-title { font-family: var(--serif); font-size: 1.1rem; font-weight: 300; color: var(--fg); margin-bottom: 0.5rem; line-height: 1.3; }
+.signal-card-body { font-size: 0.88rem; color: var(--fg2); line-height: 1.65; }
+.signal-card-body strong { color: var(--fg); font-weight: 400; }
+
+/* TREND SECTION */
+.trend-section { background: var(--ink2); border: 1px solid var(--border); padding: 2rem; margin-bottom: 1px; }
+.trend-comparison { display: grid; grid-template-columns: repeat(8,1fr); gap: 1px; background: var(--border); margin-top: 1rem; }
+.trend-col { background: var(--ink2); padding: 1rem 0.8rem; text-align: center; }
+.trend-col-lbl { font-size: 0.5rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg4); margin-bottom: 0.5rem; }
+.trend-col-val { font-family: var(--serif); font-size: 1.4rem; font-weight: 300; line-height: 1; margin-bottom: 0.2rem; }
+.trend-col-sub { font-size: 0.68rem; color: var(--fg3); }
+.trend-col.current { background: rgba(143,174,138,0.04); border-top: 1px solid rgba(143,174,138,0.2); }
+
+/* ONE FOCUS */
+.one-focus {
+  background: linear-gradient(135deg, rgba(143,174,138,0.06) 0%, transparent 60%);
+  border: 1px solid rgba(143,174,138,0.15);
+  border-left: 3px solid var(--accent);
+  padding: 2.5rem 3rem; margin-bottom: 1px;
+}
+.of-eyebrow { font-size: 0.66rem; letter-spacing: 0.26em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; opacity: 0.8; }
+.of-title { font-family: var(--serif); font-size: clamp(1.5rem, 3vw, 2.4rem); font-weight: 300; line-height: 1.2; color: var(--fg); margin-bottom: 1rem; }
+.of-title em { font-style: italic; color: var(--accent); }
+.of-body { font-size: 0.82rem; color: var(--fg2); line-height: 1.85; max-width: 700px; }
+.of-body strong { color: var(--fg); font-weight: 400; }
+.of-chain { display: flex; align-items: center; gap: 0.6rem; margin-top: 1.5rem; flex-wrap: wrap; }
+.of-step { font-size: 0.74rem; color: var(--fg3); padding: 0.3rem 0.8rem; border: 1px solid var(--border); }
+.of-step.active { color: var(--accent); border-color: rgba(143,174,138,0.3); }
+.of-arrow { color: var(--fg4); font-size: 0.7rem; }
+
+/* TWO COL */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 1px; }
+.panel { background: var(--ink2); padding: 2rem; }
+.panel-lbl { font-size: 0.64rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--fg3); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.6rem; }
+.panel-lbl::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.stat { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+.stat:last-child { border-bottom: none; }
+.stat-name { font-size: 0.7rem; color: var(--fg3); }
+.stat-val { font-family: var(--serif); font-size: 1.05rem; font-weight: 300; color: var(--fg); }
+.stat-val.warn { color: var(--warn); }
+.stat-val.good { color: var(--accent); }
+.stat-val.bad { color: var(--danger); }
+
+@media (max-width: 1100px) { .score-breakdown { grid-template-columns: 1fr 1fr; } .areas-grid { grid-template-columns: 1fr 1fr; } .three-signals { grid-template-columns: 1fr; } .trend-comparison { grid-template-columns: repeat(4,1fr); } }
+@media (max-width: 768px) { .layout { grid-template-columns: 1fr; } .sidebar { display: none; } .main { padding: 1.5rem; } .score-section { grid-template-columns: 1fr; gap: 2rem; } .score-breakdown, .areas-grid, .two-col { grid-template-columns: 1fr; } }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.main > * { animation: fadeUp 0.45s ease both; }
+.main > *:nth-child(2) { animation-delay: 0.06s; }
+.main > *:nth-child(3) { animation-delay: 0.12s; }
+.main > *:nth-child(4) { animation-delay: 0.18s; }
+.main > *:nth-child(5) { animation-delay: 0.24s; }
+.main > *:nth-child(6) { animation-delay: 0.3s; }
+.main > *:nth-child(7) { animation-delay: 0.36s; }
+
+/* AI LOADING STATE */
+.ai-loading { display: flex; align-items: center; gap: 0.8rem; padding: 1rem 0; }
+.ai-loading-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); animation: blink 1.4s ease infinite; }
+.ai-loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.ai-loading-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%,100% { opacity: 0.2; } 50% { opacity: 1; } }
+.ai-loading-text { font-size: 0.78rem; color: var(--fg3); letter-spacing: 0.12em; font-style: italic; }
+
+
+/* ── FORSYNE DESIGN UPGRADE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+/* Topbar glow line */
+.topbar, nav {
+  border-bottom: 1px solid rgba(143,174,138,0.1) !important;
+  box-shadow: 0 1px 0 rgba(143,174,138,0.04);
+}
+/* Metric cards hover glow */
+.metric-card, .panel, .card, .data-card, .insight-card {
+  transition: box-shadow 0.3s ease;
+}
+.metric-card:hover, .panel:hover, .card:hover, .data-card:hover, .insight-card:hover {
+  box-shadow: 0 0 0 1px rgba(143,174,138,0.1), 0 4px 20px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+<script src="auth.js"></script>
+<script>checkAuth();</script>
+<div class="layout">
+
+  <header class="topbar">
+    <a href="dashboard.html" class="topbar-logo">Forsyne</a>
+    <div class="topbar-center">
+      <div class="topbar-pulse"></div>
+      <span class="topbar-status">Systemet är aktivt</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topDate"></span>
+      <span class="topbar-user" id="topUser"></span>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <div class="nav-group">
+      <div class="nav-group-label">Idag</div>
+      <a class="nav-link" href="dashboard.html">Dashboard</a>
+      <a class="nav-link" href="checkin.html">Check-in</a>
+      <a class="nav-link" href="signal.html">Signalen</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Mönster</div>
+      <a class="nav-link" href="sleep.html">Sömn</a>
+      <a class="nav-link" href="energy.html">Energi</a>
+      <a class="nav-link" href="stress.html">Stress</a>
+      <a class="nav-link" href="training.html">Träning</a>
+      <a class="nav-link" href="nutrition.html">Kost</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Förstå dig själv</div>
+      <a class="nav-link" href="profilering.html">Profilering</a>
+      <a class="nav-link" href="analys.html">Total analys</a>
+      <a class="nav-link" href="systemkarta.html">Systemkarta</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Din biologi</div>
+      <a class="nav-link" href="wearables.html">Wearables</a>
+      <a class="nav-link" href="biologi.html">Blodprover &amp; hormoner</a>
+      <a class="nav-link" href="journal.html">Läkarjournal</a>
+    </div>
+    <div class="sidebar-foot">
+      Modell · Dag <span id="sidebarDay">–</span>
+      <div class="sidebar-bar"><div class="sidebar-bar-fill" id="sidebarBar" style="width:0%"></div></div>
+      <strong id="sidebarStatus">Laddar...</strong>
+      <div class="sidebar-foot-tagline">Inte baserat på genomsnitt.<br>Baserat på dig.</div>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- HEADER -->
+    <div class="page-header">
+      <div class="page-eyebrow">Välmående · AI-sammanställning · Dag 14</div>
+      <h1 class="page-heading">Helhetsbilden av<br><em>hur du mår just nu.</em></h1>
+      <p class="page-sub">Det här är inte ett snitt av dina siffror. Det är systemets samlade bild — baserad på 14 dagars data från alla åtta områden, sedd som ett sammanhängande system. Inte delar. Hela du.</p>
+    </div>
+
+    <!-- OVERALL SCORE -->
+    <div class="score-section">
+      <div class="score-left">
+        <div class="score-number" id="wellnessScore">0</div>
+        <div class="score-max">/100</div>
+        <div class="score-label">Välmåendepoäng</div>
+        <div class="score-trend dn">↓ −8 sedan för 7 dagar sedan</div>
+      </div>
+      <div class="score-right">
+        <div class="score-breakdown">
+          <div class="score-item">
+            <div class="score-item-lbl">Sömn</div>
+            <div class="score-item-val" style="color:var(--danger);">42</div>
+            <div class="score-item-bar"><div style="height:100%;width:42%;background:var(--danger);"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-item-lbl">Energi</div>
+            <div class="score-item-val" style="color:var(--danger);">34</div>
+            <div class="score-item-bar"><div style="height:100%;width:34%;background:var(--danger);"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-item-lbl">Stress</div>
+            <div class="score-item-val" style="color:var(--warn);">38</div>
+            <div class="score-item-bar"><div style="height:100%;width:38%;background:var(--warn);"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-item-lbl">Träning</div>
+            <div class="score-item-val" style="color:var(--accent);">72</div>
+            <div class="score-item-bar"><div style="height:100%;width:72%;background:var(--accent);"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-item-lbl">Kost</div>
+            <div class="score-item-val" style="color:var(--warn);">48</div>
+            <div class="score-item-bar"><div style="height:100%;width:48%;background:var(--warn);"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-item-lbl">Återhämtning</div>
+            <div class="score-item-val" style="color:var(--danger);">38</div>
+            <div class="score-item-bar"><div style="height:100%;width:38%;background:var(--danger);"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-item-lbl">HRV</div>
+            <div class="score-item-val" style="color:var(--warn);">55</div>
+            <div class="score-item-bar"><div style="height:100%;width:55%;background:var(--warn);"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-item-lbl">Psykologi</div>
+            <div class="score-item-val" style="color:var(--warn);">52</div>
+            <div class="score-item-bar"><div style="height:100%;width:52%;background:var(--warn);"></div></div>
+          </div>
+        </div>
+        <p class="score-context">Du befinner dig i ett pressat läge — inte farligt, men inte hållbart. <strong>Systemet är kapabelt men underfinansierat på återhämtning.</strong> Det syns tydligast i sömnkvaliteten och energinivåerna, som drar ner helheten trots att träningen faktiskt går bra.</p>
+      </div>
+    </div>
+
+    <!-- AI ANALYSIS -->
+    <div class="ai-analysis">
+      <div class="ai-label">
+        Systemets samlade analys · Baserad på alla 8 områden
+        <span class="ai-label-tag">AI · Uppdaterad idag 06:44</span>
+      </div>
+      <div class="ai-text">
+        <p>Du är en person med hög kapacitet som konsekvent underpresterar på återhämtning. Det är inte lathet — det är ett mönster som systemet ser tydligt i datan: du ger kroppen 80% av det den behöver för att prestera, men bara 40% av det den behöver för att återhämta sig. Det skapar ett underskott som byggs upp dag för dag, tills kroppen tvingar ett stopp.</p>
+
+        <p>Det som skiljer den här perioden från dina bättre veckor är inte träningen — VO2max-trenden är uppåtgående och konsistensen är imponerande. <strong>Det är sömnfundamentet som brister.</strong> Tre nätter under 6 timmar, djupsömn konsekvent under 55 minuter, och HRV som sjunker utan möjlighet att återhämta sig mellan nätterna. Utan tillräcklig djupsömn reparerar kroppen ingenting — inte musklerna, inte nervsystemet, inte hormonbalansen.</p>
+
+        <p>Stressen är roten, inte symptomet. Den kognitiva belastningen mitt i veckan — beslutsfattande, möten, ansvar — håller kortisolet förhöjt in på kvällarna. Det blockerar de sömnfaser som faktiskt återställer systemet. <strong>Du är inte stressad för att du sover dåligt. Du sover dåligt för att du är stressad.</strong> Det är en viktig distinktion, för det betyder att sömnproblemen inte löses med sömnrutiner ensamt.</p>
+
+        <p>Det positiva — och det är genuint positivt — är att de tre bästa dagarna under de senaste 14 dagarna alla följer ett identiskt mönster: 7h+ sömn, lätt aktivitet dagen innan, och låg kognitiv belastning på kvällen. <em>Din formel finns redan i datan.</em> Du vet vad som fungerar. Det handlar nu om att skapa förutsättningarna för det — inte att hitta en ny lösning.</p>
+      </div>
+    </div>
+
+    <!-- 8 AREAS -->
+    <div class="areas-grid">
+      <div class="area-card">
+        <div class="area-name">Sömn</div>
+        <div class="area-score" style="color:var(--danger);">42</div>
+        <div class="area-status" style="color:var(--danger);">Kritisk</div>
+        <div class="area-bar"><div class="area-fill" style="width:42%;background:var(--danger);"></div></div>
+        <div class="area-note">Djupsömn 33% under snitt. Tredje natten i rad under 6h. Primär drivkraft bakom signalen.</div>
+      </div>
+      <div class="area-card">
+        <div class="area-name">Energi</div>
+        <div class="area-score" style="color:var(--danger);">34</div>
+        <div class="area-status" style="color:var(--danger);">Kritisk</div>
+        <div class="area-bar"><div class="area-fill" style="width:34%;background:var(--danger);"></div></div>
+        <div class="area-note">Body Battery 34 — lägsta på 3 veckor. Laddar inte tillräckligt under sömn. Direkt konsekvens av sömnunderskottet.</div>
+      </div>
+      <div class="area-card">
+        <div class="area-name">Stress</div>
+        <div class="area-score" style="color:var(--warn);">38</div>
+        <div class="area-status" style="color:var(--warn);">Hög</div>
+        <div class="area-bar"><div class="area-fill" style="width:38%;background:var(--warn);"></div></div>
+        <div class="area-note">Stressnivå 68/100 — 14 enheter över snitt. Kognitiv stress är källan. Håller kortisolet uppe.</div>
+      </div>
+      <div class="area-card">
+        <div class="area-name">Träning</div>
+        <div class="area-score" style="color:var(--accent);">72</div>
+        <div class="area-status" style="color:var(--accent);">Bra</div>
+        <div class="area-bar"><div class="area-fill" style="width:72%;background:var(--accent);"></div></div>
+        <div class="area-note">VO2max uppåt. Konsistensen är imponerande. Problemet är inte träningen — det är återhämtningen mellan passen.</div>
+      </div>
+      <div class="area-card">
+        <div class="area-name">Kost</div>
+        <div class="area-score" style="color:var(--warn);">48</div>
+        <div class="area-status" style="color:var(--warn);">Oregelbunden</div>
+        <div class="area-bar"><div class="area-fill" style="width:48%;background:var(--warn);"></div></div>
+        <div class="area-note">Frukost hoppas 60% av dagarna. Kaffe efter 14:00 sker 73% av dagarna. Timing är problemet, inte kvaliteten.</div>
+      </div>
+      <div class="area-card">
+        <div class="area-name">Återhämtning</div>
+        <div class="area-score" style="color:var(--danger);">38</div>
+        <div class="area-status" style="color:var(--danger);">Underskott</div>
+        <div class="area-bar"><div class="area-fill" style="width:38%;background:var(--danger);"></div></div>
+        <div class="area-note">CNS ej återhämtat. Tränar på underskott. Återhämtningstid 36–48h men tränar var 24h.</div>
+      </div>
+      <div class="area-card">
+        <div class="area-name">HRV</div>
+        <div class="area-score" style="color:var(--warn);">55</div>
+        <div class="area-status" style="color:var(--warn);">Under snitt</div>
+        <div class="area-bar"><div class="area-fill" style="width:55%;background:var(--warn);"></div></div>
+        <div class="area-note">38ms vs snitt 46ms. Sjunker konsekvent. Speglar stress + sömnunderskott direkt i nervsystemet.</div>
+      </div>
+      <div class="area-card">
+        <div class="area-name">Psykologi</div>
+        <div class="area-score" style="color:var(--warn);">52</div>
+        <div class="area-status" style="color:var(--warn);">Påfrestning</div>
+        <div class="area-bar"><div class="area-fill" style="width:52%;background:var(--warn);"></div></div>
+        <div class="area-note">Prokrastinering +65% på höga stressdagar. Vila känns som slöseri. Prefrontal cortex nedreglerad under hög kortisol.</div>
+      </div>
+    </div>
+
+    <!-- THREE STRONGEST SIGNALS -->
+    <div class="three-signals">
+      <div class="signal-card">
+        <div class="signal-card-type st-down">Drar ner välmåendet mest</div>
+        <div class="signal-card-title">Sömn och återhämtning är systemets svagaste länk</div>
+        <div class="signal-card-body">Sömn (42) och Återhämtning (38) är de två lägsta poängen. De drar ner helheten oproportionerligt — eftersom de påverkar alla andra sex områden direkt. <strong>Fixa sömnen och hälften av de andra siffrorna rör sig av sig självt.</strong></div>
+      </div>
+      <div class="signal-card">
+        <div class="signal-card-type st-watch">Bevaka noga</div>
+        <div class="signal-card-title">Träning och stress är på kollisionskurs</div>
+        <div class="signal-card-body">Träning (72) är det enda starka området — men stress (38) och återhämtning (38) håller på att äta upp de vinster träningen skapar. <strong>Om mönstret fortsätter ytterligare 7–10 dagar riskerar VO2max-trenden att vändas.</strong> Det är en varningssignal.</div>
+      </div>
+      <div class="signal-card">
+        <div class="signal-card-type st-up">Din starkaste tillgång</div>
+        <div class="signal-card-title">Formeln finns redan i din data</div>
+        <div class="signal-card-body">Tre gånger under 14 dagar presterade du på topp. Alla tre följde exakt samma mönster. <strong>7h+ sömn, lätt aktivitet dagen innan, kognitiv ro på kvällen.</strong> Det är inte teori. Det är din bevisade formel — och den är replikerbar.</div>
+      </div>
+    </div>
+
+    <!-- 14-DAY TREND -->
+    <div class="trend-section">
+      <div class="panel-lbl">Välmåendetrend · 14 dagar</div>
+      <div class="trend-comparison">
+        <div class="trend-col">
+          <div class="trend-col-lbl">Dag 1</div>
+          <div class="trend-col-val" style="color:var(--accent);">74</div>
+          <div class="trend-col-sub">Bra start</div>
+        </div>
+        <div class="trend-col">
+          <div class="trend-col-lbl">Dag 3</div>
+          <div class="trend-col-val" style="color:var(--accent);">78</div>
+          <div class="trend-col-sub">Topp</div>
+        </div>
+        <div class="trend-col">
+          <div class="trend-col-lbl">Dag 5</div>
+          <div class="trend-col-val" style="color:var(--accent);">71</div>
+          <div class="trend-col-sub">Stabilt</div>
+        </div>
+        <div class="trend-col">
+          <div class="trend-col-lbl">Dag 7</div>
+          <div class="trend-col-val" style="color:var(--warn);">65</div>
+          <div class="trend-col-sub">Sjunker</div>
+        </div>
+        <div class="trend-col">
+          <div class="trend-col-lbl">Dag 9</div>
+          <div class="trend-col-val" style="color:var(--warn);">58</div>
+          <div class="trend-col-sub">Press</div>
+        </div>
+        <div class="trend-col">
+          <div class="trend-col-lbl">Dag 11</div>
+          <div class="trend-col-val" style="color:var(--warn);">52</div>
+          <div class="trend-col-sub">Varsel</div>
+        </div>
+        <div class="trend-col">
+          <div class="trend-col-lbl">Dag 13</div>
+          <div class="trend-col-val" style="color:var(--danger);">46</div>
+          <div class="trend-col-sub">Kritiskt</div>
+        </div>
+        <div class="trend-col current">
+          <div class="trend-col-lbl">Idag · 14</div>
+          <div class="trend-col-val" style="color:var(--warn);">47</div>
+          <div class="trend-col-sub">Stabiliserar</div>
+        </div>
+      </div>
+      <div style="font-size: 0.74rem; color:var(--fg3); margin-top:1rem; font-style:italic; line-height:1.6;">
+        Välmåendet var stabilt de första 6 dagarna. Nedgången startade dag 7 — det sammanfaller exakt med veckan med tre hårda träningspass och sömnunderskott. Dag 14 visar en svag stabilisering. Trenden vänder om signalen avvärjs.
+      </div>
+    </div>
+
+    <!-- ONE FOCUS -->
+    <div class="one-focus">
+      <div class="of-eyebrow">En sak att fokusera på · Systemets rekommendation</div>
+      <h2 class="of-title">Läggdags 22:00<br><em>tre nätter i rad.</em></h2>
+      <p class="of-body">Det finns sex saker du kan förändra. Men systemet pekar ut en. <strong>Läggdags 22:00 de närmaste tre nätterna</strong> är den förändring med störst kedjeeffekt på alla andra mätvärden. Bättre sömn sänker stressen. Lägre stress förbättrar HRV. Bättre HRV ger mer energi. Mer energi gör träningen effektivare. Allt börjar där — och din data bevisar det tre gånger om.</p>
+      <div class="of-chain">
+        <div class="of-step active">Läggdags 22:00</div>
+        <div class="of-arrow">→</div>
+        <div class="of-step active">+24 min djupsömn</div>
+        <div class="of-arrow">→</div>
+        <div class="of-step">Kortisol sjunker</div>
+        <div class="of-arrow">→</div>
+        <div class="of-step">HRV återhämtar sig</div>
+        <div class="of-arrow">→</div>
+        <div class="of-step">Body Battery laddar</div>
+        <div class="of-arrow">→</div>
+        <div class="of-step">Varsel avvärjt dag 4–5</div>
+      </div>
+    </div>
+
+    <!-- JÄMFÖRELSE + KONTEXT -->
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-lbl">Dina bästa dagar vs nu · Vad som skiljer</div>
+        <div class="stat"><span class="stat-name">Sömn bästa dagar</span><span class="stat-val good">7h 28m</span></div>
+        <div class="stat"><span class="stat-name">Sömn nu (snitt 3 nätter)</span><span class="stat-val bad">5h 28m</span></div>
+        <div class="stat"><span class="stat-name">HRV bästa dagar</span><span class="stat-val good">52 ms</span></div>
+        <div class="stat"><span class="stat-name">HRV nu</span><span class="stat-val bad">38 ms</span></div>
+        <div class="stat"><span class="stat-name">Body Battery bästa dagar</span><span class="stat-val good">82</span></div>
+        <div class="stat"><span class="stat-name">Body Battery nu</span><span class="stat-val bad">34</span></div>
+        <div class="stat"><span class="stat-name">Stress bästa dagar</span><span class="stat-val good">38/100</span></div>
+        <div class="stat"><span class="stat-name">Stress nu</span><span class="stat-val warn">68/100</span></div>
+        <div class="stat"><span class="stat-name">Välmåendepoäng bästa dagar</span><span class="stat-val good">78</span></div>
+        <div class="stat"><span class="stat-name">Välmåendepoäng nu</span><span class="stat-val warn">47</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-lbl">Om du vänder trenden · Prediktion 7 dagar</div>
+        <div class="stat"><span class="stat-name">Välmåendepoäng dag 7</span><span class="stat-val good">65–72</span></div>
+        <div class="stat"><span class="stat-name">HRV om 3 dagar</span><span class="stat-val good">42–44 ms</span></div>
+        <div class="stat"><span class="stat-name">Body Battery om 3 dagar</span><span class="stat-val good">55–62</span></div>
+        <div class="stat"><span class="stat-name">Varsel avslutat</span><span class="stat-val good">Om 3–4 dagar</span></div>
+        <div class="stat"><span class="stat-name">Träning möjlig (hårt pass)</span><span class="stat-val good">Onsdag–torsdag</span></div>
+        <div class="stat"><span class="stat-name">Sömnkvalitet</span><span class="stat-val good">Normaliseras dag 3</span></div>
+        <div class="stat"><span class="stat-name">Stressnivå</span><span class="stat-val good">Mot snitt (54) dag 5</span></div>
+        <div class="stat"><span class="stat-name">Kognitiv kapacitet</span><span class="stat-val good">Återställd dag 4–5</span></div>
+      </div>
+    </div>
+
+  <footer style="padding: 1.5rem 3.5rem 2rem; border-top: 1px solid var(--border);">
+    <p style="font-size: 0.74rem; color: #5B7FA6; line-height: 1.7; max-width: 700px; margin-bottom: 0.5rem;">Din data är krypterad, privat och tillhör bara dig. · Forsyne säljer aldrig data.</p>
+    <p style="font-size: 0.74rem; color: var(--fg4); line-height: 1.7; max-width: 700px; margin-bottom: 0.5rem;">Systemets insikter ersätter inte råd från läkare, psykolog eller annan vårdgivare.</p>
+    <p style="font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg4);"><a href="manifesto.html" style="color:var(--fg4); text-decoration:none;">Manifesto</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Disclaimer</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Integritet</a> · © 2026 Forsyne</p>
+  </footer>
+
+  </main>
+</div>
+
+<script>
+// Date + user
+const d = new Date();
+const days = ['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+const months = ['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+document.getElementById('topDate').textContent = `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+const _ob = JSON.parse(localStorage.getItem('forsyne_onboarding') || '{}');
+const _u  = API.user();
+document.getElementById('topUser').textContent = (_ob.q3_1 || (_u && _u.email ? _u.email.split('@')[0] : '')).toUpperCase();
+
+document.querySelectorAll('.nav-link').forEach(l => {
+  l.addEventListener('click', e => { if(l.getAttribute('href')==='#') e.preventDefault(); });
+});
+
+function scoreColor(s) {
+  return s>=70?'var(--accent)':s>=50?'var(--warn)':'var(--danger)';
+}
+function systemScore(x) {
+  return Math.round((x.energy + x.sleep + (10-x.stress) + x.focus + x.motivation) / 5 * 10);
+}
+
+function renderWellness(checkins) {
+  const c = [...checkins].sort((a,b)=>a.created_at<b.created_at?-1:1);
+  const n = c.length;
+
+  if (!n) {
+    document.querySelector('.main').innerHTML = `
+      <div style="padding:4rem 0;max-width:520px;">
+        <div style="width:28px;height:1px;background:rgba(143,174,138,0.4);margin-bottom:1.8rem;"></div>
+        <h2 style="font-family:var(--serif);font-size:clamp(1.6rem,3vw,2.2rem);font-weight:300;line-height:1.2;margin-bottom:1.2rem;">Välmåendepoängen är inte beräknad ännu.<br><em>Systemet behöver något att räkna på.</em></h2>
+        <p style="font-size: 0.8rem;color:var(--fg3);line-height:1.75;margin-bottom:1.8rem;">Välmåendepanelen syntetiserar sömn, energi, stress och återhämtning till en poäng. Den poängen är meningslös utan din data — och precis som en spegel behöver den något att reflektera.</p>
+        <a href="checkin.html" style="font-size: 0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);text-decoration:none;border:1px solid rgba(143,174,138,0.3);padding:0.65rem 1.4rem;">Starta med en check-in</a>
+      </div>`;
+    return;
+  }
+
+  const avg = f => c.reduce((s,x)=>s+x[f],0)/n;
+  const avgSleep=avg('sleep'), avgStress=avg('stress'), avgEnergy=avg('energy');
+  const avgFocus=avg('focus'), avgMotivation=avg('motivation');
+
+  const sleepScore = Math.round(avgSleep*10);
+  const energyScore = Math.round(avgEnergy*10);
+  const stressScore = Math.round((10-avgStress)*10);
+  const focusScore  = Math.round(avgFocus*10);
+  const motivScore  = Math.round(avgMotivation*10);
+  const recovScore  = Math.round((avgEnergy+avgSleep+(10-avgStress))/3*10);
+  const kostScore   = 50;
+  const hrvScore    = 55;
+
+  const wellness = Math.round(
+    sleepScore*0.22 + energyScore*0.18 + stressScore*0.18 +
+    recovScore*0.15 + focusScore*0.12 + motivScore*0.10 +
+    kostScore*0.03 + hrvScore*0.02
+  );
+
+  // Animate score
+  const el = document.getElementById('wellnessScore');
+  el.style.color = scoreColor(wellness);
+  let cur=0;
+  const speed = Math.max(5, Math.round(800/wellness));
+  const timer = setInterval(()=>{ cur++; el.textContent=cur; if(cur>=wellness) clearInterval(timer); }, speed);
+
+  // Score trend (recent 3 vs previous 3)
+  const trendEl = document.querySelector('.score-trend');
+  if (trendEl && n>=6) {
+    const r3 = c.slice(-3).reduce((s,x)=>s+systemScore(x),0)/3;
+    const p3 = c.slice(-6,-3).reduce((s,x)=>s+systemScore(x),0)/3;
+    const diff = Math.round(r3-p3);
+    trendEl.textContent = diff>=0?`↑ +${diff} sedan 3 dagar sedan`:`↓ ${diff} sedan 3 dagar sedan`;
+    trendEl.className = `score-trend ${diff>=0?'up':'dn'}`;
+  } else if (trendEl) {
+    trendEl.textContent = `Baserat på ${n} check-in`;
+    trendEl.className = 'score-trend';
+  }
+
+  // 8 score-items (order: Sömn, Energi, Stress, Träning, Kost, Återhämtning, HRV, Psykologi)
+  const scoreVals = [sleepScore, energyScore, stressScore, 72, kostScore, recovScore, hrvScore, motivScore];
+  document.querySelectorAll('.score-item').forEach((item,i) => {
+    const vEl=item.querySelector('.score-item-val');
+    const bEl=item.querySelector('.score-item-bar div');
+    if(vEl){vEl.textContent=scoreVals[i];vEl.style.color=scoreColor(scoreVals[i]);}
+    if(bEl){bEl.style.width=scoreVals[i]+'%';bEl.style.background=scoreColor(scoreVals[i]);}
+  });
+
+  // Score context
+  const ctx = document.querySelector('.score-context');
+  const lowestScore = Math.min(sleepScore,energyScore,stressScore,recovScore);
+  const lowestName = lowestScore===sleepScore?'Sömn':lowestScore===energyScore?'Energi':lowestScore===stressScore?'Stresshantering':'Återhämtning';
+  if (ctx) ctx.innerHTML = `Välmående baserat på ${n} check-ins. Din svagaste länk är <strong>${lowestName} (${lowestScore})</strong> — det är där förbättringen ger störst systemeffekt. ${wellness<50?'Systemet är under press — inte farligt, men inte hållbart.':wellness<70?'Systemet håller sig, men det finns utrymme att förbättra.':'Systemet är i god balans.'}`;
+
+  // 8 area-cards
+  const areaData = [
+    {score:sleepScore, status:sleepScore>=70?'Bra':sleepScore>=50?'Under snitt':'Kritisk',
+     note:sleepScore<50?`Sömn ${(avgSleep).toFixed(1)}/10. Primär bottleneck. Tär på energi, stress och återhämtning.`:sleepScore<70?`Sömn ${(avgSleep).toFixed(1)}/10. Fungerar men kan förbättras.`:`Sömn ${(avgSleep).toFixed(1)}/10. Bra fundament.`},
+    {score:energyScore, status:energyScore>=70?'Bra':energyScore>=50?'Under snitt':'Kritisk',
+     note:`Energi snitt ${(avgEnergy).toFixed(1)}/10. ${energyScore<50?'Låg reserv — direkt konsekvens av sömnunderskott och stress.':energyScore<70?'Energin håller sig — finns utrymme att optimera.':'God energireserv.'}`},
+    {score:stressScore, status:stressScore>=70?'Låg':stressScore>=50?'Måttlig':'Hög',
+     note:`Stress snitt ${(avgStress).toFixed(1)}/10. ${stressScore<50?'Hög belastning. Håller kortisolet uppe — blockerar återhämtning.':stressScore<70?'Måttlig stressnivå. Påverkar sömnkvaliteten.':'Stress under kontroll.'}`},
+    {score:72, status:'Estimat', note:'Träningsdata kräver wearable-integration. Estimat baserat på energi och återhämtningspoäng.'},
+    {score:kostScore, status:'Oregelbunden', note:'Kostdata kräver manuell input. Kräver integration med kostdatabas för exakta insikter.'},
+    {score:recovScore, status:recovScore>=70?'Bra':recovScore>=50?'Underskott':'Kritisk',
+     note:`Återhämtning proxy: ${recovScore}% (energi+sömn+låg stress). ${recovScore<50?'Systemet hinner inte återhämta sig mellan belastningarna.':'Återhämtning ok.'}`},
+    {score:hrvScore, status:'Estimat', note:'HRV kräver wearable (Oura, Whoop, Garmin). Estimat visas — koppla wearable för exakt data.'},
+    {score:motivScore, status:motivScore>=70?'Bra':motivScore>=50?'Påfrestning':'Under press',
+     note:`Motivation ${(avgMotivation).toFixed(1)}/10. ${motivScore<50?'Signal om utmattning eller otillräcklig återhämtning.':motivScore<70?'Motivationen påverkas — håll koll på stressnivån.':'Motivationen är stark.'}`},
+  ];
+
+  document.querySelectorAll('.area-card').forEach((card,i) => {
+    const a=areaData[i]; if(!a) return;
+    const sEl=card.querySelector('.area-score');
+    const stEl=card.querySelector('.area-status');
+    const bEl=card.querySelector('.area-fill');
+    const nEl=card.querySelector('.area-note');
+    if(sEl){sEl.textContent=a.score;sEl.style.color=scoreColor(a.score);}
+    if(stEl){stEl.textContent=a.status;stEl.style.color=scoreColor(a.score);}
+    if(bEl){bEl.style.width=a.score+'%';bEl.style.background=scoreColor(a.score);}
+    if(nEl) nEl.textContent=a.note;
+  });
+
+  // Three signals
+  const sCards = document.querySelectorAll('.signal-card');
+  const lowest3 = Math.min(sleepScore,energyScore,stressScore);
+  const lowestN3 = lowest3===sleepScore?'Sömn':lowest3===energyScore?'Energi':'Stress';
+  const highest3 = Math.max(sleepScore,energyScore,stressScore,motivScore);
+  const highestN3 = highest3===sleepScore?'Sömn':highest3===energyScore?'Energi':highest3===stressScore?'Stresshantering':'Motivation';
+  if(sCards[0]){
+    sCards[0].querySelector('.signal-card-title').textContent=`${lowestN3} är systemets svagaste länk just nu`;
+    sCards[0].querySelector('.signal-card-body').innerHTML=`${lowestN3} (${lowest3}) drar ner helhetspoängen oproportionerligt. <strong>Förbättring av ${lowestN3.toLowerCase()} ger störst återbäring på välmåendepoängen.</strong>`;
+  }
+  if(sCards[2]){
+    sCards[2].querySelector('.signal-card-title').textContent=`${highestN3} är din starkaste tillgång`;
+    sCards[2].querySelector('.signal-card-body').innerHTML=`${highestN3} (${highest3}) håller systemet uppe. <strong>Bygg vidare på det som redan fungerar.</strong>`;
+  }
+  if(sCards[1] && n>=6){
+    const r3avg=c.slice(-3).reduce((s,x)=>s+systemScore(x),0)/3;
+    const p3avg=c.slice(-6,-3).reduce((s,x)=>s+systemScore(x),0)/3;
+    const dir=r3avg>=p3avg?'uppåt':'nedåt';
+    sCards[1].querySelector('.signal-card-title').textContent=`Välmåendetrenden pekar ${dir}`;
+    sCards[1].querySelector('.signal-card-body').innerHTML=`De senaste 3 dagarna vs 3 dagar innan: <strong>${r3avg>=p3avg?'+':''} ${Math.round(r3avg-p3avg)} poäng</strong>. ${r3avg<p3avg?'Bromsa nedgången nu.':'Håll kursen.'}`;
+  }
+
+  // 14-day trend columns (8 columns)
+  const trendCols = document.querySelectorAll('.trend-col');
+  if (trendCols.length>=1 && n>=2) {
+    const samples = [];
+    const total = trendCols.length;
+    for (let i=0; i<total-1; i++) {
+      const idx = Math.round(i*(n-1)/(total-1));
+      samples.push(c[Math.min(idx,n-1)]);
+    }
+    samples.push(c[n-1]);
+    samples.forEach((tc,i) => {
+      if(!trendCols[i]) return;
+      const s=systemScore(tc);
+      const lbl=i===samples.length-1?`Idag · ${n}`:`Dag ${Math.round(i*(n-1)/(total-1))+1}`;
+      const sub=s>=70?'Bra':s>=60?'Ok':s>=50?'Press':s>=40?'Lågt':'Kritiskt';
+      trendCols[i].innerHTML=`<div class="trend-col-lbl">${lbl}</div><div class="trend-col-val" style="color:${scoreColor(s)};">${s}</div><div class="trend-col-sub">${sub}</div>`;
+      trendCols[i].className=`trend-col${i===samples.length-1?' current':''}`;
+    });
+  }
+
+  // One-focus recommendation
+  const ofTitle=document.querySelector('.of-title');
+  const ofBody=document.querySelector('.of-body');
+  if(sleepScore<=energyScore&&sleepScore<=stressScore){
+    if(ofTitle)ofTitle.innerHTML=`Sömn ≥7<br><em>tre nätter i rad.</em>`;
+    if(ofBody)ofBody.innerHTML=`Det finns ${Math.max(1,n)} mätvärden att förbättra. Men systemet pekar ut ett. <strong>Sömn ≥7 tre nätter i rad</strong> — det är förändringen med störst kedjeeffekt. Sömn → Sänkt kortisol → Bättre HRV → Mer energi → Bättre fokus. Din data bekräftar det ${c.filter(x=>x.sleep>=7&&x.stress<=4).length} gånger.`;
+  } else if(stressScore<=energyScore){
+    if(ofTitle)ofTitle.innerHTML=`Sänk stressen.<br><em>Ett steg åt gången.</em>`;
+    if(ofBody)ofBody.innerHTML=`<strong>Stressreduktion</strong> är förändringen med störst kedjeeffekt just nu. Kortisol håller systemet i beredskapsläge — det blockerar återhämtning, sömn och energi. En kvällsrutin utan skärmar och beslut är startpunkten.`;
+  } else {
+    if(ofTitle)ofTitle.innerHTML=`Energi.<br><em>Ge systemet bränsle.</em>`;
+    if(ofBody)ofBody.innerHTML=`<strong>Energireserven är din akuta bottleneck.</strong> Vila, sömn och rörelse i rätt ordning återställer den. Det är inte slumpmässigt — systemet ser mönstret.`;
+  }
+
+  // AI analysis
+  const aiText=document.querySelector('.ai-text');
+  if(aiText){
+    const primary=sleepScore<=energyScore&&sleepScore<=stressScore?'sömn':stressScore<=energyScore?'stress':'energi';
+    const best=c.filter(x=>x.sleep>=7&&x.stress<=4).length;
+    aiText.innerHTML=`<p>Baserat på ${n} check-ins är ditt välmående <strong>${wellness}/100</strong>. ${wellness<50?'Det är ett pressat läge — inte farligt, men inte hållbart.':wellness<70?'Systemet håller sig, men det finns tydliga förbättringsområden.':'Systemet är i god balans.'} Ditt svagaste område är ${lowestName.toLowerCase()} (${lowestScore}).</p>
+    <p>${primary==='sömn'?`<strong>Sömnen är din primära bottleneck.</strong> Snitt ${(avgSleep).toFixed(1)}/10 — och det syns i alla andra mätvärden. Energin följer sömnen tätt.`:primary==='stress'?`<strong>Stress är din primära bottleneck.</strong> Snitt ${(avgStress).toFixed(1)}/10 — håller kortisolet förhöjt, blockerar djupsömn och tär på energireserven.`:`<strong>Energin är din primära bottleneck.</strong> Snitt ${(avgEnergy).toFixed(1)}/10. Kroppen signalerar att den inte får tillräcklig återhämtning.`}</p>
+    <p>Fokus snitt: ${(avgFocus).toFixed(1)}/10. Motivation: ${(avgMotivation).toFixed(1)}/10. ${avgFocus>avgMotivation+0.8?'Du har kapaciteten att fokusera men tappar motivation — hänger ihop med stress och sömnunderskott.':avgMotivation>avgFocus+0.8?'Du är motiverad men tappar fokus — vanligt tecken på kognitiv utmattning.':'Fokus och motivation följer varandra — de styrs av samma underliggande faktorer.'}</p>
+    <p><em>Din formel finns redan i datan.</em> ${best>0?`${best} av ${n} dagar med god sömn och låg stress visar konsekvent bättre energi och fokus — det är replikerbart.`:'Fortsätt dina check-ins för att systemet ska kunna identifiera din personliga formel.'}</p>`;
+  }
+
+  // Comparison stats (best days vs now)
+  const latest=c[n-1];
+  const bestDay=c.reduce((b,x)=>systemScore(x)>systemScore(b)?x:b,c[0]);
+  const nowScore=systemScore(latest);
+  const bestScore=systemScore(bestDay);
+  const compPanels=document.querySelectorAll('.two-col:last-of-type .panel');
+  if(compPanels[0]){
+    compPanels[0].innerHTML=`<div class="panel-lbl">Dina bästa dagar vs nu · Vad som skiljer</div>
+    <div class="stat"><span class="stat-name">Sömn bästa dag</span><span class="stat-val good">${bestDay.sleep}/10</span></div>
+    <div class="stat"><span class="stat-name">Sömn nu</span><span class="stat-val ${latest.sleep>=6?'good':latest.sleep>=4?'warn':'bad'}">${latest.sleep}/10</span></div>
+    <div class="stat"><span class="stat-name">Energi bästa dag</span><span class="stat-val good">${bestDay.energy}/10</span></div>
+    <div class="stat"><span class="stat-name">Energi nu</span><span class="stat-val ${latest.energy>=6?'good':latest.energy>=4?'warn':'bad'}">${latest.energy}/10</span></div>
+    <div class="stat"><span class="stat-name">Stress bästa dag</span><span class="stat-val good">${bestDay.stress}/10</span></div>
+    <div class="stat"><span class="stat-name">Stress nu</span><span class="stat-val ${latest.stress<=4?'good':latest.stress<=6?'warn':'bad'}">${latest.stress}/10</span></div>
+    <div class="stat"><span class="stat-name">Välmående bästa dag</span><span class="stat-val good">${bestScore}</span></div>
+    <div class="stat"><span class="stat-name">Välmående nu</span><span class="stat-val ${scoreColor(nowScore).includes('accent')?'good':scoreColor(nowScore).includes('warn')?'warn':'bad'}">${nowScore}</span></div>`;
+  }
+  if(compPanels[1]){
+    const predWellness=Math.min(100,wellness+Math.round((bestScore-wellness)*0.4));
+    const predSleep=(avgSleep+Math.min(10,avgSleep+1.5)).toFixed(1);
+    const predStress=Math.max(1,avgStress-1.5).toFixed(1);
+    compPanels[1].innerHTML=`<div class="panel-lbl">Om du vänder trenden · Prediktion 7 dagar</div>
+    <div class="stat"><span class="stat-name">Välmående om 7 dagar</span><span class="stat-val good">${predWellness}–${Math.min(100,predWellness+8)}</span></div>
+    <div class="stat"><span class="stat-name">Sömn om 3 dagar</span><span class="stat-val good">~${predSleep}/10</span></div>
+    <div class="stat"><span class="stat-name">Stress om 3 dagar</span><span class="stat-val good">~${predStress}/10</span></div>
+    <div class="stat"><span class="stat-name">Energi om 3 dagar</span><span class="stat-val good">~${Math.min(10,avgEnergy+1.2).toFixed(1)}/10</span></div>
+    <div class="stat"><span class="stat-name">Krasch</span><span class="stat-val good">Avvärjd</span></div>
+    <div class="stat"><span class="stat-name">Förutsättning</span><span class="stat-val good">Sömn → Stress → Energi</span></div>`;
+  }
+
+  // Sidebar
+  const foot=document.querySelector('.sidebar-foot');
+  if(foot) foot.innerHTML=`Välmående · Dag ${n}<br><strong>${wellness}/100</strong>`;
+  const ey=document.querySelector('.page-eyebrow');
+  if(ey) ey.textContent=`Välmående · AI-sammanställning · ${n} dagars data`;
+  const sub=document.querySelector('.page-sub');
+  if(sub) sub.textContent=`Det här är inte ett snitt av dina siffror. Det är systemets samlade bild — baserad på ${n} dagars data från alla åtta områden, sedd som ett sammanhängande system.`;
+}
+
+(async () => {
+  let checkins;
+  try {
+    checkins = await API.getCheckins() || [];
+  } catch(e) {
+    const m = document.querySelector('.main');
+    if (m) m.insertAdjacentHTML('afterbegin', '<div style="padding:3rem 0;max-width:480px;"><div style="font-size: 0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:rgba(168,92,92,0.8);margin-bottom:1rem;">Systemfel</div><p style="font-size: 0.8rem;color:var(--fg3);line-height:1.75;">Systemet kunde inte hämta din data. Kontrollera anslutningen och ladda om sidan.</p></div>');
+    return;
+  }
+  renderWellness(checkins);
+
+  // Agent 3 — AI wellness insight
+  if (checkins.length >= 3) {
+    try {
+      const profile = JSON.parse(localStorage.getItem('forsyne_onboarding') || '{}');
+      const resp = await fetch('/api/agent/insights/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API.token() },
+        body: JSON.stringify({ checkins, profile, context: 'wellness' })
+      });
+      if (resp.ok) {
+        const ai = await resp.json();
+        if (ai?.insikt) {
+          // Inject insight into the signal cards area
+          const el = document.querySelector('.signal-card:last-child .signal-card-body');
+          if (el) {
+            el.innerHTML = ai.insikt + (ai.rekommendation ? `<br><br><strong>${ai.rekommendation}</strong>` : '');
+          }
+          // Update page-sub
+          const sub = document.querySelector('.page-sub');
+          if (sub && ai.sammanfattning) sub.textContent = ai.sammanfattning;
+        }
+      }
+    } catch(e) {}
+  }
+})();
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F1210">
+<title>Forsyne — Integritet och datahantering</title>
+<meta name="description" content="Hur Forsyne hanterar din data. GDPR-efterlevnad, dina rättigheter, tredjepartstjänster.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#0F1210; --ink2:#131714;
+  --fg:#F2F0EA; --fg2:#CCC9BF; --fg3:#8A8E89; --fg4:#4a4e49;
+  --accent:#8FAE8A;
+  --border:rgba(242,240,234,0.06);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Jost',system-ui,sans-serif;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html, body {
+  background: linear-gradient(to bottom, var(--ink) 0%, var(--ink2) 100%);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-weight: 300;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 5rem 1.5rem 3rem;
+}
+.nav-back {
+  display: inline-block;
+  font-family: var(--sans);
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  text-decoration: none;
+  margin-bottom: 4rem;
+  transition: color 0.2s ease;
+}
+.nav-back:hover { color: var(--fg); }
+h1 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.15;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.5rem;
+}
+.subtitle {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--fg2);
+  margin-bottom: 3.5rem;
+}
+h2 {
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+}
+h2:first-of-type { margin-top: 0; }
+p {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  line-height: 1.7;
+  margin-bottom: 1rem;
+  color: var(--fg);
+}
+p.meta {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--fg2);
+  line-height: 1.6;
+}
+ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 1.5rem;
+}
+ul li {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--fg);
+  padding-left: 1.2rem;
+  position: relative;
+  margin-bottom: 0.4rem;
+}
+ul li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--fg3);
+}
+a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(143,174,138,0.3); }
+a:hover { border-bottom-color: var(--accent); }
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 3rem 0;
+}
+
+footer {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  font-family: var(--sans);
+  font-size: 0.68rem;
+  font-weight: 300;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  border-top: 1px solid var(--border);
+}
+footer a {
+  color: var(--fg3);
+  text-decoration: none;
+  border-bottom: none;
+  margin-left: 1rem;
+}
+.footer-sep { color: var(--fg4); margin: 0 0.5rem; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <a href="/" class="nav-back">← Tillbaka</a>
+
+  <h1>Integritet och datahantering</h1>
+  <p class="subtitle">Hur Forsyne hanterar din data.</p>
+
+  <p>Forsyne bygger en prediktiv modell av din biologi. Datan du lämnar är därför känslig i grunden — och behandlas så. Den här sidan beskriver vad vi samlar, varför, och vilka rättigheter du har.</p>
+
+  <hr>
+
+  <h2>Vad vi samlar</h2>
+  <ul>
+    <li>Kontouppgifter: email, namn, ålder (valfri), ort (valfri)</li>
+    <li>Wearable-data du kopplar in: Garmin, Dexcom, Strava, Apple Health och liknande — HRV, sömn, träningsbelastning, glukos, aktiviteter</li>
+    <li>Subjektiva check-ins du gör varje dag: energi, sömn, stress, fokus, motivation, fri text</li>
+    <li>Blodprover, DNA-rapporter och labbtester du själv väljer att ladda upp</li>
+    <li>Konversationer du för med Forsynes agenter (systemprompterna inklusive din data)</li>
+    <li>Teknisk metadata: IP-adress och user-agent vid signup (för spamskydd), standard server-loggar</li>
+  </ul>
+
+  <h2>Varför</h2>
+  <p>För att bygga en modell av just dig — dina mönster, dina baslinjer, dina kraschsekvenser. Utan datan finns ingen produkt. Vi säljer inte din data vidare och använder den inte för reklam eller tredjepartsmarknadsföring.</p>
+
+  <h2>Hur länge</h2>
+  <p>Så länge du är aktiv användare. Om du avslutar ditt konto raderas all din data permanent inom 30 dagar. Backup-system kan innehålla data i ytterligare 90 dagar innan rotation.</p>
+
+  <h2>Vem har åtkomst</h2>
+  <p>Forsynes kärnteam. Inga tredje parter. Åtkomst är begränsad till service-nycklar i produktionsmiljön och loggas.</p>
+
+  <h2>Tredjepartstjänster vi använder</h2>
+  <ul>
+    <li>Supabase (databas, EU-region)</li>
+    <li>Railway (hosting, EU-region)</li>
+    <li>Cloudflare (DNS, CDN)</li>
+    <li>Anthropic (AI-modellen som driver Forsynes agenter, USA — din data passerar deras API för analys men lagras inte hos dem)</li>
+    <li>Resend (email, EU-region)</li>
+  </ul>
+  <p>Alla tredje parter har egna databehandlaravtal. Anthropic behåller inte data från API-anrop för modellträning när vi anropar deras API.</p>
+
+  <h2>Kryptering</h2>
+  <p>Känsliga fält (check-ins, profil, chat-innehåll) krypteras i vilotillstånd med AES-256. All trafik över HTTPS (TLS 1.3).</p>
+
+  <h2>Dina rättigheter under GDPR</h2>
+  <ul>
+    <li>Rätt till insyn: få en kopia av all din data</li>
+    <li>Rätt till rättelse: korrigera felaktiga uppgifter</li>
+    <li>Rätt till radering: få all din data permanent borttagen</li>
+    <li>Rätt till dataportabilitet: få din data exporterad i maskinläsbart format</li>
+    <li>Rätt till invändning: säga nej till viss behandling</li>
+    <li>Rätt att klaga till Integritetsskyddsmyndigheten (IMY) om du är missnöjd med hur vi hanterar din data</li>
+  </ul>
+
+  <h2>Vi gör inte medicinska diagnoser</h2>
+  <p>Forsyne är inte ett medicinskt hjälpmedel. Systemet observerar och förutsäger mönster i din data — men uttalar sig aldrig kliniskt om värden. När du uppladdar blodprover, DNA eller labbtester tolkar vi dem i sport-science-kontext, inte medicinskt. För kliniska frågor: vänd dig till din läkare eller den som beställt testet.</p>
+
+  <h2>Cookies och spårning</h2>
+  <p>Forsyne använder varken analytics eller spårningscookies. Inga Google Analytics, inga Meta Pixels, inga reklamnätverk. Teknisk sessionshantering (inloggning) använder lokalt lagrade token enbart.</p>
+
+  <h2>Kontakt</h2>
+  <p>Frågor eller förfrågningar om din data: <a href="mailto:ckarjalainenjoels@gmail.com">ckarjalainenjoels@gmail.com</a>.</p>
+
+  <hr>
+
+  <p class="meta">Senast uppdaterad: 19 april 2026. Denna sida kan uppdateras över tid när tjänsten växer; väsentliga ändringar meddelas via email.</p>
+
+</div>
+
+<footer>
+  <span>Forsyne. Byggt i Stockholm.</span>
+  <span class="footer-sep">·</span>
+  <a href="mailto:ckarjalainenjoels@gmail.com">Kontakt</a>
+</footer>
+
+</body>
+</html>

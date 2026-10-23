@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Läkarjournal</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--ink:#0F1210;--ink2:#131714;--ink3:#171c18;--fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;--accent:#8FAE8A;--warn:#C4875A;--danger:#A85C5C;--trust:#5B7FA6;--serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;--border:rgba(242,240,234,0.06);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;line-height:1.7;min-height:100vh;overflow-x:hidden;}
+.page-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;}
+.page-bg-img{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.18) saturate(0.4);}
+.page-bg-veil{position:absolute;inset:0;background:linear-gradient(to bottom,var(--ink) 0%,rgba(15,18,16,0.72) 9%,rgba(15,18,16,0.06) 26%,rgba(15,18,16,0.06) 74%,rgba(15,18,16,0.72) 91%,var(--ink) 100%);}
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(2rem,5vw,4rem);height:64px;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.85);backdrop-filter:blur(32px);}
+.logo{font-family:var(--serif);font-size:1.1rem;font-weight:400;letter-spacing:0.18em;color:var(--fg);text-decoration:none;}
+.nav-center{font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+.nav-meta{display:flex;align-items:center;gap:1.5rem;}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(143,174,138,0.6);animation:pulse 2.5s ease infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.nav-date{font-family:var(--serif);font-size:0.9rem;color:var(--fg2);}
+.nav-user{font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg3);text-decoration:none;}
+.nav-signal{display:none;font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--danger);text-decoration:none;align-items:center;gap:0.4rem;}
+.nav-signal::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);animation:sig-pulse 1.6s ease infinite;}
+.nav-signal.show{display:flex;}
+@keyframes sig-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(168,92,92,0.6)}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(168,92,92,0)}}
+main{position:relative;z-index:1;flex:1;min-width:0;overflow-y:auto;height:100%;}
+
+.page-header{padding:1.8rem 2rem 1.4rem;border-bottom:1px solid var(--border);}
+.page-header h1{font-family:var(--serif);font-size:1.8rem;font-weight:300;font-style:italic;line-height:1.2;color:var(--fg);}
+.page-header-sub{font-size:0.62rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);margin-top:0.3rem;}
+
+.s-section{padding:clamp(2.5rem,4vw,3.5rem) clamp(2rem,6vw,5rem);border-bottom:1px solid var(--border);}
+.s-ey{font-size:0.56rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.5rem;display:flex;align-items:center;gap:0.7rem;}
+.s-ey::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+.dots{display:flex;gap:0.4rem;}.dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:dp 1.4s ease infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.load-row{display:flex;align-items:center;gap:0.8rem;}
+.load-txt{font-size:0.6rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+
+.up-zone{border:1px solid var(--border);background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);padding:3rem 2rem;text-align:center;cursor:pointer;transition:border-color 0.2s,background 0.2s;max-width:600px;}
+.up-zone:hover,.up-zone.drag{border-color:rgba(143,174,138,0.25);background:rgba(15,18,16,0.75);}
+.up-zone-txt{font-family:var(--serif);font-style:italic;font-size:1rem;color:var(--fg3);margin-bottom:0.5rem;}
+.up-zone-meta{font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg4);}
+.up-input{display:none;}
+.up-result{margin-top:1.5rem;display:none;}
+.up-result-ey{font-size:0.54rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);margin-bottom:0.8rem;}
+.up-result-txt{font-family:var(--serif);font-style:italic;font-size:0.9rem;color:var(--fg2);line-height:1.7;max-width:560px;}
+
+.doc-list{display:flex;flex-direction:column;border:1px solid var(--border);}
+.doc-item{background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);padding:1.5rem 1.8rem;border-bottom:1px solid var(--border);transition:background 0.15s;}
+.doc-item:last-child{border-bottom:none;}
+.doc-item:hover{background:rgba(15,18,16,0.75);}
+.doc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.6rem;}
+.doc-name{font-size:0.8rem;color:var(--fg);letter-spacing:0.04em;}
+.doc-date{font-size:0.62rem;color:var(--fg4);letter-spacing:0.08em;}
+.doc-extraction{font-family:var(--serif);font-style:italic;font-size:0.82rem;color:var(--fg3);line-height:1.6;}
+.doc-del{background:none;border:none;color:var(--fg4);font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;cursor:pointer;transition:color 0.2s;padding:0;margin-top:0.8rem;}
+.doc-del:hover{color:var(--danger);}
+.doc-empty{padding:2rem;font-family:var(--serif);font-style:italic;font-size:0.82rem;color:var(--fg4);}
+
+.sum-btn{background:none;border:1px solid var(--border);color:var(--fg3);font-family:var(--sans);font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;padding:0.85rem 2rem;cursor:pointer;transition:border-color 0.2s,color 0.2s;}
+.sum-btn:hover{border-color:rgba(143,174,138,0.3);color:var(--fg);}
+.sum-dl-btn{background:none;border:1px solid rgba(143,174,138,0.2);color:var(--accent);font-family:var(--sans);font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;padding:0.85rem 2rem;cursor:pointer;transition:border-color 0.2s,color 0.2s;margin-top:1.5rem;display:none;}
+.sum-dl-btn.show{display:block;}
+.sum-dl-btn:hover{border-color:rgba(143,174,138,0.5);color:var(--fg);}
+.sum-preview{margin-top:2rem;display:none;}
+.sum-preview.show{display:block;}
+.sum-preview-title{font-family:var(--serif);font-style:italic;font-size:1rem;color:var(--fg);margin-bottom:1.5rem;}
+.sum-row{display:flex;justify-content:space-between;align-items:baseline;padding:0.7rem 0;border-bottom:1px solid var(--border);}
+.sum-row-label{font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--fg4);}
+.sum-row-val{font-family:var(--serif);font-style:italic;font-size:0.9rem;color:var(--fg2);}
+.sum-obs{margin-top:1.5rem;}
+.sum-obs-label{font-size:0.54rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--fg4);margin-bottom:0.8rem;display:flex;align-items:center;gap:0.7rem;}
+.sum-obs-label::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+.sum-obs-txt{font-family:var(--serif);font-style:italic;font-size:0.85rem;color:var(--fg3);line-height:1.8;max-width:560px;}
+
+.s-footer{padding:clamp(2rem,4vw,3rem) clamp(2rem,6vw,5rem);font-family:var(--serif);font-style:italic;font-size:0.7rem;color:var(--fg4);}
+.content-wrap{display:flex;align-items:flex-start;height:calc(100vh - 64px);overflow:hidden;}
+.sidebar{width:210px;height:100%;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:rgba(15,18,16,0.4);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;z-index:50;padding:2.5rem 0 1.8rem;}
+.sidebar::-webkit-scrollbar{display:none;}
+.ng{margin-bottom:0;}
+.ngl{font-size:0.44rem;letter-spacing:0.32em;text-transform:uppercase;color:var(--fg4);padding:0.7rem 1.8rem 0.2rem;}
+.nl{display:block;padding:0.22rem 1.8rem;font-size:0.76rem;letter-spacing:0.06em;color:var(--fg3);text-decoration:none;transition:color 0.2s,border-left-color 0.2s;border-left:1px solid transparent;cursor:pointer;}
+.nl:hover{color:var(--fg2);}
+.nl.active{color:var(--fg);border-left-color:var(--accent);background:rgba(143,174,138,0.04);}
+.nl.signal-link{color:var(--danger);display:flex;align-items:center;gap:0.5rem;}
+.nl.signal-link::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+.selvitas-wrap{margin-top:auto;padding-top:0.5rem;border-top:1px solid var(--border);}.selvitas-nav{display:block;padding:0.6rem 1.8rem 0.3rem;font-family:var(--serif);font-style:italic;font-size:0.78rem;letter-spacing:0.08em;color:var(--fg3);text-decoration:none;transition:color 0.2s;}.selvitas-nav:hover{color:var(--fg2);}
+
+@media(max-width:860px){
+  .sidebar{display:none!important;}
+  .content-wrap,.page-wrap,.layout-wrap{display:block!important;}
+  #main,.main-content,.page-content{width:100%!important;max-height:none!important;overflow-y:auto!important;}
+  .mg,.pred-grid,.today-plan-grid,.bio-grid,.src-grid,.prof-grid{grid-template-columns:1fr 1fr!important;}
+  .pred-grid,.prof-grid{grid-template-columns:1fr!important;}
+}
+</style>
+</head>
+<body>
+<script>checkAuth();</script>
+<div class="page-bg">
+  <div class="page-bg-img" style="background-image:url('images/DALL·E 2026-04-11 16.00.15 - A dark, intimate scene of a doctor\'s journal on a desk. A worn notebook with slightly textured paper lies open, with handwritten notes visible but not.webp')"></div>
+  <div class="page-bg-veil"></div>
+</div>
+<nav>
+  <a href="dashboard.html" class="logo">Forsyne</a>
+  <span class="nav-center">Läkarjournal</span>
+  <div class="nav-meta">
+    <div class="nav-dot"></div>
+    <span class="nav-date" id="topDate"></span>
+    <a class="nav-user" id="topUser" href="profile.html"></a>
+  </div>
+</nav>
+<div class="content-wrap">
+<aside class="sidebar">
+  <div class="ng">
+    <div class="ngl">Idag</div>
+    <a class="nl" href="dashboard.html">Dashboard</a>
+    <a class="nl" href="checkin.html">Check-in</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Mönster</div>
+    <a class="nl" href="sleep.html">Sömn</a>
+    <a class="nl" href="energy.html">Energi</a>
+    <a class="nl" href="stress.html">Stress</a>
+    <a class="nl" href="training.html">Träning</a>
+    <a class="nl" href="kostlogg.html">Kost</a>
+    <a class="nl" href="wearables.html">Wearables</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Djupet</div>
+    <a class="nl" href="biologi.html">Biologi</a>
+    <a class="nl" href="dna.html">DNA</a>
+    <a class="nl" href="journal.html">Journal</a>
+    <a class="nl" href="analys.html">Analys</a>
+    <a class="nl" href="coach.html">Coach</a>
+  </div>
+</aside>
+<main>
+
+  <div class="page-header">
+    <h1>Läkarjournal</h1>
+    <div class="page-header-sub">Din biologi &middot; Medicinsk historia</div>
+  </div>
+
+  <!-- Ladda upp -->
+  <section class="s-section">
+    <div class="s-ey">Ladda upp dokument</div>
+    <div class="up-zone" id="up-zone" onclick="document.getElementById('up-input').click()" ondragover="ev(event)" ondrop="drop(event)" ondragleave="this.classList.remove('drag')">
+      <div class="up-zone-txt">Drag och släpp eller klicka för att ladda upp</div>
+      <div class="up-zone-meta">PDF · DOC · DOCX · JPG · PNG — max 10 MB</div>
+    </div>
+    <input class="up-input" type="file" id="up-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="upload(this.files[0])">
+    <div id="up-loading" style="display:none;margin-top:1rem;" class="load-row">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Agenten läser dokumentet</span>
+    </div>
+    <div class="up-result" id="up-result">
+      <div class="up-result-ey">Agentens extraktion</div>
+      <div class="up-result-txt" id="up-result-txt"></div>
+    </div>
+  </section>
+
+  <!-- Uppladdade dokument -->
+  <section class="s-section">
+    <div class="s-ey">Uppladdade dokument</div>
+    <div class="load-row" id="doc-load"><span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span><span class="load-txt">Hämtar dokument</span></div>
+    <div class="doc-list" id="doc-list" style="display:none;"></div>
+  </section>
+
+  <!-- Läkarsummering -->
+  <section class="s-section">
+    <div class="s-ey">Läkarsummering</div>
+    <button class="sum-btn" onclick="generateSummary()">Generera läkarsummering</button>
+    <div id="sum-loading" style="display:none;margin-top:1.2rem;" class="load-row">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Sammanställer data</span>
+    </div>
+    <div class="sum-preview" id="sum-preview">
+      <div class="sum-preview-title" id="sum-title"></div>
+      <div id="sum-rows"></div>
+      <div class="sum-obs">
+        <div class="sum-obs-label">Systemets observationer</div>
+        <div class="sum-obs-txt" id="sum-obs-txt"></div>
+      </div>
+    </div>
+    <button class="sum-dl-btn" id="sum-dl-btn" onclick="downloadPDF()">Ladda ner PDF</button>
+  </section>
+
+  <footer class="s-footer">Allt krypteras med AES-256. Bara du har tillgång.</footer>
+
+</main>
+</div>
+
+<script>
+// ── Sidebar: auto-active baserat på URL ──
+(function(){
+  const page = location.pathname.split('/').pop() || 'dashboard.html';
+  document.querySelectorAll('.sidebar a.nl').forEach(a => {
+    if (a.getAttribute('href') === page) a.classList.add('active');
+  });
+})();
+
+function tw(el,text,ms,cb){let i=0;el.textContent='';const t=()=>{if(i<text.length){el.textContent+=text[i++];setTimeout(t,ms);}else if(cb)cb();};t();}
+function ev(e){e.preventDefault();document.getElementById('up-zone').classList.add('drag');}
+function drop(e){e.preventDefault();document.getElementById('up-zone').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)upload(f);}
+
+let docs=[];
+
+function renderDocs(){
+  const list=document.getElementById('doc-list');
+  list.innerHTML='';
+  if(docs.length===0){list.innerHTML='<div class="doc-empty">Inga dokument uppladdade ännu.</div>';return;}
+  docs.forEach((doc,i)=>{
+    const item=document.createElement('div');
+    item.className='doc-item';
+    const dateStr=doc.created_at?new Date(doc.created_at).toLocaleDateString('sv-SE'):'';
+    item.innerHTML=`<div class="doc-header"><span class="doc-name">${doc.name||doc.filename||'Dokument'}</span><span class="doc-date">${dateStr}</span></div><div class="doc-extraction">${doc.extraction||doc.insikt||'Bearbetas...'}</div><button class="doc-del" onclick="deleteDoc(${i})">Radera</button>`;
+    list.appendChild(item);
+  });
+}
+
+async function deleteDoc(i){
+  const doc=docs[i];
+  if(!doc)return;
+  try{await fetch(`/api/journal/${doc.id||doc._id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+API.token()}});}catch(e){}
+  docs.splice(i,1);
+  renderDocs();
+}
+
+async function upload(file){
+  if(!file)return;
+  document.getElementById('up-loading').style.display='flex';
+  document.getElementById('up-result').style.display='none';
+  const fd=new FormData();
+  fd.append('file',file);
+  let txt='Agenten kunde inte läsa dokumentet.';
+  let newDoc=null;
+  try{
+    const r=await fetch('/api/journal/analyze',{method:'POST',headers:{'Authorization':'Bearer '+API.token()},body:fd});
+    if(r.ok){const j=await r.json();txt=j.analysis?.systemkontext||j.insikt||j.extraction||'Dokumentet analyserades.';newDoc={name:file.name,extraction:txt,created_at:new Date().toISOString()};}
+  }catch(e){}
+  document.getElementById('up-loading').style.display='none';
+  const resEl=document.getElementById('up-result-txt');
+  document.getElementById('up-result').style.display='block';
+  tw(resEl,txt,14);
+  if(newDoc){docs.unshift(newDoc);renderDocs();}
+}
+
+let sumData=null;
+
+async function generateSummary(){
+  document.getElementById('sum-loading').style.display='flex';
+  document.getElementById('sum-preview').classList.remove('show');
+  document.getElementById('sum-dl-btn').classList.remove('show');
+  let checkins=[];
+  try{const r=await fetch('/api/checkins',{headers:{'Authorization':'Bearer '+API.token()}});if(r.ok){const d=await r.json();checkins=Array.isArray(d)?d:(d.checkins||[]);}}catch(e){}
+  const last30=checkins.slice(-30);
+  const profile=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+  const avg=(key)=>{const vals=last30.map(c=>c[key]).filter(v=>typeof v==='number');return vals.length?Math.round((vals.reduce((a,b)=>a+b,0)/vals.length)*10)/10:null;};
+  const sleepAvg=avg('sleep'),stressAvg=avg('stress'),energyAvg=avg('energy');
+  const name=profile.q3_1||'Patient';
+  let observations='Systemet har inte tillräckligt med data för att generera observationer.';
+  try{const r=await fetch('/api/agent/insights/generate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.token()},body:JSON.stringify({checkins:last30,profile,context:'doctor_summary'})});if(r.ok){const j=await r.json();if(j.insikt)observations=j.insikt;}}catch(e){}
+  const d=new Date();
+  const MONTHS=['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+  sumData={name,date:d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear(),dateFile:d.toISOString().slice(0,10),period:'Senaste 30 dagarna',sleep:sleepAvg,stress:stressAvg,energy:energyAvg,observations,checkins:last30.length};
+  document.getElementById('sum-loading').style.display='none';
+  document.getElementById('sum-title').textContent=name+' · '+sumData.date;
+  const rows=[
+    {label:'Period',val:sumData.period+' ('+sumData.checkins+' mätningar)'},
+    {label:'Sömnkvalitet (snitt)',val:sleepAvg!==null?sleepAvg+' / 10':'Otillräcklig data'},
+    {label:'Stressnivå (snitt)',val:stressAvg!==null?stressAvg+' / 10':'Otillräcklig data'},
+    {label:'Energinivå (snitt)',val:energyAvg!==null?energyAvg+' / 10':'Otillräcklig data'},
+  ];
+  document.getElementById('sum-rows').innerHTML=rows.map(r=>`<div class="sum-row"><span class="sum-row-label">${r.label}</span><span class="sum-row-val">${r.val}</span></div>`).join('');
+  document.getElementById('sum-obs-txt').textContent=observations;
+  document.getElementById('sum-preview').classList.add('show');
+  document.getElementById('sum-dl-btn').classList.add('show');
+}
+
+function downloadPDF(){
+  if(!sumData)return;
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,M=22,TW=W-M*2;
+  let y=M;
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(6.5);
+  doc.setTextColor(120,120,120);
+  doc.text('FORSYNE — LÄKARSUMMERING',M,y);
+  y+=7;
+  doc.setDrawColor(80,90,85);
+  doc.setLineWidth(0.3);
+  doc.line(M,y,W-M,y);
+  y+=10;
+  doc.setFont('times','italic');
+  doc.setFontSize(20);
+  doc.setTextColor(18,23,20);
+  doc.text(sumData.name,M,y);
+  y+=7;
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(120,120,120);
+  doc.text(sumData.date,M,y);
+  y+=12;
+  doc.setDrawColor(210,210,210);
+  doc.setLineWidth(0.2);
+  doc.line(M,y,W-M,y);
+  y+=9;
+  const rows=[
+    ['Period',sumData.period+' ('+sumData.checkins+' mätningar)'],
+    ['Sömnkvalitet (snitt)',sumData.sleep!==null?sumData.sleep+' / 10':'Otillräcklig data'],
+    ['Stressnivå (snitt)',sumData.stress!==null?sumData.stress+' / 10':'Otillräcklig data'],
+    ['Energinivå (snitt)',sumData.energy!==null?sumData.energy+' / 10':'Otillräcklig data'],
+  ];
+  rows.forEach(([label,val])=>{
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(6);
+    doc.setTextColor(140,140,140);
+    doc.text(label.toUpperCase(),M,y);
+    doc.setFont('times','italic');
+    doc.setFontSize(10);
+    doc.setTextColor(28,33,30);
+    doc.text(val,M+TW*0.46,y);
+    y+=7;
+    doc.setDrawColor(225,225,225);
+    doc.setLineWidth(0.1);
+    doc.line(M,y-1,W-M,y-1);
+    y+=1;
+  });
+  y+=8;
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(6);
+  doc.setTextColor(140,140,140);
+  doc.text('SYSTEMETS OBSERVATIONER',M,y);
+  y+=7;
+  doc.setFont('times','italic');
+  doc.setFontSize(9.5);
+  doc.setTextColor(45,52,48);
+  const lines=doc.splitTextToSize(sumData.observations,TW);
+  doc.text(lines,M,y);
+  y+=lines.length*5.5+12;
+  doc.setDrawColor(210,210,210);
+  doc.setLineWidth(0.2);
+  doc.line(M,y,W-M,y);
+  y+=7;
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(5.5);
+  doc.setTextColor(170,170,170);
+  doc.text('Genererad av Forsyne · '+sumData.date+' · Konfidentiell medicinsk sammanfattning',M,y);
+  doc.save('forsyne-lakarsummering-'+sumData.dateFile+'.pdf');
+}
+
+(async()=>{
+  const d=new Date();
+  const DAYS=['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+  const MONTHS=['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+  const dateEl=document.getElementById('topDate'),userEl=document.getElementById('topUser');
+  if(dateEl)dateEl.textContent=DAYS[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()];
+  if(userEl){const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');const u=API&&API.user?API.user():null;userEl.textContent=(ob.q3_1||(u?u.email.split('@')[0]:'')||'').toUpperCase();}
+
+  let checkins=[];
+  try{const r=await fetch('/api/checkins',{headers:{'Authorization':'Bearer '+API.token()}});if(r.ok){const data=await r.json();checkins=Array.isArray(data)?data:(data.checkins||[]);}}catch(e){}
+
+  try{const signalEl=document.getElementById('nav-signal');const recent=(checkins||[]).slice(-3);if(recent.filter(c=>c.stress>=7&&c.sleep<=5).length>=2&&signalEl)signalEl.classList.add('show');}catch(e){}
+
+  try{const r=await fetch('/api/journal',{headers:{'Authorization':'Bearer '+API.token()}});if(r.ok){const j=await r.json();docs=j.documents||j||[];}}catch(e){}
+  document.getElementById('doc-load').style.display='none';
+  document.getElementById('doc-list').style.display='flex';
+  renderDocs();
+})();
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Systemkarta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="system.css">
+<style>
+
+
+.main { display: flex; flex-direction: column; overflow: hidden; }
+
+/* PAGE HEADER */
+.page-header {
+  padding: 2rem 3rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-end; justify-content: space-between;
+  flex-shrink: 0;
+}
+.page-eyebrow { font-size: 0.66rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.6rem; }
+.page-eyebrow::before { content: ''; width: 14px; height: 1px; background: var(--accent); opacity: 0.5; }
+.page-heading { font-family: var(--serif); font-size: clamp(1.5rem, 2.5vw, 2.2rem); font-weight: 300; line-height: 1.15; color: var(--fg); }
+.page-heading em { font-style: italic; color: var(--fg2); }
+.header-right { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
+
+/* FILTER BUTTONS */
+.filter-btn {
+  padding: 0.3rem 0.8rem; border: 1px solid var(--border);
+  font-size: 0.68rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--fg3);
+  background: none; cursor: pointer; font-family: var(--sans);
+  transition: all 0.2s;
+}
+.filter-btn:hover { border-color: rgba(143,174,138,0.3); color: var(--fg2); }
+.filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(143,174,138,0.06); }
+
+/* CANVAS AREA */
+.canvas-wrap {
+  flex: 1; position: relative; overflow: hidden;
+  min-height: 0;
+}
+#systemMap { width: 100%; height: 100%; }
+
+/* NODE DETAIL PANEL */
+.detail-panel {
+  position: absolute; right: 2rem; top: 2rem;
+  width: 280px;
+  background: rgba(19,23,20,0.95);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(24px);
+  transform: translateX(320px);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  z-index: 10;
+}
+.detail-panel.visible { transform: translateX(0); }
+.dp-header { padding: 1.4rem 1.6rem; border-bottom: 1px solid var(--border); }
+.dp-close {
+  float: right; font-size: 0.7rem; color: var(--fg4);
+  cursor: pointer; transition: color 0.2s; background: none;
+  border: none; font-family: var(--sans); letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.dp-close:hover { color: var(--fg2); }
+.dp-status { font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.5rem; }
+.dp-title { font-family: var(--serif); font-size: 1.4rem; font-weight: 300; color: var(--fg); line-height: 1.2; }
+.dp-value { font-family: var(--serif); font-size: 2rem; font-weight: 300; line-height: 1; margin-top: 0.3rem; }
+.dp-body { padding: 1.2rem 1.6rem; }
+.dp-insight { font-size: 0.88rem; color: var(--fg2); line-height: 1.7; margin-bottom: 1.2rem; font-style: italic; }
+.dp-connections-lbl { font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--fg3); margin-bottom: 0.6rem; }
+.dp-connection { display: flex; align-items: center; gap: 0.7rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+.dp-connection:last-child { border-bottom: none; }
+.dp-conn-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.dp-conn-name { font-size: 0.78rem; color: var(--fg2); flex: 1; }
+.dp-conn-strength { font-size: 0.6rem; color: var(--fg3); }
+.dp-footer { padding: 1rem 1.6rem; border-top: 1px solid var(--border); }
+.dp-link { font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); text-decoration: none; transition: opacity 0.2s; }
+.dp-link:hover { opacity: 0.7; }
+
+/* LEGEND */
+.legend {
+  position: absolute; left: 2rem; bottom: 2rem;
+  display: flex; flex-direction: column; gap: 0.5rem;
+  background: rgba(19,23,20,0.85);
+  border: 1px solid var(--border);
+  padding: 1rem 1.2rem;
+  backdrop-filter: blur(16px);
+}
+.legend-item { display: flex; align-items: center; gap: 0.6rem; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg3); }
+.legend-line { width: 24px; height: 2px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* HINT */
+.hint {
+  position: absolute; left: 50%; bottom: 2rem;
+  transform: translateX(-50%);
+  font-size: 0.68rem; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--fg4);
+  pointer-events: none;
+  animation: hintFade 3s ease 2s forwards;
+  opacity: 1;
+}
+@keyframes hintFade { to { opacity: 0; } }
+
+/* TOOLTIP */
+.node-tooltip {
+  position: absolute; pointer-events: none;
+  background: rgba(19,23,20,0.95);
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.8rem;
+  font-size: 0.74rem; color: var(--fg2);
+  letter-spacing: 0.08em;
+  opacity: 0; transition: opacity 0.15s;
+  backdrop-filter: blur(16px);
+  white-space: nowrap;
+}
+.node-tooltip.visible { opacity: 1; }
+
+@media (max-width: 768px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .detail-panel { width: calc(100vw - 2rem); right: 1rem; top: auto; bottom: 1rem; }
+}
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.page-header { animation: fadeUp 0.4s ease both; }
+
+
+/* ── FORSYNE DESIGN UPGRADE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+/* Topbar glow line */
+.topbar, nav {
+  border-bottom: 1px solid rgba(143,174,138,0.1) !important;
+  box-shadow: 0 1px 0 rgba(143,174,138,0.04);
+}
+/* Metric cards hover glow */
+.metric-card, .panel, .card, .data-card, .insight-card {
+  transition: box-shadow 0.3s ease;
+}
+.metric-card:hover, .panel:hover, .card:hover, .data-card:hover, .insight-card:hover {
+  box-shadow: 0 0 0 1px rgba(143,174,138,0.1), 0 4px 20px rgba(0,0,0,0.3);
+}
+
+body {
+  background-image:
+    linear-gradient(rgba(143,174,138,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(143,174,138,0.03) 1px, transparent 1px) !important;
+  background-size: 40px 40px !important;
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <header class="topbar">
+    <a href="dashboard.html" class="topbar-logo">Forsyne</a>
+    <div class="topbar-center">
+      <div class="topbar-pulse"></div>
+      <span class="topbar-status">Systemet är aktivt</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topDate"></span>
+      <span class="topbar-user" id="topUser"></span>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <div class="nav-group">
+      <div class="nav-group-label">Idag</div>
+      <a class="nav-link" href="dashboard.html">Dashboard</a>
+      <a class="nav-link" href="checkin.html">Check-in</a>
+      <a class="nav-link" href="signal.html">Signalen</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Mönster</div>
+      <a class="nav-link" href="sleep.html">Sömn</a>
+      <a class="nav-link" href="energy.html">Energi</a>
+      <a class="nav-link" href="stress.html">Stress</a>
+      <a class="nav-link" href="training.html">Träning</a>
+      <a class="nav-link" href="nutrition.html">Kost</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Förstå dig själv</div>
+      <a class="nav-link" href="profilering.html">Profilering</a>
+      <a class="nav-link" href="analys.html">Total analys</a>
+      <a class="nav-link active" href="systemkarta.html">Systemkarta</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Din biologi</div>
+      <a class="nav-link" href="wearables.html">Wearables</a>
+      <a class="nav-link" href="biologi.html">Blodprover &amp; hormoner</a>
+      <a class="nav-link" href="journal.html">Läkarjournal</a>
+    </div>
+    <div class="sidebar-foot">
+      Modell · Dag <span id="sidebarDay">–</span>
+      <div class="sidebar-bar"><div class="sidebar-bar-fill" id="sidebarBar" style="width:0%"></div></div>
+      <strong id="sidebarStatus">Laddar...</strong>
+      <div class="sidebar-foot-tagline">Inte baserat på genomsnitt.<br>Baserat på dig.</div>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <div class="page-header">
+      <div>
+        <div class="page-eyebrow">Systemkarta · Dina kopplingar</div>
+        <h1 class="page-heading">Så här fungerar<br><em>du som ett system.</em></h1>
+      </div>
+      <div class="header-right">
+        <button class="filter-btn active" onclick="setFilter('all', this)">Alla</button>
+        <button class="filter-btn" onclick="setFilter('critical', this)">Kritiska</button>
+        <button class="filter-btn" onclick="setFilter('positive', this)">Positiva</button>
+      </div>
+    </div>
+
+    <!-- CANVAS -->
+    <div class="canvas-wrap">
+      <svg id="systemMap"></svg>
+
+      <!-- TOOLTIP -->
+      <div class="node-tooltip" id="tooltip"></div>
+
+      <!-- LEGEND -->
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-line" style="background:var(--danger);"></div>
+          Kritisk koppling
+        </div>
+        <div class="legend-item">
+          <div class="legend-line" style="background:var(--warn);"></div>
+          Varningskoppling
+        </div>
+        <div class="legend-item">
+          <div class="legend-line" style="background:var(--accent);"></div>
+          Positiv koppling
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--danger); box-shadow:0 0 8px var(--danger);"></div>
+          Kritisk nod
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--accent);"></div>
+          Stabil nod
+        </div>
+      </div>
+
+      <!-- HINT -->
+      <div class="hint">Klicka på en nod för att utforska</div>
+
+      <!-- DETAIL PANEL -->
+      <div class="detail-panel" id="detailPanel">
+        <div class="dp-header">
+          <button class="dp-close" onclick="closeDetail()">Stäng ×</button>
+          <div class="dp-status" id="dpStatus"></div>
+          <div class="dp-title" id="dpTitle"></div>
+          <div class="dp-value" id="dpValue"></div>
+        </div>
+        <div class="dp-body">
+          <div class="dp-insight" id="dpInsight"></div>
+          <div class="dp-connections-lbl">Kopplingar från denna nod</div>
+          <div id="dpConnections"></div>
+        </div>
+        <div class="dp-footer">
+          <a href="#" class="dp-link" id="dpLink">Öppna djupsida →</a>
+        </div>
+      </div>
+    </div>
+
+  <footer style="padding: 1.5rem 3.5rem 2rem; border-top: 1px solid var(--border);">
+    <p style="font-size: 0.74rem; color: #5B7FA6; line-height: 1.7; max-width: 700px; margin-bottom: 0.5rem;">Din data är krypterad, privat och tillhör bara dig. · Forsyne säljer aldrig data.</p>
+    <p style="font-size: 0.74rem; color: var(--fg4); line-height: 1.7; max-width: 700px; margin-bottom: 0.5rem;">Systemets insikter ersätter inte råd från läkare, psykolog eller annan vårdgivare.</p>
+    <p style="font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg4);"><a href="manifesto.html" style="color:var(--fg4); text-decoration:none;">Manifesto</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Disclaimer</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Integritet</a> · © 2026 Forsyne</p>
+  </footer>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+
+// ── DATE ──
+const d = new Date();
+const days = ['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+const months = ['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+document.getElementById('topDate').textContent = `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+
+try {
+  const ob = JSON.parse(localStorage.getItem('forsyne_onboarding') || '{}');
+  if (ob.q3_1) document.getElementById('topUser').textContent = ob.q3_1;
+} catch(e) {}
+
+// ── SYSTEM DATA ──
+// Baserat på 14 dagars mockad data — ersätts med riktig data från Supabase
+const nodes = [
+  {
+    id: 'stress',
+    label: 'Stress',
+    value: '68',
+    unit: '/100',
+    status: 'critical',
+    color: '#A85C5C',
+    page: 'stress.html',
+    insight: 'Primär drivkraft bakom signalen. Kognitiv belastning ons–fre håller kortisolet förhöjt och påverkar tre andra noder direkt.',
+    metric: 'Stressnivå'
+  },
+  {
+    id: 'sleep',
+    label: 'Sömn',
+    value: '5h 12m',
+    unit: '',
+    status: 'critical',
+    color: '#A85C5C',
+    page: 'sleep.html',
+    insight: 'Tredje natten under 6h i rad. Djupsömnen blockeras av förhöjt kortisol. Källan sitter i stressen — inte i sömnvanorna.',
+    metric: 'Total sömn'
+  },
+  {
+    id: 'hrv',
+    label: 'HRV',
+    value: '38ms',
+    unit: '',
+    status: 'critical',
+    color: '#A85C5C',
+    page: 'sleep.html',
+    insight: 'Under snitt (46ms). Sjunker konsekvent sedan fredag. Speglar stressens och sömnunderskottets kombinerade effekt på nervsystemet.',
+    metric: 'HRV natt'
+  },
+  {
+    id: 'energy',
+    label: 'Energi',
+    value: '34',
+    unit: '/100',
+    status: 'critical',
+    color: '#A85C5C',
+    page: 'energy.html',
+    insight: 'Body Battery 34 — lägsta på 3 veckor. Laddas inte tillräckligt under sömn. Direkt konsekvens av sömnunderskottet.',
+    metric: 'Body Battery'
+  },
+  {
+    id: 'training',
+    label: 'Träning',
+    value: '72',
+    unit: '/100',
+    status: 'good',
+    color: '#8FAE8A',
+    page: 'training.html',
+    insight: 'VO2max-trenden är uppåtgående. Konsistensen är stark. Problemet är inte träningen — det är återhämtningen mellan passen.',
+    metric: 'Träningspoäng'
+  },
+  {
+    id: 'nutrition',
+    label: 'Kost',
+    value: '48',
+    unit: '/100',
+    status: 'warning',
+    color: '#C4875A',
+    page: 'nutrition.html',
+    insight: 'Frukost hoppas 60% av dagarna. Kaffe efter 14:00 sker 73% av dagarna. Timing är problemet — inte kvaliteten på maten.',
+    metric: 'Kostpoäng'
+  },
+  {
+    id: 'recovery',
+    label: 'Åter-\nhämtning',
+    value: '38',
+    unit: '/100',
+    status: 'critical',
+    color: '#A85C5C',
+    page: 'training.html',
+    insight: 'CNS ej återhämtat. Tränar på underskott. Återhämtningstid 36–48h men tränar var 24h.',
+    metric: 'Återhämtning'
+  },
+  {
+    id: 'psychology',
+    label: 'Psykologi',
+    value: '52',
+    unit: '/100',
+    status: 'warning',
+    color: '#C4875A',
+    page: 'wellness.html',
+    insight: 'Prokrastinering +65% på höga stressdagar. Prefrontal cortex nedregleras under hög kortisol. Det är biologi — inte brist på disciplin.',
+    metric: 'Psyk. hälsa'
+  },
+  {
+    id: 'signalen',
+    label: 'Signalen',
+    value: 'Dag 2',
+    unit: 'av 7',
+    status: 'critical',
+    color: '#A85C5C',
+    page: 'signalen.html',
+    insight: 'Aktivt sedan fredag. Tre primära signaler konvergerar: HRV, sömn och energi sjunker simultant. Krasch förväntas dag 7 om inget förändras.',
+    metric: 'Varselstatus'
+  }
+];
+
+// Kopplingar — source, target, strength (0-1), type
+const links = [
+  // Stress är roten — påverkar allt
+  { source: 'stress', target: 'sleep',      strength: 0.92, type: 'critical', label: '−24 min djupsömn per stresstoppar efter 18:00' },
+  { source: 'stress', target: 'hrv',        strength: 0.88, type: 'critical', label: 'Kortisol sänker HRV direkt' },
+  { source: 'stress', target: 'energy',     strength: 0.78, type: 'critical', label: 'Hög stress accelererar urladdning +25%' },
+  { source: 'stress', target: 'psychology', strength: 0.74, type: 'warning',  label: '+65% prokrastinering vid stress >65' },
+  { source: 'stress', target: 'nutrition',  strength: 0.55, type: 'warning',  label: 'Kortisol ökar ghrelin och cravings' },
+
+  // Sömn påverkar allt
+  { source: 'sleep', target: 'hrv',        strength: 0.88, type: 'critical', label: 'Djupsömn <55 min sänker HRV 8–12 ms' },
+  { source: 'sleep', target: 'energy',     strength: 0.85, type: 'critical', label: '−12 Body Battery per timme under snitt' },
+  { source: 'sleep', target: 'recovery',   strength: 0.80, type: 'critical', label: 'Återhämtning tar 36–48h istället för 24h' },
+  { source: 'sleep', target: 'psychology', strength: 0.68, type: 'warning',  label: 'Sömnunderskott sänker kognitiv kapacitet −25%' },
+
+  // HRV → energi och träning
+  { source: 'hrv',   target: 'energy',    strength: 0.82, type: 'critical', label: 'Lågt HRV = låg laddningseffektivitet under sömn' },
+  { source: 'hrv',   target: 'training',  strength: 0.70, type: 'warning',  label: 'HRV styr optimal träningsbelastning' },
+  { source: 'hrv',   target: 'signalen',   strength: 0.95, type: 'critical', label: 'HRV-trend är primär varsel-signal' },
+
+  // Träning ↔ återhämtning
+  { source: 'training',  target: 'recovery', strength: 0.74, type: 'warning',  label: 'Hårt pass kräver 36–48h återhämtning' },
+  { source: 'training',  target: 'sleep',    strength: 0.65, type: 'warning',  label: 'Kvällsträning −35% djupsömn' },
+
+  // Kost → energi och sömn
+  { source: 'nutrition', target: 'energy',   strength: 0.72, type: 'warning',  label: 'Hoppad frukost −14 Body Battery' },
+  { source: 'nutrition', target: 'sleep',    strength: 0.60, type: 'warning',  label: 'Kaffe efter 14:00 −18 min djupsömn' },
+
+  // Signalen ← allt kritiskt
+  { source: 'sleep',    target: 'signalen',   strength: 0.88, type: 'critical', label: 'Tre nätter under 6h = varsel-trigger' },
+  { source: 'energy',   target: 'signalen',   strength: 0.80, type: 'critical', label: 'Body Battery <40 = varsel-signal' },
+
+  // Positiva kopplingar
+  { source: 'training', target: 'stress',    strength: 0.65, type: 'positive', label: 'Förmiddagsträning −22% kvällsstress' },
+  { source: 'recovery', target: 'energy',    strength: 0.70, type: 'positive', label: 'God återhämtning laddar Body Battery' },
+];
+
+// ── D3 VISUALIZATION ──
+let currentFilter = 'all';
+let selectedNode = null;
+
+const svg = d3.select('#systemMap');
+const wrap = document.querySelector('.canvas-wrap');
+
+function getSize() {
+  return { w: wrap.clientWidth, h: wrap.clientHeight };
+}
+
+let { w, h } = getSize();
+
+// Defs — gradients & filters
+const defs = svg.append('defs');
+
+// Glow filter
+const glowFilter = defs.append('filter').attr('id', 'glow');
+glowFilter.append('feGaussianBlur').attr('stdDeviation', '3').attr('result', 'coloredBlur');
+const feMerge = glowFilter.append('feMerge');
+feMerge.append('feMergeNode').attr('in', 'coloredBlur');
+feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+
+// Strong glow
+const strongGlow = defs.append('filter').attr('id', 'strongGlow');
+strongGlow.append('feGaussianBlur').attr('stdDeviation', '6').attr('result', 'coloredBlur');
+const feMerge2 = strongGlow.append('feMerge');
+feMerge2.append('feMergeNode').attr('in', 'coloredBlur');
+feMerge2.append('feMergeNode').attr('in', 'SourceGraphic');
+
+// Arrow markers
+['critical', 'warning', 'positive'].forEach(type => {
+  const color = type === 'critical' ? '#A85C5C' : type === 'warning' ? '#C4875A' : '#8FAE8A';
+  defs.append('marker')
+    .attr('id', 'arrow-' + type)
+    .attr('viewBox', '0 -5 10 10')
+    .attr('refX', 28).attr('refY', 0)
+    .attr('markerWidth', 6).attr('markerHeight', 6)
+    .attr('orient', 'auto')
+    .append('path')
+    .attr('d', 'M0,-5L10,0L0,5')
+    .attr('fill', color)
+    .attr('opacity', 0.6);
+});
+
+// Main group
+const g = svg.append('g');
+
+// Position nodes in an organic layout
+function positionNodes(width, height) {
+  const cx = width / 2;
+  const cy = height / 2;
+  const positions = {
+    stress:     { x: cx - width * 0.28, y: cy - height * 0.18 },
+    sleep:      { x: cx - width * 0.05, y: cy - height * 0.32 },
+    hrv:        { x: cx + width * 0.22, y: cy - height * 0.22 },
+    energy:     { x: cx + width * 0.28, y: cy + height * 0.08 },
+    training:   { x: cx + width * 0.12, y: cy + height * 0.30 },
+    nutrition:  { x: cx - width * 0.18, y: cy + height * 0.30 },
+    recovery:   { x: cx - width * 0.30, y: cy + height * 0.12 },
+    psychology: { x: cx - width * 0.10, y: cy + height * 0.05 },
+    signalen:   { x: cx + width * 0.04, y: cy - height * 0.08 },
+  };
+  return positions;
+}
+
+let positions = positionNodes(w, h);
+nodes.forEach(n => { n.x = positions[n.id].x; n.y = positions[n.id].y; });
+
+// ── LINKS ──
+const linkG = g.append('g').attr('class', 'links');
+
+function getLinkColor(type) {
+  return type === 'critical' ? '#A85C5C' : type === 'warning' ? '#C4875A' : '#8FAE8A';
+}
+
+function getLinkOpacity(type) {
+  return type === 'critical' ? 0.55 : type === 'warning' ? 0.42 : 0.38;
+}
+
+function getLinkWidth(strength) {
+  return 0.8 + strength * 2.2;
+}
+
+const linkPaths = linkG.selectAll('path')
+  .data(links)
+  .enter()
+  .append('path')
+  .attr('class', d => 'link link-' + d.type)
+  .attr('fill', 'none')
+  .attr('stroke', d => getLinkColor(d.type))
+  .attr('stroke-width', d => getLinkWidth(d.strength))
+  .attr('stroke-opacity', d => getLinkOpacity(d.type))
+  .attr('marker-end', d => `url(#arrow-${d.type})`)
+  .attr('d', d => {
+    const src = nodes.find(n => n.id === d.source);
+    const tgt = nodes.find(n => n.id === d.target);
+    const dx = tgt.x - src.x, dy = tgt.y - src.y;
+    const mx = src.x + dx * 0.5 + dy * 0.15;
+    const my = src.y + dy * 0.5 - dx * 0.15;
+    return `M${src.x},${src.y} Q${mx},${my} ${tgt.x},${tgt.y}`;
+  });
+
+// ── NODES ──
+const nodeG = g.append('g').attr('class', 'nodes');
+
+const nodeGroups = nodeG.selectAll('g')
+  .data(nodes)
+  .enter()
+  .append('g')
+  .attr('class', 'node-group')
+  .attr('transform', d => `translate(${d.x},${d.y})`)
+  .style('cursor', 'pointer')
+  .on('mouseenter', function(event, d) { onNodeHover(event, d, true); })
+  .on('mouseleave', function(event, d) { onNodeHover(event, d, false); })
+  .on('click', function(event, d) { onNodeClick(d); });
+
+// Outer pulse ring (only critical)
+nodeGroups.filter(d => d.status === 'critical')
+  .append('circle')
+  .attr('r', 38)
+  .attr('fill', 'none')
+  .attr('stroke', d => d.color)
+  .attr('stroke-width', 1)
+  .attr('stroke-opacity', 0)
+  .attr('class', 'pulse-outer')
+  .each(function(d) {
+    const el = d3.select(this);
+    function pulse() {
+      el.attr('r', 32).attr('stroke-opacity', 0.4)
+        .transition().duration(2000).ease(d3.easeCubicOut)
+        .attr('r', 52).attr('stroke-opacity', 0)
+        .on('end', pulse);
+    }
+    setTimeout(pulse, Math.random() * 2000);
+  });
+
+// Node background circle
+nodeGroups.append('circle')
+  .attr('r', 30)
+  .attr('fill', d => {
+    const alpha = d.status === 'critical' ? '0.14' : d.status === 'warning' ? '0.10' : '0.08';
+    return d.color + Math.round(parseFloat(alpha) * 255).toString(16).padStart(2,'0');
+  })
+  .attr('stroke', d => d.color)
+  .attr('stroke-width', d => d.status === 'critical' ? 1.5 : 1)
+  .attr('stroke-opacity', d => d.status === 'critical' ? 0.7 : 0.4)
+  .attr('filter', d => d.status === 'critical' ? 'url(#glow)' : null);
+
+// Inner dot
+nodeGroups.append('circle')
+  .attr('r', 4)
+  .attr('fill', d => d.color)
+  .attr('opacity', d => d.status === 'critical' ? 1 : 0.6)
+  .attr('filter', d => d.status === 'critical' ? 'url(#strongGlow)' : null);
+
+// Node label
+nodeGroups.append('text')
+  .attr('y', 46)
+  .attr('text-anchor', 'middle')
+  .attr('font-family', "'Jost', sans-serif")
+  .attr('font-size', '11')
+  .attr('font-weight', '300')
+  .attr('letter-spacing', '1.5')
+  .attr('fill', d => d.status === 'critical' ? '#F2F0EA' : '#8A8E89')
+  .attr('text-transform', 'uppercase')
+  .text(d => d.label.replace('\n', ' ').toUpperCase());
+
+// Node value
+nodeGroups.append('text')
+  .attr('y', 5)
+  .attr('text-anchor', 'middle')
+  .attr('font-family', "'Cormorant Garamond', serif")
+  .attr('font-size', d => d.value.length > 5 ? '12' : '14')
+  .attr('font-weight', '300')
+  .attr('fill', d => d.color)
+  .attr('opacity', 0.9)
+  .text(d => d.value);
+
+// ── HOVER ──
+const tooltip = document.getElementById('tooltip');
+
+function onNodeHover(event, d, entering) {
+  if (entering) {
+    // Highlight connected links
+    linkPaths.transition().duration(200)
+      .attr('stroke-opacity', l =>
+        l.source === d.id || l.target === d.id
+          ? getLinkOpacity(l.type) * 2
+          : getLinkOpacity(l.type) * 0.2
+      )
+      .attr('stroke-width', l =>
+        l.source === d.id || l.target === d.id
+          ? getLinkWidth(l.strength) * 1.5
+          : getLinkWidth(l.strength)
+      );
+
+    // Dim other nodes
+    nodeGroups.transition().duration(200)
+      .attr('opacity', n => {
+        if (n.id === d.id) return 1;
+        const connected = links.some(l =>
+          (l.source === d.id && l.target === n.id) ||
+          (l.target === d.id && l.source === n.id)
+        );
+        return connected ? 0.9 : 0.25;
+      });
+
+    // Tooltip
+    tooltip.textContent = d.metric + ': ' + d.value + d.unit;
+    tooltip.classList.add('visible');
+    tooltip.style.left = (event.offsetX + 16) + 'px';
+    tooltip.style.top = (event.offsetY - 8) + 'px';
+  } else {
+    if (selectedNode) return;
+    resetHighlight();
+    tooltip.classList.remove('visible');
+  }
+}
+
+function resetHighlight() {
+  linkPaths.transition().duration(300)
+    .attr('stroke-opacity', d => getLinkOpacity(d.type))
+    .attr('stroke-width', d => getLinkWidth(d.strength));
+  nodeGroups.transition().duration(300).attr('opacity', 1);
+}
+
+// ── CLICK → DETAIL PANEL ──
+function onNodeClick(d) {
+  selectedNode = d;
+  tooltip.classList.remove('visible');
+
+  // Update detail panel
+  const statusColors = { critical: '#A85C5C', warning: '#C4875A', good: '#8FAE8A' };
+  const statusLabels = { critical: 'Kritisk', warning: 'Varning', good: 'Stabil' };
+
+  document.getElementById('dpStatus').textContent = statusLabels[d.status] || '';
+  document.getElementById('dpStatus').style.color = statusColors[d.status];
+  document.getElementById('dpTitle').textContent = d.label.replace('\n', ' ');
+  document.getElementById('dpValue').textContent = d.value + d.unit;
+  document.getElementById('dpValue').style.color = d.color;
+  document.getElementById('dpInsight').textContent = d.insight;
+  document.getElementById('dpLink').href = d.page;
+  document.getElementById('dpLink').textContent = 'Öppna ' + d.label.replace('\n', ' ').toLowerCase() + 'sidan →';
+
+  // Connected nodes
+  const connected = links.filter(l => l.source === d.id || l.target === d.id);
+  const connHtml = connected.map(l => {
+    const otherId = l.source === d.id ? l.target : l.source;
+    const other = nodes.find(n => n.id === otherId);
+    const color = getLinkColor(l.type);
+    const dir = l.source === d.id ? '→' : '←';
+    return `<div class="dp-connection">
+      <div class="dp-conn-dot" style="background:${color};"></div>
+      <div class="dp-conn-name">${dir} ${other.label.replace('\n',' ')}</div>
+      <div class="dp-conn-strength" style="color:${color};">${Math.round(l.strength * 100)}%</div>
+    </div>`;
+  }).join('');
+  document.getElementById('dpConnections').innerHTML = connHtml;
+
+  document.getElementById('detailPanel').classList.add('visible');
+
+  // Highlight this node's connections
+  linkPaths.transition().duration(200)
+    .attr('stroke-opacity', l =>
+      l.source === d.id || l.target === d.id
+        ? getLinkOpacity(l.type) * 2.2
+        : getLinkOpacity(l.type) * 0.15
+    )
+    .attr('stroke-width', l =>
+      l.source === d.id || l.target === d.id
+        ? getLinkWidth(l.strength) * 2
+        : getLinkWidth(l.strength)
+    );
+
+  nodeGroups.transition().duration(200)
+    .attr('opacity', n => {
+      if (n.id === d.id) return 1;
+      const connected = links.some(l =>
+        (l.source === d.id && l.target === n.id) ||
+        (l.target === d.id && l.source === n.id)
+      );
+      return connected ? 1 : 0.2;
+    });
+}
+
+function closeDetail() {
+  selectedNode = null;
+  document.getElementById('detailPanel').classList.remove('visible');
+  resetHighlight();
+}
+
+// Click outside to close
+svg.on('click', function(event) {
+  if (event.target.tagName === 'svg') closeDetail();
+});
+
+// ── FILTER ──
+function setFilter(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = type;
+  closeDetail();
+
+  linkPaths.transition().duration(300)
+    .attr('stroke-opacity', l => {
+      if (type === 'all') return getLinkOpacity(l.type);
+      if (type === 'critical') return l.type === 'critical' ? getLinkOpacity(l.type) * 1.5 : 0.04;
+      if (type === 'positive') return l.type === 'positive' ? getLinkOpacity(l.type) * 1.5 : 0.04;
+      return getLinkOpacity(l.type);
+    });
+
+  nodeGroups.transition().duration(300)
+    .attr('opacity', n => {
+      if (type === 'all') return 1;
+      if (type === 'critical') return n.status === 'critical' ? 1 : 0.3;
+      if (type === 'positive') return n.status === 'good' ? 1 : 0.3;
+      return 1;
+    });
+}
+
+// ── RESIZE ──
+function resize() {
+  const size = getSize();
+  w = size.w; h = size.h;
+  svg.attr('width', w).attr('height', h);
+
+  positions = positionNodes(w, h);
+  nodes.forEach(n => { n.x = positions[n.id].x; n.y = positions[n.id].y; });
+
+  nodeGroups.attr('transform', d => `translate(${d.x},${d.y})`);
+
+  linkPaths.attr('d', d => {
+    const src = nodes.find(n => n.id === d.source);
+    const tgt = nodes.find(n => n.id === d.target);
+    const dx = tgt.x - src.x, dy = tgt.y - src.y;
+    const mx = src.x + dx * 0.5 + dy * 0.15;
+    const my = src.y + dy * 0.5 - dx * 0.15;
+    return `M${src.x},${src.y} Q${mx},${my} ${tgt.x},${tgt.y}`;
+  });
+}
+
+svg.attr('width', w).attr('height', h);
+window.addEventListener('resize', resize);
+
+// ── ENTRANCE ANIMATION ──
+nodeGroups.attr('opacity', 0)
+  .transition().duration(600).ease(d3.easeCubicOut)
+  .delay((d, i) => i * 80)
+  .attr('opacity', 1);
+
+linkPaths.attr('stroke-opacity', 0)
+  .transition().duration(800).ease(d3.easeCubicOut)
+  .delay((d, i) => 400 + i * 40)
+  .attr('stroke-opacity', d => getLinkOpacity(d.type));
+
+// NAV
+document.querySelectorAll('.nav-link').forEach(l => {
+  l.addEventListener('click', e => {
+    if (l.getAttribute('href') === '#') {
+      e.preventDefault();
+      document.querySelectorAll('.nav-link').forEach(x => x.classList.remove('active'));
+      l.classList.add('active');
+    }
+  });
+});
+
+</script>
+<script>
+checkAuth();
+// Set user name from onboarding
+const _ob = JSON.parse(localStorage.getItem('forsyne_onboarding') || '{}');
+const _un = document.getElementById('topUser');
+if (_un && _ob.q3_1) _un.textContent = _ob.q3_1;
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

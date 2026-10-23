@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Check-in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<script src="cache.js"></script>
+<style>
+:root{--ink:#0F1210;--ink2:#131714;--ink3:#171c18;--fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;--accent:#8FAE8A;--warn:#C4875A;--danger:#A85C5C;--trust:#5B7FA6;--serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;--border:rgba(242,240,234,0.06);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;}
+.page-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;}
+.page-bg-img{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.18) saturate(0.4);}
+.page-bg-veil{position:absolute;inset:0;background:linear-gradient(to bottom,var(--ink) 0%,rgba(15,18,16,0.72) 9%,rgba(15,18,16,0.06) 26%,rgba(15,18,16,0.06) 74%,rgba(15,18,16,0.72) 91%,var(--ink) 100%);}
+nav{display:flex;align-items:center;justify-content:space-between;padding:0 clamp(1.5rem,4vw,2.5rem);height:60px;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.95);backdrop-filter:blur(24px);position:sticky;top:0;z-index:100;flex-shrink:0;}
+.logo{font-family:var(--serif);font-size:1.1rem;font-weight:400;letter-spacing:0.16em;color:var(--fg);text-decoration:none;}
+.nav-back{font-size:0.74rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--fg3);text-decoration:none;transition:color 0.2s;}
+.nav-back:hover{color:var(--fg2);}
+.checkin-wrap{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:4rem 2rem 6rem;position:relative;z-index:1;}
+.checkin-inner{width:100%;max-width:580px;}
+.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;}
+.progress-step{font-size:0.66rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg4);}
+.progress-bar{height:1px;background:var(--border);position:relative;margin-bottom:3.5rem;}
+.progress-fill{height:100%;background:var(--accent);position:absolute;top:0;left:0;transition:width 0.5s cubic-bezier(0.4,0,0.2,1);}
+.loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6rem 0;text-align:center;}
+.loading-dots{display:flex;gap:0.5rem;margin-bottom:1.5rem;}
+.loading-dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:dotPulse 1.4s ease infinite;}
+.loading-dot:nth-child(2){animation-delay:0.2s;}
+.loading-dot:nth-child(3){animation-delay:0.4s;}
+@keyframes dotPulse{0%,80%,100%{opacity:0.2;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}
+.loading-text{font-size:0.74rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg4);}
+.question-card{background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);border:1px solid var(--border);padding:2.4rem 2.4rem 2rem;animation:fadeUp 0.4s ease both;}
+.question-card::before{content:'';display:block;width:14px;height:1px;background:var(--accent);opacity:0.5;margin-bottom:1.2rem;}
+.q-label{font-size:0.62rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--accent);opacity:0.7;margin-bottom:0.8rem;}
+.q-text{font-family:var(--serif);font-size:clamp(1.3rem,2.8vw,1.7rem);font-weight:300;line-height:1.45;color:var(--fg);margin-bottom:2rem;}
+.scale-wrap{margin-bottom:1.5rem;}
+.scale-buttons{display:flex;gap:0.5rem;}
+.scale-btn{flex:1;min-height:52px;background:none;border:1px solid var(--border);color:var(--fg3);font-family:var(--sans);font-size:1rem;font-weight:300;cursor:pointer;transition:all 0.15s;position:relative;}
+.scale-btn:hover{border-color:rgba(143,174,138,0.3);color:var(--fg2);}
+.scale-btn.selected{border-color:var(--accent);color:var(--accent);background:rgba(143,174,138,0.06);}
+.scale-labels{display:flex;justify-content:space-between;margin-top:0.5rem;font-size:0.62rem;letter-spacing:0.12em;color:var(--fg4);}
+.yesno-wrap{display:flex;gap:0.75rem;margin-bottom:1.5rem;}
+.yesno-btn{flex:1;min-height:52px;background:none;border:1px solid var(--border);color:var(--fg3);font-family:var(--sans);font-size:0.78rem;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;}
+.yesno-btn:hover{border-color:rgba(143,174,138,0.3);color:var(--fg2);}
+.yesno-btn.selected{border-color:var(--accent);color:var(--accent);background:rgba(143,174,138,0.06);}
+.freetext-wrap{margin-bottom:1.5rem;}
+.freetext-optional{font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg4);margin-bottom:0.6rem;display:block;}
+.freetext-input{width:100%;background:none;border:none;border-bottom:1px solid var(--border);color:var(--fg2);font-family:var(--sans);font-size:0.88rem;font-weight:300;line-height:1.7;padding:0.6rem 0;resize:none;outline:none;min-height:72px;transition:border-color 0.2s;}
+.freetext-input:focus{border-bottom-color:rgba(143,174,138,0.3);}
+.freetext-input::placeholder{color:var(--fg4);}
+.voice-row{display:flex;align-items:center;gap:0.6rem;margin-top:0.5rem;}
+.voice-btn{background:none;border:1px solid var(--border);color:var(--fg4);font-family:var(--sans);font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.35rem 0.75rem;cursor:pointer;transition:border-color 0.2s,color 0.2s;}
+.voice-btn:hover{border-color:var(--accent);color:var(--accent);}
+.voice-btn.listening{border-color:var(--accent);color:var(--accent);animation:pulse-border 1.2s ease infinite;}
+.voice-hint{font-size:0.65rem;letter-spacing:0.1em;color:var(--fg4);}
+@keyframes pulse-border{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.next-row{display:flex;justify-content:flex-end;margin-top:0.5rem;}
+.next-btn{padding:0.95rem 2.4rem;background:none;border:1px solid rgba(143,174,138,0.35);font-family:var(--sans);font-size:0.78rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);cursor:pointer;transition:all 0.25s;min-height:48px;}
+.next-btn:hover:not(:disabled){background:rgba(143,174,138,0.08);border-color:var(--accent);}
+.next-btn:disabled{opacity:0.3;cursor:not-allowed;}
+.done-state{display:none;text-align:center;padding:5rem 0;animation:fadeUp 0.5s ease both;}
+.done-state.active{display:block;}
+.done-dots{display:flex;gap:0.5rem;justify-content:center;margin-bottom:2.5rem;}
+.done-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:dotPulse 1.4s ease infinite;}
+.done-dot:nth-child(2){animation-delay:0.2s;}
+.done-dot:nth-child(3){animation-delay:0.4s;}
+.error-msg{font-size:0.7rem;color:var(--danger);padding:0.8rem 1.2rem;border:1px solid rgba(168,92,92,0.2);background:rgba(168,92,92,0.04);margin-bottom:1.5rem;display:none;}
+.error-msg.visible{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.s-footer{padding:2rem clamp(1.5rem,4vw,2.5rem);border-top:1px solid var(--border);margin-top:3rem;position:relative;z-index:1;}
+.s-footer p{font-size:0.68rem;color:var(--fg4);line-height:1.7;max-width:480px;margin:0 0 0.5rem;}
+.s-footer a{color:var(--fg3);text-decoration:none;}
+.s-footer-links{font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg4);}
+@media(max-width:600px){.checkin-wrap{padding:2rem 1.2rem 4rem;}nav{padding:0 1.2rem;}.question-card{padding:1.6rem 1.4rem 1.4rem;}}
+
+@media(max-width:860px){
+  .sidebar{display:none!important;}
+  .content-wrap,.page-wrap,.layout-wrap{display:block!important;}
+  #main,.main-content,.page-content{width:100%!important;max-height:none!important;overflow-y:auto!important;}
+  .mg,.pred-grid,.today-plan-grid,.bio-grid,.src-grid,.prof-grid{grid-template-columns:1fr 1fr!important;}
+  .pred-grid,.prof-grid{grid-template-columns:1fr!important;}
+}
+</style>
+</head>
+<body>
+<script>checkAuth();</script>
+<div class="page-bg">
+  <div class="page-bg-img" style="background-image:url('images/DALL·E 2026-04-11 15.20.51 - A dark, minimal interior room with a single tall window. Soft morning light streams in, casting long, gentle shadows across bare walls and a simple fl.webp')"></div>
+  <div class="page-bg-veil"></div>
+</div>
+
+<nav>
+  <a href="dashboard.html" class="logo">Forsyne</a>
+  <a href="dashboard.html" class="nav-back">← Dashboard</a>
+</nav>
+
+<div class="checkin-wrap">
+  <div class="checkin-inner">
+
+    <div class="progress-header">
+      <span class="progress-step" id="stepLabel"></span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div class="loading-state" id="loadingState">
+      <div class="loading-dots">
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+      </div>
+      <div class="loading-text">Systemet förbereder din check-in</div>
+    </div>
+
+    <div id="questionArea" style="display:none;"></div>
+
+    <div class="done-state" id="doneState">
+      <div class="done-dots">
+        <div class="done-dot"></div>
+        <div class="done-dot"></div>
+        <div class="done-dot"></div>
+      </div>
+      <div id="notif-ask" style="display:none;margin-top:2.5rem;">
+        <p style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg4);margin-bottom:1rem;">Aktivera dagliga påminnelser?</p>
+        <button onclick="enableNotifPrompt()" style="background:none;border:1px solid rgba(143,174,138,0.3);color:var(--accent);font-family:var(--sans);font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.6rem 1.4rem;cursor:pointer;">Aktivera</button>
+        <button onclick="document.getElementById('notif-ask').style.display='none'" style="background:none;border:none;color:var(--fg4);font-family:var(--sans);font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.6rem 1rem;cursor:pointer;margin-left:0.5rem;">Inte nu</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer class="s-footer">
+  <p>Forsyne är ett verktyg för självförståelse och prestation. Systemets insikter ersätter inte råd från läkare, psykolog eller annan vårdgivare — de kompletterar dem. <a href="disclaimer.html">Läs mer</a></p>
+  <p class="s-footer-links"><a href="manifesto.html">Manifesto</a> · <a href="disclaimer.html">Disclaimer</a> · <a href="disclaimer.html">Integritet</a> · © 2026 Forsyne</p>
+</footer>
+
+<script>
+// ── Sidebar: auto-active baserat på URL ──
+(function(){
+  const page = location.pathname.split('/').pop() || 'dashboard.html';
+  document.querySelectorAll('.sidebar a.nl').forEach(a => {
+    if (a.getAttribute('href') === page) a.classList.add('active');
+  });
+})();
+
+let questions=[];
+let answers={};
+let current=0;
+
+(async()=>{
+  try{
+    const data=await API.post('/api/checkin/questions',{
+      phase:localStorage.getItem('prv_phase')||'',
+      goal:localStorage.getItem('prv_goal')||''
+    });
+    if(!data||!data.questions)throw new Error('Inga frågor');
+    questions=data.questions;
+    document.getElementById('loadingState').style.display='none';
+    document.getElementById('questionArea').style.display='block';
+    renderQuestion(0);
+  }catch(e){
+    showError('Systemet kunde inte förbereda din check-in just nu. Försök igen om en stund.');
+    document.getElementById('loadingState').style.display='none';
+  }
+})();
+
+function renderQuestion(idx){
+  current=idx;
+  const q=questions[idx];
+  const total=questions.length;
+  const pct=Math.round((idx/total)*100);
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('stepLabel').textContent=`Fråga ${idx+1} av ${total}`;
+  const area=document.getElementById('questionArea');
+  area.innerHTML=buildQuestionHTML(q,idx);
+}
+
+function buildQuestionHTML(q,idx){
+  const total=questions.length;
+  let inputHTML='';
+  if(q.type==='scale'){
+    const cur=answers[q.id];
+    const btns=[1,2,3,4,5].map(v=>`<button type="button" class="scale-btn${cur===v?' selected':''}" onclick="selectScale(${v})">${v}</button>`).join('');
+    inputHTML=`<div class="scale-wrap"><div class="scale-buttons">${btns}</div><div class="scale-labels"><span>Låg</span><span>Hög</span></div></div>`;
+  }else if(q.type==='yesno'){
+    const cur=answers[q.id];
+    inputHTML=`<div class="yesno-wrap"><button type="button" class="yesno-btn${cur===true?' selected':''}" onclick="selectYesNo(true)">Ja</button><button type="button" class="yesno-btn${cur===false?' selected':''}" onclick="selectYesNo(false)">Nej</button></div>`;
+  }else{
+    const cur=answers[q.id]||'';
+    const voiceSupported=('webkitSpeechRecognition' in window||'SpeechRecognition' in window);
+    const voiceRow=voiceSupported?`<div class="voice-row"><button type="button" class="voice-btn" id="voiceBtn" onclick="toggleVoice()">Tala</button><span class="voice-hint" id="voiceHint">Klicka och tala din reflektion</span></div>`:'';
+    inputHTML=`<div class="freetext-wrap"><span class="freetext-optional">Valfritt svar</span><textarea class="freetext-input" id="freetextInput" placeholder="Skriv något, eller lämna tomt och fortsätt…" oninput="answers['${q.id}']=this.value.trim()" rows="3">${cur}</textarea>${voiceRow}</div>`;
+  }
+  const isLast=idx===total-1;
+  const nextLabel=isLast?'Spara check-in →':'Nästa →';
+  const needsAnswer=q.type==='scale'||q.type==='yesno';
+  const hasAnswer=needsAnswer?(answers[q.id]!==undefined):true;
+  return `<div class="question-card"><div class="q-label">Check-in · ${q.type==='scale'?'Skala 1–5':q.type==='yesno'?'Ja eller nej':'Fri text'}</div><div class="q-text">${q.text}</div>${inputHTML}<div class="next-row"><button class="next-btn" id="nextBtn" onclick="handleNext()" ${needsAnswer&&!hasAnswer?'disabled':''}>${nextLabel}</button></div></div>`;
+}
+
+function selectScale(val){const q=questions[current];answers[q.id]=val;renderQuestion(current);}
+function selectYesNo(val){const q=questions[current];answers[q.id]=val;renderQuestion(current);}
+
+async function handleNext(){
+  const q=questions[current];
+  if(q.type==='freetext'){const el=document.getElementById('freetextInput');if(el)answers[q.id]=el.value.trim();}
+  if(current<questions.length-1){renderQuestion(current+1);return;}
+  const btn=document.getElementById('nextBtn');
+  if(btn){btn.disabled=true;btn.textContent='Sparar…';}
+  document.getElementById('progressFill').style.width='100%';
+  try{
+    const token=API.token();
+    const res=await fetch('/api/checkin/submit',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({answers})});
+    if(!res.ok)throw new Error('Submit failed');
+    PCache.bust();
+    document.getElementById('questionArea').style.display='none';
+    document.getElementById('stepLabel').textContent='';
+    const done=document.getElementById('doneState');
+    done.classList.add('active');
+    // Visa påminnelse-prompt om notiser inte är aktiverade
+    if('Notification' in window && Notification.permission !== 'granted' && !localStorage.getItem('prv_notif_enabled')){
+      document.getElementById('notif-ask').style.display='block';
+      setTimeout(()=>{_redirect('dashboard.html');},5000);
+    } else {
+      setTimeout(()=>{_redirect('dashboard.html');},2000);
+    }
+  }catch(e){
+    showError('Något gick fel när vi sparade din check-in. Försök igen.');
+    if(btn){btn.disabled=false;btn.textContent='Försök igen →';}
+  }
+}
+
+function showError(msg){const el=document.getElementById('errorMsg');el.textContent=msg;el.classList.add('visible');}
+
+let _recognition=null;
+function toggleVoice(){
+  const btn=document.getElementById('voiceBtn');
+  const hint=document.getElementById('voiceHint');
+  const ta=document.getElementById('freetextInput');
+  if(!btn||!ta)return;
+
+  if(_recognition){
+    _recognition.stop();
+    return;
+  }
+
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  const r=new SR();
+  r.lang='sv-SE';
+  r.interimResults=true;
+  r.continuous=false;
+  _recognition=r;
+
+  btn.textContent='Lyssnar…';
+  btn.classList.add('listening');
+  if(hint)hint.textContent='Tala nu — klicka igen för att avsluta';
+
+  const baseText=ta.value;
+
+  r.onresult=e=>{
+    let interim='',final='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal)final+=e.results[i][0].transcript;
+      else interim+=e.results[i][0].transcript;
+    }
+    ta.value=baseText+(baseText&&(final||interim)?' ':'')+((final||interim));
+    const q=questions[current];
+    if(q)answers[q.id]=ta.value.trim();
+  };
+
+  r.onend=()=>{
+    _recognition=null;
+    btn.textContent='Tala';
+    btn.classList.remove('listening');
+    if(hint)hint.textContent='Klicka och tala din reflektion';
+    const q=questions[current];
+    const el=document.getElementById('freetextInput');
+    if(q&&el)answers[q.id]=el.value.trim();
+  };
+
+  r.onerror=()=>{r.stop();};
+  r.start();
+}
+</script>
+<script src="notif.js"></script>
+<script>
+async function enableNotifPrompt(){
+  const ok = await window._notif.enable();
+  document.getElementById('notif-ask').style.display='none';
+  if(ok) window._notif.setTime('07:30');
+  _redirect('dashboard.html');
+}
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

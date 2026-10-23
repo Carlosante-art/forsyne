@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bekräfta ditt konto — Forsyne</title>
+</head>
+<body style="margin:0; padding:0; background:#0F1210; font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-weight:300; color:#F2F0EA;">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0F1210; min-height:100vh;">
+  <tr>
+    <td align="center" style="padding: 60px 20px;">
+
+      <table width="540" cellpadding="0" cellspacing="0" border="0" style="max-width:540px; width:100%;">
+
+        <!-- LOGO -->
+        <tr>
+          <td style="padding-bottom:48px; text-align:center;">
+            <span style="font-family:Georgia,'Times New Roman',serif; font-size:15px; font-weight:400; letter-spacing:0.22em; color:#F2F0EA; text-transform:uppercase;">Forsyne</span>
+          </td>
+        </tr>
+
+        <!-- DIVIDER TOP -->
+        <tr>
+          <td style="padding-bottom:48px;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="height:1px; background:rgba(242,240,234,0.06); font-size:0; line-height:0;">&nbsp;</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- HEADING -->
+        <tr>
+          <td style="padding-bottom:12px; text-align:left;">
+            <span style="font-family:Georgia,'Times New Roman',serif; font-size:32px; font-weight:300; line-height:1.2; color:#F2F0EA; display:block;">Bekräfta ditt</span>
+            <span style="font-family:Georgia,'Times New Roman',serif; font-size:32px; font-weight:300; font-style:italic; line-height:1.2; color:#CCC9BF; display:block;">konto.</span>
+          </td>
+        </tr>
+
+        <!-- BODY TEXT -->
+        <tr>
+          <td style="padding-bottom:40px; padding-top:20px;">
+            <p style="font-size:14px; color:#8A8E89; line-height:1.85; margin:0; font-weight:300;">
+              Du är ett klick bort från att bygga din modell.<br>
+              Klicka på knappen nedan för att bekräfta din e-postadress och starta onboardingen.
+            </p>
+          </td>
+        </tr>
+
+        <!-- CTA BUTTON -->
+        <tr>
+          <td style="padding-bottom:40px;">
+            <table cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="background:#D6CFC0;">
+                  <a href="{{ .ConfirmationURL }}" style="display:inline-block; padding:14px 40px; font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:11px; font-weight:500; letter-spacing:0.2em; text-transform:uppercase; color:#0F1210; text-decoration:none; white-space:nowrap;">Bekräfta konto</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- FALLBACK LINK -->
+        <tr>
+          <td style="padding-bottom:48px;">
+            <p style="font-size:11px; color:#4a4e49; line-height:1.8; margin:0;">
+              Fungerar inte knappen? Kopiera och klistra in den här länken i din webbläsare:<br>
+              <span style="color:#5B7FA6; word-break:break-all;">{{ .ConfirmationURL }}</span>
+            </p>
+          </td>
+        </tr>
+
+        <!-- DIVIDER BOTTOM -->
+        <tr>
+          <td style="padding-bottom:32px;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="height:1px; background:rgba(242,240,234,0.06); font-size:0; line-height:0;">&nbsp;</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- TRUST NOTE -->
+        <tr>
+          <td style="padding-bottom:12px; text-align:center;">
+            <p style="font-size:11px; color:#5B7FA6; line-height:1.8; margin:0;">
+              Din data är krypterad, privat och tillhör bara dig. · Forsyne säljer aldrig data.
+            </p>
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="text-align:center;">
+            <p style="font-size:10px; color:#4a4e49; line-height:1.8; margin:0;">
+              Om du inte skapade ett konto hos Forsyne kan du ignorera detta mail.<br>
+              © 2026 Forsyne
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

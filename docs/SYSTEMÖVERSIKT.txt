@@ -1,0 +1,758 @@
+FORSYNE — FULLSTÄNDIG SYSTEMÖVERSIKT
+Genererad: 2026-04-13
+========================================================
+
+
+═══════════════════════════════════════════════════════
+1. ARKITEKTUR
+═══════════════════════════════════════════════════════
+
+Stack:
+  Frontend:   Vanilla JS, HTML, system.css
+  Backend:    Node.js / Express (server.js, ~4 300 rader)
+  Databas:    Supabase (PostgreSQL) med Row Level Security
+  AI:         Claude claude-sonnet-4-6 via Anthropic API
+  Hosting:    Railway (auto-deploy från GitHub)
+  Repo:       https://github.com/Carlosante-art/forsyne
+
+Miljövariabler (Railway):
+  SUPABASE_URL          — Supabase project URL
+  SUPABASE_SERVICE_KEY  — service-role key (kringgår RLS)
+  ANTHROPIC_API_KEY     — Claude API
+  ENCRYPTION_KEY        — AES-256 nyckel för fritext
+  SCHEDULE_SECRET       — skyddar intern meta-agent schedule-route
+  NODE_ENV              — "production" på Railway
+  MOCK_AI               — sätt "true" för att pausa alla Claude-anrop
+
+
+═══════════════════════════════════════════════════════
+2. SUPABASE — ALLA TABELLER
+═══════════════════════════════════════════════════════
+
+Alla tabeller har Row Level Security aktiverat.
+Alla politiken: FOR ALL USING (auth.uid() = user_id)
+Supabase service-role key kringgår RLS på server-sidan.
+
+────────────────────────────────────────────────────────
+TABELL: profiles
+────────────────────────────────────────────────────────
+  id          uuid PRIMARY KEY
+  user_id     uuid → auth.users (UNIQUE)
+  data        jsonb  — onboarding-svar + agent-genererade fält
+  analysis    text   — initial profiltextanalys
+  created_at  timestamptz
+  updated_at  timestamptz
+
+  Viktiga fält i data (jsonb):
+    q1_0b           — primärt mål (t.ex. "sova bättre")
+    q1_1            — varför (KRYPTERAT med AES-256)
+    q2_11           — vad som förändrade dem (KRYPTERAT)
+    q3_1            — namn
+    _profile        — agent-genererad profiltext
+    _training_goal  — agent-genererat träningsmål
+    + alla onboarding-svar (q1_0 till q3_x)
+
+────────────────────────────────────────────────────────
+TABELL: checkins
+────────────────────────────────────────────────────────
+  id              uuid PRIMARY KEY
+  user_id         uuid → auth.users
+  date            date (UNIQUE per user+date)
+  energy          numeric(4,1)   — 1-10
+  focus           numeric(4,1)   — 1-10
+  stress          numeric(4,1)   — 1-10
+  sleep           numeric(4,1)   — 1-10
+  motivation      numeric(4,1)   — 1-10
+  mood            numeric(4,1)   — 1-10
+  moods           jsonb[]        — valda stämningsord
+  reflection      text           — KRYPTERAT med AES-256
+  personal_answer text           — KRYPTERAT med AES-256
+  analysis        text
+  created_at      timestamptz
+
+  Index: checkins_user_date (user_id, date DESC)
+
+────────────────────────────────────────────────────────
+TABELL: daily_data
+────────────────────────────────────────────────────────
+  id          uuid PRIMARY KEY
+  user_id     uuid → auth.users (UNIQUE per user+date)
+  date        date
+  psi         numeric(6,1)   — Personal Status Index (0-100)
+  normalize   jsonb          — normaliserade värden
+  prediction  jsonb          — Agent 4 output
+  insight     jsonb          — Agent 3 output
+  balance     jsonb          — Agent 9 output
+  updated_at  timestamptz
+
+  Index: daily_data_user_date (user_id, date DESC)
+
+────────────────────────────────────────────────────────
+TABELL: insights
+────────────────────────────────────────────────────────
+  id               uuid PRIMARY KEY
+  user_id          uuid → auth.users
+  date             date DEFAULT CURRENT_DATE
+  data             jsonb DEFAULT '{}'
+  rubrik           text   — insiktens rubrik
+  insikt           text   — huvudtext
+  prediktion       text   — vad som händer härnäst
+  rekommendation   text   — vad användaren ska göra
+  prioritet        text   — "Hög", "Normal", "Låg"
+  grundat_i        text[] — datapunkter som stödjer insikten
+  mönster_referens text   — vilket mönster som refereras (NY)
+  psi_förklaring   text   — varför PSI är som det är (NY)
+  agent            text   — "meta", "3", etc.
+  created_at       timestamptz
+
+  Index: insights_user_id (user_id)
+  Meta-agent insikter cachas 6 timmar (inga dubbletter inom 6h)
+
+────────────────────────────────────────────────────────
+TABELL: predictions
+────────────────────────────────────────────────────────
+  id         uuid PRIMARY KEY
+  user_id    uuid → auth.users
+  date       date DEFAULT CURRENT_DATE
+  data       jsonb DEFAULT '{}'
+  created_at timestamptz
+
+  Index: predictions_user_id (user_id)
+
+────────────────────────────────────────────────────────
+TABELL: patterns
+────────────────────────────────────────────────────────
+  id         uuid PRIMARY KEY
+  user_id    uuid → auth.users (UNIQUE)
+  data       jsonb DEFAULT '{}'
+  created_at timestamptz
+  updated_at timestamptz
+
+────────────────────────────────────────────────────────
+TABELL: integrations
+────────────────────────────────────────────────────────
+  id            uuid PRIMARY KEY
+  user_id       uuid → auth.users (UNIQUE per user+provider)
+  provider      text    — "strava", "garmin", "dexcom", "cronometer",
+                           "blood_labs", "dna", "nutrition", "medical_journal"
+  access_token  text
+  refresh_token text
+  token_expires timestamptz
+  data          jsonb   — provider-specifik data
+  last_synced   timestamptz
+
+  Index: integrations_token (access_token)
+
+────────────────────────────────────────────────────────
+TABELL: conversations
+────────────────────────────────────────────────────────
+  id         uuid PRIMARY KEY
+  user_id    uuid → auth.users (UNIQUE per user+agent)
+  agent_id   text   — "2_checkin", "3_insights", etc.
+  messages   jsonb  — konversationshistorik
+  updated_at timestamptz
+
+────────────────────────────────────────────────────────
+TABELL: journal_entries
+────────────────────────────────────────────────────────
+  (skapas via server, struktur ej i schema-fil)
+  Lagrar journal/dagboksanteckningar kopplade till user
+
+────────────────────────────────────────────────────────
+TABELL: journal_context
+────────────────────────────────────────────────────────
+  id         uuid PRIMARY KEY
+  user_id    uuid → auth.users (UNIQUE)
+  context    text
+  created_at timestamptz
+  updated_at timestamptz
+
+────────────────────────────────────────────────────────
+TABELL: validations
+────────────────────────────────────────────────────────
+  (används av validerings-agent)
+  kategori    text
+  paastående  text
+  svar        text
+  kommentar   text
+  created_at  timestamptz
+
+────────────────────────────────────────────────────────
+TABELL: training_schedule   ← NY
+────────────────────────────────────────────────────────
+  id          uuid PRIMARY KEY
+  user_id     uuid → auth.users (UNIQUE per user+dag)
+  dag         text   — "Måndag", "Tisdag", ..., "Söndag"
+  typ         text   — "Tung styrka", "Medel styrka", "Lätt/Rörlighet",
+                        "Kondition", "Vila", "Aktiv vila"
+  fokus       text   — "Ben", "Överkropp", "Helkropp", "Kondition", "Rörlighet"
+  intensitet  integer CHECK (1-10)
+  varaktighet integer   — minuter
+  anteckningar text
+  aktiv       boolean DEFAULT true
+  created_at  timestamptz
+  updated_at  timestamptz
+
+  RLS: training_schedule_user — FOR ALL USING (auth.uid() = user_id)
+
+────────────────────────────────────────────────────────
+TABELL: nutrition_protocol   ← NY
+────────────────────────────────────────────────────────
+  id                   uuid PRIMARY KEY
+  user_id              uuid → auth.users (UNIQUE)
+  fastar               boolean DEFAULT false
+  fastfönster          text    — "16:8", "18:6", etc.
+  kolhydratsstrategi   text    — "normal", "lågkolhydrat", "cyklisk", "keto"
+  kolhydrater_gram     integer — dagligt mål
+  protein_gram         integer
+  kalorier             integer
+  tillskott            text[]  — lista av kosttillskott
+  anteckningar         text
+  updated_at           timestamptz
+
+  RLS: nutrition_protocol_user — FOR ALL USING (auth.uid() = user_id)
+
+────────────────────────────────────────────────────────
+TABELL: waitlist
+────────────────────────────────────────────────────────
+  id         uuid PRIMARY KEY
+  email      text UNIQUE
+  created_at timestamptz
+
+  RLS: "Public insert only" — FOR INSERT WITH CHECK (true)
+
+
+═══════════════════════════════════════════════════════
+3. KRYPTERING
+═══════════════════════════════════════════════════════
+
+  Algoritm: AES-256 via CryptoJS
+  Nyckel:   ENCRYPTION_KEY i miljövariabler
+
+  Krypterade fält:
+    profiles.data.q1_1       — varför användaren är här
+    profiles.data.q2_11      — vad som förändrade dem
+    checkins.reflection       — daglig reflektion (fritext)
+    checkins.personal_answer  — svar på personlig fråga (fritext)
+
+  Server krypterar vid skrivning, dekrypterar vid läsning.
+  Supabase lagrar alltid krypterad ciphertext.
+
+
+═══════════════════════════════════════════════════════
+4. PSI — PERSONAL STATUS INDEX
+═══════════════════════════════════════════════════════
+
+  Formel:
+    PSI = ((energi + sömn + (10 - stress) + fokus + motivation) / 5) × 10
+
+  Skala: 0-100
+  Tolkning:
+    PSI > 70   — grön, kör planerat träningspass
+    PSI 55-70  — gul, sänk intensitet 1-2 enheter
+    PSI < 55   — röd, kör aldrig tungt planerat pass
+
+  Beräknas:
+    - Server-side i meta-agenten (psiOf-funktion)
+    - Schema-agenten (per dag och för idag)
+    - Klient-side (dashboard.html, checkin.html)
+
+
+═══════════════════════════════════════════════════════
+5. BACKEND API — ALLA ENDPOINTS
+═══════════════════════════════════════════════════════
+
+Auth: alla skyddade routes kräver "Authorization: Bearer <token>"
+      token = Supabase JWT från klient
+
+── AUTH & PROFIL ──────────────────────────────────────
+
+GET  /api/me
+  → { id, email }
+
+GET  /api/profile
+  → { data: {...}, analysis, created_at }
+  Returnerar dekrypterad profildata
+
+POST /api/profile
+  body: { data: {...}, analysis }
+  Krypterar q1_1 och q2_11 innan lagring
+
+── CHECK-IN ───────────────────────────────────────────
+
+GET  /api/checkins
+  → array av alla check-ins (dekrypterade)
+
+POST /api/checkin/questions
+  → dagens personliga fråga från Agent 2
+
+POST /api/checkin/submit
+  body: { energy, sleep, stress, focus, motivation, mood, moods, reflection, personal_answer }
+  Krypterar fritext, sparar check-in, returnerar PSI
+
+── INSIKTER ───────────────────────────────────────────
+
+GET  /api/insights/latest
+  → senaste meta-agent insikt (rubrik, insikt, prediktion,
+     rekommendation, prioritet, grundat_i, mönster_referens,
+     psi_förklaring, created_at)
+
+POST /api/insights/daily
+  → proxy till /api/agent/insights/generate
+
+POST /api/block-insight
+  Sparar blockerad insikt i daily_data
+
+── AGENTER ────────────────────────────────────────────
+
+POST /api/agent/checkin/generate     — Agent 2: check-in fråga
+POST /api/agent/insights/generate    — Agent 3: daglig insikt
+POST /api/agent/prediction/generate  — Agent 4: prediktion
+POST /api/agent/datasources/normalize — Agent 5: normalisera data
+POST /api/agent/balance/generate     — Agent 9: balansanalys
+POST /api/agent/validate             — valideringsagent
+POST /api/agent/meta/run             — Meta-agent (cachas 6h)
+POST /api/agent/meta/schedule        — Schema-trigger (kräver SCHEDULE_SECRET)
+
+POST /api/agent/schedule/recommend   ← NY
+  body: (inget, hämtar data självt)
+  → { ok, dag, psi, plan, träning: {...}, kost: {...}, systeminsikt }
+  Schema-agent: anpassar dagens pass + kost efter PSI
+
+── TRÄNINGSSCHEMA ─────────────────────────────────────
+
+GET  /api/training-schedule          ← NY
+  → array av { dag, typ, fokus, intensitet, varaktighet, anteckningar }
+
+POST /api/training-schedule          ← NY
+  body: { schedule: [...] }
+  Upsert per dag (onConflict: user_id,dag)
+
+── KOSTPROTOKOLL ──────────────────────────────────────
+
+GET  /api/nutrition-protocol         ← NY
+  → { fastar, fastfönster, kolhydratsstrategi, kolhydrater_gram,
+      protein_gram, kalorier, tillskott, anteckningar }
+
+POST /api/nutrition-protocol         ← NY
+  body: { fastar, fastfönster, ... }
+  Upsert (onConflict: user_id)
+
+── BIOLOGISKA DATA ────────────────────────────────────
+
+POST /api/blood/upload               — Agent 6: blodprov-PDF
+GET  /api/blood/data
+DELETE /api/blood/disconnect
+
+POST /api/dna/upload                 — Agent 7: DNA-rapport
+GET  /api/dna/data
+DELETE /api/dna/disconnect
+
+POST /api/nutrition/upload           — Agent 8: kostnäring-data
+GET  /api/nutrition/data
+DELETE /api/nutrition/disconnect
+
+POST /api/journal/analyze            — Agent 10: läkarjournal
+GET  /api/journal/medical-context
+DELETE /api/journal/medical-context
+
+── INTEGRATIONER ──────────────────────────────────────
+
+GET  /api/integrations               — alla providers + status
+GET  /api/garmin/api-available       — kollar om Garmin API finns
+POST /api/garmin/import              — manuell JSON-import från Garmin
+DELETE /api/integrations/:provider   — koppla från
+
+GET  /auth/strava                    — OAuth2 start
+GET  /auth/strava/callback           — OAuth2 callback
+
+GET  /auth/dexcom                    — OAuth2 start
+GET  /auth/dexcom/callback           — OAuth2 callback
+
+POST /api/analyze                    — allmän data-analys
+
+── GDPR ───────────────────────────────────────────────
+
+DELETE /api/user/delete
+  Raderar ALL användardata från alla tabeller permanent
+
+── MISC ───────────────────────────────────────────────
+
+POST /api/predict                    — proxy till prediction/generate
+POST /api/data/normalize             — proxy till datasources/normalize
+POST /api/waitlist                   — e-post till waitlist
+
+
+═══════════════════════════════════════════════════════
+6. AGENTER — ALLA 12 ST
+═══════════════════════════════════════════════════════
+
+Alla agenter: model = claude-sonnet-4-6
+
+──────────────────────────────────────────────────────
+AGENT 2 — CHECK-IN AGENTEN (agent_2_checkin.md)
+──────────────────────────────────────────────────────
+  Trigger:   POST /api/agent/checkin/generate
+  Uppgift:   Genererar en personlig daglig fråga
+  Input:     profil, senaste check-ins, dagens datum
+  Output:    { fråga: "..." }
+
+──────────────────────────────────────────────────────
+AGENT 3 — INSIKTSAGENTEN (agent_3_insights.md)
+──────────────────────────────────────────────────────
+  Trigger:   POST /api/agent/insights/generate
+  Uppgift:   Skapar daglig insikt baserat på check-in
+  Input:     checkins, profil, agent3_output, agent4_output
+  Output:    { insikt, prediktion, rekommendation, prioritet, ... }
+
+──────────────────────────────────────────────────────
+AGENT 4 — PREDIKTIONSAGENTEN (agent_4_prediction.md)
+──────────────────────────────────────────────────────
+  Trigger:   POST /api/agent/prediction/generate
+  Uppgift:   Förutsäger imorgon och kommande 7 dagar
+  Input:     checkins, profil
+  Output:    { imorgon, vecka, varsel_status, ... }
+
+──────────────────────────────────────────────────────
+AGENT 5 — DATAKÄLLSAGENTEN (agent_5_datasources.md)
+──────────────────────────────────────────────────────
+  Trigger:   POST /api/agent/datasources/normalize
+  Uppgift:   Normaliserar externt data till systemets format
+  Input:     rådata från wearables
+  Output:    normaliserade check-in-kompatibla värden
+
+──────────────────────────────────────────────────────
+AGENT 6 — BLODPROVSAGENTEN (agent_6_blood.md)
+──────────────────────────────────────────────────────
+  Trigger:   POST /api/blood/upload (PDF)
+  Uppgift:   Tolkar blodprovsresultat och identifierar mönster
+  Input:     PDF-text (parsad med pdf-parse)
+  Output:    strukturerad bloddata + insikter
+
+──────────────────────────────────────────────────────
+AGENT 7 — DNA-AGENTEN (agent_7_dna.md)
+──────────────────────────────────────────────────────
+  Trigger:   POST /api/dna/upload
+  Uppgift:   Tolkar DNA-rapport, kopplar till beteendemönster
+  Input:     DNA-rapport text
+  Output:    genetiska insikter relevanta för hälsa
+
+──────────────────────────────────────────────────────
+AGENT 8 — KOSTDATAAGENTEN (agent_8_nutrition.md)
+──────────────────────────────────────────────────────
+  Trigger:   POST /api/nutrition/upload
+  Uppgift:   Analyserar koststatus, makros, mikronäringsämnen
+  Input:     nutritionsdata (t.ex. Cronometer export)
+  Output:    kostnäringsinsikter
+
+──────────────────────────────────────────────────────
+AGENT 9 — BALANSAGENTEN (agent_9_balance.md)
+──────────────────────────────────────────────────────
+  Trigger:   POST /api/agent/balance/generate
+  Uppgift:   Hittar vad som fungerar (positivt fokus)
+  Input:     checkins, profil, insikt, prediktion
+  Output:    { balans_insikt, vad_fungerar, ... }
+  max_tokens: 500
+
+──────────────────────────────────────────────────────
+AGENT 10 — JOURNALAGENTEN (agent_10_journal.md)
+──────────────────────────────────────────────────────
+  Trigger:   POST /api/journal/analyze (PDF)
+  Uppgift:   Tolkar läkarjournal, hälsohistorik, diagnoser
+  Input:     PDF-text
+  Output:    medicinsk kontext för systemet
+  Rate limit: 5 per timme per användare
+
+──────────────────────────────────────────────────────
+META-AGENTEN (prompts/meta_agent.md)
+──────────────────────────────────────────────────────
+  Trigger:   POST /api/agent/meta/run
+             POST /api/agent/meta/schedule (intern, daglig)
+  Uppgift:   Systemets kärna. Ser hela bilden. Uppdaterar
+             användarmodellen. Sparar systeminsikt.
+  max_tokens: 8 000
+  Cache:     6 timmar (körs ej igen om nyare insikt finns)
+  Retry:     3 försök vid overloaded, 10s paus
+
+  Input till Claude (payload):
+    analys_period         — datum + antal dagar
+    profil                — decrypterad profildata
+    checkins              — alla check-ins som textrader
+    kritiska_dagar        — dagar med stress≥7 / sömn≤4 / energi≤2
+    period_snitt          — snitt per 7-dagarsperiod
+    tidigare_insikter     — senaste 30 insikter
+    valideringssvar       — feedback från validerings-agent
+    dagar_aktiv           — antal dagar i systemet
+    personliga_baslinjer  ← NY: snitt+std per metrik
+    korrelationer         ← NY: top 8 laggade Pearson-korrelationer (r≥0.4, n≥8)
+    sju_dagars_tabell     ← NY: senaste 7 dagar med PSI per dag
+    avvikelseflaggor      ← NY: dagar som bryter mönstret (≥1.6σ)
+    konvergens_idag       ← NY: varning om 3+ metriker kritiska samtidigt
+
+  Output (JSON):
+    modell_uppdatering.reviderade_fält  — mergas in i profiles.data
+    agent_koordinering                   — koordinering mellan agenter
+    systeminsikt:
+      rubrik           — insiktens rubrik
+      insikt           — huvudtext
+      prediktion       — vad som händer härnäst
+      rekommendation   — vad att göra
+      prioritet        — "Hög" / "Normal" / "Låg"
+      grundat_i        — datapunkter som stödjer
+      mönster_referens ← NY: vilket mönster refereras
+      psi_förklaring   ← NY: varför PSI är som det är
+
+  Sparar: systeminsikt → insights (agent="meta")
+  Sparar: reviderade_fält → profiles.data (merge)
+
+──────────────────────────────────────────────────────
+SCHEMA-AGENTEN (inline i server.js)
+──────────────────────────────────────────────────────
+  Trigger:   POST /api/agent/schedule/recommend
+  Uppgift:   Anpassar dagens träning och kost efter PSI
+  Input:     senaste 14 check-ins, träningsschema,
+             kostprotokoll, profil
+  max_tokens: 800
+
+  PSI-regler:
+    PSI < 55  → kör_planerat = false, modifiera alltid
+    PSI 55-70 → kör_planerat = true, sänk intensitet 1-2
+    PSI > 70  → kör_planerat = true, kör som planerat
+
+  Kost-regler:
+    fastar + PSI < 60 + tung träning → justera kolhydrater upp
+
+  Output:
+    träning:
+      kör_planerat      boolean
+      rekommendation    string (max 120 tecken)
+      modifiering       string eller null
+      intensitet_idag   number (1-10)
+      fokus_idag        string
+      varning           string eller null
+    kost:
+      följ_protokoll    boolean
+      justering         string eller null
+      prioritet_idag    string
+      timing            string eller null
+    systeminsikt        string (en mening)
+
+
+═══════════════════════════════════════════════════════
+7. SPRÅKREGLER (gäller alla agenter)
+═══════════════════════════════════════════════════════
+
+Förbjudna ord (saneras automatiskt via sanera()-funktion):
+  "diskrepans"                → "skillnad"
+  "korrelation" (till user)   → "samband"
+  "data indikerar"            → "det visar"
+  "baserat på dina mätvärden" → (tas bort)
+  "systemet har identifierat" → "systemet ser"
+  "troligtvis inte slumpen"   → "inte slumpmässigt"
+
+Övriga förbud (i prompt, ej sanerade):
+  "klassisk", "optimal", "resa", "potential", "bästa version"
+
+Ton: direkt och specifik, ej tröstande, ej klinisk
+
+
+═══════════════════════════════════════════════════════
+8. SÄKERHET
+═══════════════════════════════════════════════════════
+
+Rate limiters:
+  /api/me och auth-routes:  10 req/minut
+  /api/checkin/*:            20 req/timme
+  /api/journal/*:             5 req/timme
+
+Filuppladdning (multer):
+  In-memory only — inga filer skrivs till disk
+  Max 10 MB per fil
+
+HTTPS:
+  Automatisk redirect HTTP → HTTPS i production
+
+Supabase:
+  Service-role key på server (kringgår RLS)
+  Klient-sida använder anon key med RLS
+  Alla tabeller har RLS aktiverat
+
+Meta-agent schedule:
+  Kräver SCHEDULE_SECRET header — skyddar mot obehörig körning
+
+
+═══════════════════════════════════════════════════════
+9. EXTERNA INTEGRATIONER
+═══════════════════════════════════════════════════════
+
+Strava (OAuth2):
+  /auth/strava          — start
+  /auth/strava/callback — token, lagras i integrations
+
+Dexcom (OAuth2, CGM):
+  /auth/dexcom          — start
+  /auth/dexcom/callback — token, glukosdata
+
+Garmin:
+  Manuell JSON-import via /api/garmin/import
+  (Garmin Direct API-status kollas via /api/garmin/api-available)
+
+Cronometer:
+  Import av nutritionsdata, lagras i integrations
+
+Blodprover:
+  PDF-upload → pdf-parse → Agent 6
+
+DNA:
+  Rapport-text → Agent 7
+
+Läkarjournal:
+  PDF-upload → pdf-parse → Agent 10
+
+
+═══════════════════════════════════════════════════════
+10. FRONTEND — ALLA SIDOR
+═══════════════════════════════════════════════════════
+
+Delade filer:
+  auth.js         — checkAuth(), token refresh, API-wrapper
+  transitions.js  — fade, toast, skeleton-loader, dotPulse
+  components.js   — delade UI-funktioner
+  system.css      — globalt designsystem
+
+Sidorna:
+  landing.html       — landningssida + waitlist
+  login.html         — inloggning / registrering
+  confirm.html       — e-postbekräftelse
+  email_confirm.html — bekräftat-state
+  reset.html         — lösenordsåterställning
+  disclaimer.html    — ansvarsfriskrivning
+  onboarding.html    — konversationell onboarding (ej formulär)
+
+  dashboard.html     — HUBBEN
+    - PSI-ring (SVG, levande)
+    - Dashboard-öga (SVG, kopplat till systemstatus)
+    - Korrelations-kortkortsfeed (top-8 samband)
+    - Meta-agent insikt (rubrik, insikt, mönster_referens, psi_förklaring)
+    - Idag-plan (schema-agent: träning + kost för idag)
+    - Sidolinks: alla sidor
+
+  checkin.html       — daglig check-in (60 sekunder)
+  historik.html      — check-in-historik och trender
+  energy.html        — energiöversikt
+  sleep.html         — sömnöversikt
+  stress.html        — stressöversikt
+  wellness.html      — välmåendeöversikt
+  patterns.html      — mönsteröversikt
+  analys.html        — djupanalys
+  plan.html          — planer och mål
+  signal.html        — kritiska signaler
+  signalen.html      — varsel-sida
+  varslet.html       — varselsida
+  systemkarta.html   — systemkarta
+  systemmap.html     — alternativ systemkarta
+  biologi.html       — biologiöversikt
+  profilering.html   — profilsida
+  profile.html       — profilinställningar
+  datasources.html   — datakällor och integrationer
+  wearables.html     — wearable-integrationer (Strava, Dexcom, Garmin)
+  dna.html           — DNA-analys
+  journal.html       — läkarjournal
+  kostracking.html   — kostspårning
+  nutrition.html     — kostprotokoll (NY)
+    - Live editor för kostprotokoll
+    - Sparar till /api/nutrition-protocol
+    - Visar dagens kostjustering från schema-agenten
+  training.html      — träningsschema (NY)
+    - Live veckoschema-editor (en rad per dag)
+    - Typ, fokus, intensitet, varaktighet per dag
+    - Sparar till /api/training-schedule
+    - Visar dagens rekommendation från schema-agenten
+  selvitas.html      — Selvitas-konceptsida
+  manifesto.html     — manifesto
+  energy.html        — energi-djupdyk
+
+Design-regler (bryts aldrig):
+  Bakgrund:       #0F1210
+  Text:           #F2F0EA
+  Accent grön:    #8FAE8A
+  Accent orange:  #C4875A
+  Accent röd:     #A85C5C
+  Typsnitt:       Cormorant Garamond (serif, systemets röst)
+                  Jost (sans, metadata och labels)
+  Ingen border-radius
+  Inga emojis
+  Inga ikoner
+  Tomma states: alltid en mening, aldrig "–"
+  Laddning: dotPulse + text, aldrig spinner
+  Animationer: ease, aldrig linear
+
+
+═══════════════════════════════════════════════════════
+11. CRON / SCHEMALAGDA KÖRNINGAR
+═══════════════════════════════════════════════════════
+
+Meta-agenten körs dagligen för alla aktiva användare
+via POST /api/agent/meta/schedule (kräver SCHEDULE_SECRET).
+
+Trigger kan sättas upp som:
+  - Railway cron job
+  - Extern scheduler (t.ex. cron-job.org)
+  - node-cron lokalt (paketet finns installerat)
+
+Logik: hämtar alla user_id som check-inat idag,
+       kör runMetaAgent() för varje användare asynkront.
+
+
+═══════════════════════════════════════════════════════
+12. MIGRATIONSFILER (i /migrations/)
+═══════════════════════════════════════════════════════
+
+supabase_schema.sql
+  — Fullständigt grundschema (alla ursprungliga tabeller)
+
+supabase_rls.sql
+  — RLS-politiken för alla ursprungliga tabeller
+
+training_nutrition_schedule.sql
+  — CREATE TABLE training_schedule
+  — CREATE TABLE nutrition_protocol
+  — RLS för båda
+
+insights_pattern_fields.sql
+  — ALTER TABLE insights ADD COLUMN mönster_referens text
+  — ALTER TABLE insights ADD COLUMN psi_förklaring text
+
+KÖR_DESSA.txt
+  — Steg-för-steg guide: en SQL-sats i taget för Supabase Editor
+
+
+═══════════════════════════════════════════════════════
+STATUS (2026-04-13)
+═══════════════════════════════════════════════════════
+
+Supabase:
+  [x] profiles
+  [x] checkins
+  [x] daily_data
+  [x] insights (inkl. mönster_referens, psi_förklaring)
+  [x] predictions
+  [x] patterns
+  [x] integrations
+  [x] conversations
+  [x] journal_context
+  [x] waitlist
+  [x] training_schedule + RLS
+  [x] nutrition_protocol + RLS
+
+Railway:
+  [x] Deployat (commit 85e41d3)
+  [x] Alla nya endpoints live
+
+Kvar att bygga:
+  - Cronometer OAuth-integration (har manuell import)
+  - Garmin Direct API (OAuth väntar på Garmin-godkännande)
+  - Dexcom real-time CGM (OAuth finns, polling ej satt)
+  - Testlabb-integration (vision: vetenskapliga tester i kontext)
+
+========================================================

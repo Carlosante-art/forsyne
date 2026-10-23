@@ -1,0 +1,32 @@
+{
+  "name": "Forsyne",
+  "short_name": "Forsyne",
+  "description": "Du märker det om 72 timmar. Vi ser det nu.",
+  "start_url": "/app/today.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F1210",
+  "theme_color": "#0F1210",
+  "lang": "sv-SE",
+  "icons": [
+    {
+      "src": "/images/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/landing/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/landing/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

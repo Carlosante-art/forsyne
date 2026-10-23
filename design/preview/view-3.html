@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0F1210">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Forsyne">
+<title>Forsyne — Check-in (preview)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#0F1210; --ink2:#131714;
+  --fg:#F2F0EA; --fg2:#CCC9BF; --fg3:#8A8E89; --fg4:#4a4e49;
+  --accent:#8FAE8A; --warn:#C4875A; --danger:#A85C5C; --trust:#5B7FA6;
+  --border:rgba(242,240,234,0.06);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Jost',system-ui,sans-serif;
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+
+html, body {
+  background: linear-gradient(to bottom, var(--ink) 0%, var(--ink2) 100%);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-weight: 300;
+  line-height: 1.7;
+  min-height: 100vh;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
+}
+
+.frame {
+  max-width: 430px;
+  margin: 0 auto;
+  height: 100vh;
+  height: 100dvh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 500px) {
+  body { background: #050605; padding: 2rem 0; overflow: auto; }
+  html { overflow: auto; }
+  .frame {
+    background: linear-gradient(to bottom, var(--ink) 0%, var(--ink2) 100%);
+    border-radius: 36px;
+    overflow: hidden;
+    box-shadow: 0 0 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+    margin-top: 1rem;
+    height: 90vh;
+    max-height: 880px;
+  }
+}
+
+/* ── NAV ── */
+nav {
+  height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.nav-back, .nav-skip {
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  text-decoration: none;
+}
+.nav-back:hover, .nav-skip:hover { color: var(--fg2); }
+.nav-title {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--fg2);
+}
+
+/* ── PROGRESS DOTS ── */
+.progress {
+  display: flex; gap: 0.5rem; justify-content: center;
+  padding: 1.4rem 0 0.4rem;
+  flex-shrink: 0;
+}
+.progress-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--fg4);
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+.progress-dot.done { background: var(--accent); }
+.progress-dot.active { background: var(--fg); transform: scale(1.3); }
+.progress-label {
+  text-align: center;
+  font-size: 0.55rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  padding-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* ── QUESTION CONTAINER ── */
+.questions {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+.q {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 2rem;
+  text-align: center;
+  opacity: 0;
+  transform: translateX(100%);
+  transition: opacity 0.35s ease, transform 0.4s ease;
+  pointer-events: none;
+}
+.q.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+.q.done {
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+.q-text {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 1.85rem;
+  line-height: 1.25;
+  color: var(--fg);
+  margin-bottom: 3rem;
+  max-width: 320px;
+}
+
+/* ── DOTS (1-5) ── */
+.dots {
+  display: flex; gap: 1.4rem;
+  margin-bottom: 1.2rem;
+}
+.dot {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid var(--fg3);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex; align-items: center; justify-content: center;
+}
+.dot:hover { border-color: var(--fg2); transform: scale(1.05); }
+.dot:active { transform: scale(0.92); }
+.dot.selected.low { background: var(--warn); border-color: var(--warn); }
+.dot.selected.mid { background: var(--fg); border-color: var(--fg); }
+.dot.selected.high { background: var(--accent); border-color: var(--accent); }
+
+.anchors {
+  display: flex; justify-content: space-between; width: 100%;
+  max-width: 280px;
+  font-size: 0.7rem;
+  color: var(--fg3);
+  letter-spacing: 0.05em;
+}
+
+/* ── PILLS (Q3) ── */
+.pills {
+  display: flex; flex-wrap: wrap; gap: 0.55rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  max-width: 340px;
+}
+.pill {
+  padding: 0.55rem 1.05rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--fg2);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  font-weight: 300;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.pill:hover { border-color: var(--fg3); color: var(--fg); }
+.pill.selected {
+  background: var(--fg);
+  color: var(--ink);
+  border-color: var(--fg);
+}
+.pill.selected.exclusive {
+  background: var(--fg3);
+  color: var(--ink);
+  border-color: var(--fg3);
+}
+
+.q-cta {
+  margin-top: 0.5rem;
+  padding: 0.75rem 2.4rem;
+  background: var(--accent);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.q-cta:hover { opacity: 0.85; }
+.q-cta:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── COMPLETION ── */
+.done-screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 2rem;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.done-screen.show { display: flex; opacity: 1; }
+
+.done-ring {
+  width: 180px; height: 180px;
+  position: relative;
+  margin-bottom: 1.4rem;
+}
+.done-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.done-ring .rb {
+  fill: none;
+  stroke: rgba(242,240,234,0.06);
+  stroke-width: 4;
+}
+.done-ring .rf {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 502;
+  stroke-dashoffset: 502;
+  animation: doneDraw 0.9s ease 0.3s forwards;
+}
+.done-num {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--serif);
+  font-size: 4.5rem;
+  font-weight: 300;
+  color: var(--fg);
+}
+@keyframes doneDraw {
+  to { stroke-dashoffset: 162; }
+}
+
+.done-delta {
+  font-size: 1rem;
+  color: var(--accent);
+  margin-bottom: 0.45rem;
+  opacity: 0;
+  animation: deltaIn 0.4s ease 1.0s forwards;
+}
+.done-delta-lbl {
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  margin-bottom: 1.6rem;
+  opacity: 0;
+  animation: deltaIn 0.4s ease 1.1s forwards;
+}
+.done-msg {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.2rem;
+  color: var(--fg);
+  margin-bottom: 2.6rem;
+  opacity: 0;
+  animation: deltaIn 0.5s ease 1.3s forwards;
+}
+.done-extra {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg3);
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 0.6rem 1.5rem;
+  cursor: pointer;
+  opacity: 0;
+  animation: deltaIn 0.5s ease 1.7s forwards;
+}
+.done-extra:hover { border-color: var(--fg3); color: var(--fg2); }
+
+@keyframes deltaIn {
+  to { opacity: 1; }
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--border);
+  background: rgba(15,18,16,0.85);
+  backdrop-filter: blur(20px);
+  flex-shrink: 0;
+}
+.bn-item {
+  display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+  padding: 0.85rem 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding-bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px));
+}
+.bn-item.active { color: var(--fg); }
+.bn-item:hover { color: var(--fg2); }
+.bn-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: 0; }
+.bn-item.active .bn-dot { opacity: 1; }
+
+</style>
+</head>
+<body>
+
+<div class="frame">
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-back" href="view-1.html">‹ Tillbaka</a>
+    <div class="nav-title">Check-in</div>
+    <button class="nav-skip" onclick="restart()">Skip</button>
+  </nav>
+
+  <!-- PROGRESS -->
+  <div class="progress" id="progress">
+    <div class="progress-dot active"></div>
+    <div class="progress-dot"></div>
+    <div class="progress-dot"></div>
+  </div>
+  <div class="progress-label" id="progressLabel">Fråga 1 / 3</div>
+
+  <!-- QUESTIONS -->
+  <div class="questions">
+
+    <!-- Q1: Energy -->
+    <div class="q active" id="q1">
+      <div class="q-text">Hur är energin idag?</div>
+      <div class="dots">
+        <button class="dot" onclick="answerDot(1, 1)"></button>
+        <button class="dot" onclick="answerDot(1, 2)"></button>
+        <button class="dot" onclick="answerDot(1, 3)"></button>
+        <button class="dot" onclick="answerDot(1, 4)"></button>
+        <button class="dot" onclick="answerDot(1, 5)"></button>
+      </div>
+      <div class="anchors"><span>lågt</span><span>högt</span></div>
+    </div>
+
+    <!-- Q2: Mood -->
+    <div class="q" id="q2">
+      <div class="q-text">Hur är humöret?</div>
+      <div class="dots">
+        <button class="dot" onclick="answerDot(2, 1)"></button>
+        <button class="dot" onclick="answerDot(2, 2)"></button>
+        <button class="dot" onclick="answerDot(2, 3)"></button>
+        <button class="dot" onclick="answerDot(2, 4)"></button>
+        <button class="dot" onclick="answerDot(2, 5)"></button>
+      </div>
+      <div class="anchors"><span>tungt</span><span>lätt</span></div>
+    </div>
+
+    <!-- Q3: Notable toggles -->
+    <div class="q" id="q3">
+      <div class="q-text">Något att flagga från igår?</div>
+      <div class="pills" id="pills">
+        <button class="pill" onclick="togglePill(this)">Alkohol</button>
+        <button class="pill" onclick="togglePill(this)">Sen koffein</button>
+        <button class="pill" onclick="togglePill(this)">Sjuk / krämpor</button>
+        <button class="pill" onclick="togglePill(this)">Resa</button>
+        <button class="pill" onclick="togglePill(this)">Hård träning</button>
+        <button class="pill exclusive-opt" onclick="togglePill(this)">Inget särskilt</button>
+      </div>
+      <button class="q-cta" id="ctaQ3" disabled onclick="finish()">Spara</button>
+    </div>
+
+    <!-- DONE / completion screen -->
+    <div class="done-screen" id="done">
+      <div class="done-ring">
+        <svg viewBox="0 0 180 180">
+          <circle class="rb" cx="90" cy="90" r="80"></circle>
+          <circle class="rf" cx="90" cy="90" r="80"></circle>
+        </svg>
+        <div class="done-num" id="doneNum">0</div>
+      </div>
+      <div class="done-delta" id="doneDelta">+3</div>
+      <div class="done-delta-lbl">sedan igår</div>
+      <div class="done-msg" id="doneMsg">Tack. Vi ses imorgon.</div>
+      <button class="done-extra" onclick="alert('I riktig app: visa fördjupad journal-form')">Logga något extra →</button>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <a class="bn-item" href="view-1.html">
+      <div class="bn-dot"></div>
+      <span>Today</span>
+    </a>
+    <a class="bn-item" href="view-2.html">
+      <div class="bn-dot"></div>
+      <span>Trends</span>
+    </a>
+    <a class="bn-item active" href="#">
+      <div class="bn-dot"></div>
+      <span>Check-in</span>
+    </a>
+    <a class="bn-item" href="view-4.html">
+      <div class="bn-dot"></div>
+      <span>Insights</span>
+    </a>
+  </div>
+
+</div>
+
+<script>
+const answers = { q1: null, q2: null, q3: [] };
+const completionMessages = [
+  'Tack. Vi ses imorgon.',
+  'Bra. Sov gott.',
+  'Noterat. Imorgon igen.',
+  'Tack — det här hjälper.',
+];
+
+function answerDot(qNum, value) {
+  answers['q' + qNum] = value;
+  // Mark selected dot
+  const q = document.getElementById('q' + qNum);
+  q.querySelectorAll('.dot').forEach((d, i) => {
+    d.classList.remove('selected', 'low', 'mid', 'high');
+    if (i + 1 === value) {
+      d.classList.add('selected');
+      if (value <= 2) d.classList.add('low');
+      else if (value === 3) d.classList.add('mid');
+      else d.classList.add('high');
+    }
+  });
+  // Update progress
+  const dots = document.querySelectorAll('.progress-dot');
+  dots[qNum - 1].classList.remove('active');
+  dots[qNum - 1].classList.add('done');
+  if (qNum < 3) {
+    dots[qNum].classList.add('active');
+    document.getElementById('progressLabel').textContent = `Fråga ${qNum + 1} / 3`;
+  }
+  // Animate transition after short pause
+  setTimeout(() => {
+    q.classList.remove('active');
+    q.classList.add('done');
+    if (qNum < 3) {
+      document.getElementById('q' + (qNum + 1)).classList.add('active');
+    }
+  }, 350);
+}
+
+function togglePill(el) {
+  const pills = document.querySelectorAll('#pills .pill');
+  const isExclusive = el.classList.contains('exclusive-opt');
+  if (isExclusive) {
+    pills.forEach(p => {
+      if (p !== el) p.classList.remove('selected', 'exclusive');
+    });
+    el.classList.toggle('selected');
+    el.classList.toggle('exclusive');
+  } else {
+    pills.forEach(p => {
+      if (p.classList.contains('exclusive-opt')) {
+        p.classList.remove('selected', 'exclusive');
+      }
+    });
+    el.classList.toggle('selected');
+  }
+  // Enable CTA when at least one selected
+  const anySelected = Array.from(pills).some(p => p.classList.contains('selected'));
+  document.getElementById('ctaQ3').disabled = !anySelected;
+}
+
+function finish() {
+  // Save Q3
+  const pills = document.querySelectorAll('#pills .pill.selected');
+  answers.q3 = Array.from(pills).map(p => p.textContent.trim());
+
+  // Mark progress complete
+  document.querySelectorAll('.progress-dot').forEach(d => {
+    d.classList.remove('active');
+    d.classList.add('done');
+  });
+  document.getElementById('progressLabel').textContent = 'Klart';
+
+  // Hide Q3
+  document.getElementById('q3').classList.remove('active');
+  document.getElementById('q3').classList.add('done');
+
+  // Show completion
+  setTimeout(() => {
+    const done = document.getElementById('done');
+    done.classList.add('show');
+    // Count up to a composite (mock: 72)
+    const target = 72;
+    const numEl = document.getElementById('doneNum');
+    let v = 0;
+    const dur = 900;
+    const t0 = performance.now();
+    function step(t) {
+      const p = Math.min(1, (t - t0) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const cur = Math.round(0 + (target - 0) * eased);
+      numEl.textContent = cur;
+      if (p < 1) requestAnimationFrame(step);
+    }
+    setTimeout(() => requestAnimationFrame(step), 300);
+
+    // Random completion message
+    const msg = completionMessages[Math.floor(Math.random() * completionMessages.length)];
+    document.getElementById('doneMsg').textContent = msg;
+  }, 400);
+}
+
+function restart() {
+  // Reset everything for re-demo
+  answers.q1 = null; answers.q2 = null; answers.q3 = [];
+  document.querySelectorAll('.dot').forEach(d => d.classList.remove('selected', 'low', 'mid', 'high'));
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('selected', 'exclusive'));
+  document.getElementById('ctaQ3').disabled = true;
+  document.querySelectorAll('.q').forEach(q => { q.classList.remove('active', 'done'); });
+  document.getElementById('q1').classList.add('active');
+  document.getElementById('done').classList.remove('show');
+  document.querySelectorAll('.progress-dot').forEach((d, i) => {
+    d.classList.remove('active', 'done');
+    if (i === 0) d.classList.add('active');
+  });
+  document.getElementById('progressLabel').textContent = 'Fråga 1 / 3';
+}
+
+</script>
+
+</body>
+</html>

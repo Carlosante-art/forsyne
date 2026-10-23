@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0F1210">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Forsyne — Profil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#0F1210; --ink2:#131714;
+  --fg:#F2F0EA; --fg2:#CCC9BF; --fg3:#8A8E89; --fg4:#4a4e49;
+  --accent:#8FAE8A; --warn:#C4875A; --danger:#A85C5C; --trust:#5B7FA6;
+  --border:rgba(242,240,234,0.06);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Jost',system-ui,sans-serif;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html, body { background: linear-gradient(to bottom, var(--ink) 0%, var(--ink2) 100%); color: var(--fg); font-family: var(--sans); font-weight: 300; line-height: 1.7; min-height: 100vh; min-height: 100dvh; -webkit-font-smoothing: antialiased; -webkit-overflow-scrolling: touch; overflow-x: hidden; }
+.frame { max-width: 430px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+@media (min-width: 500px) { body { background: #050605; padding: 2rem 0; } .frame { background: linear-gradient(to bottom, var(--ink) 0%, var(--ink2) 100%); border-radius: 36px; overflow: hidden; box-shadow: 0 0 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05); margin-top: 1rem; padding-bottom: 1rem; } }
+
+nav { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; border-bottom: 1px solid var(--border); background: rgba(15,18,16,0.85); backdrop-filter: blur(32px); position: sticky; top: 0; z-index: 100; }
+.nav-back, .nav-icon { font-family: var(--sans); font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg3); cursor: pointer; background: transparent; border: none; text-decoration: none; }
+.nav-back:hover, .nav-icon:hover { color: var(--fg2); }
+.nav-title { font-family: var(--serif); font-size: 0.95rem; color: var(--fg2); font-style: italic; }
+
+.identity { padding: 1.6rem 1.5rem 1.4rem; border-bottom: 1px solid var(--border); }
+.identity-name { font-family: var(--serif); font-size: 1.4rem; color: var(--fg); margin-bottom: 0.25rem; letter-spacing: 0.04em; }
+.identity-meta { font-size: 0.85rem; color: var(--fg2); line-height: 1.4; }
+
+.section { padding-top: 1.6rem; }
+.section-header { font-size: 0.62rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--fg3); padding: 0 1.5rem 0.85rem; }
+
+.bio-card { margin: 0 1.25rem 0.7rem; padding: 1rem 1.15rem; border: 1px solid var(--border); background: rgba(242,240,234,0.012); cursor: pointer; transition: background 0.2s ease; }
+.bio-card:hover { background: rgba(242,240,234,0.025); }
+.bio-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.45rem; gap: 0.5rem; }
+.bio-label { font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg2); font-weight: 400; }
+.bio-source { font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg3); display: flex; align-items: center; gap: 0.35rem; }
+.bio-source::before { content: '✓'; color: var(--accent); font-size: 0.7rem; }
+.bio-source.empty { color: var(--fg4); }
+.bio-source.empty::before { content: '—'; color: var(--fg4); }
+.bio-meta { font-size: 0.78rem; color: var(--fg3); margin-bottom: 0.5rem; line-height: 1.5; }
+.bio-cta { font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg2); display: inline-block; margin-top: 0.35rem; }
+
+.baseline-card { margin: 0 1.25rem 0.55rem; padding: 0.95rem 1.15rem; border: 1px solid var(--border); background: rgba(242,240,234,0.012); }
+.bl-row { display: flex; justify-content: space-between; align-items: baseline; }
+.bl-key { font-size: 0.78rem; color: var(--fg2); }
+.bl-val { font-size: 1.05rem; color: var(--fg); font-weight: 300; }
+.bl-meta { font-size: 0.7rem; color: var(--fg3); margin-top: 0.25rem; }
+
+.sources { margin: 0 1.25rem 1rem; padding: 1rem 1.15rem; border: 1px solid var(--border); }
+.source-row { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
+.source-row:last-of-type { border-bottom: none; }
+.source-name { display: flex; align-items: center; gap: 0.55rem; color: var(--fg2); }
+.source-name::before { content: '✓'; color: var(--accent); font-size: 0.85rem; }
+.source-name.empty { color: var(--fg4); }
+.source-name.empty::before { content: '—'; color: var(--fg4); }
+.source-meta { font-size: 0.7rem; color: var(--fg3); }
+
+.bottom-nav { margin-top: auto; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border); background: rgba(15,18,16,0.85); backdrop-filter: blur(20px); position: sticky; bottom: 0; }
+.bn-item { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.85rem 0; font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg3); text-decoration: none; padding-bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px)); }
+.bn-item.active { color: var(--fg); }
+.bn-item:hover { color: var(--fg2); }
+.bn-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: 0; }
+.bn-item.active .bn-dot { opacity: 1; }
+
+.loading { padding: 4rem 2rem; text-align: center; }
+.loading-dots { display: inline-flex; gap: 6px; }
+.loading-dots span { width: 6px; height: 6px; background: var(--fg3); border-radius: 50%; animation: dotPulse 1.4s ease-in-out infinite; }
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+.loading-text { font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--fg3); margin-top: 1rem; }
+@keyframes dotPulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div class="frame">
+
+  <nav>
+    <a class="nav-back" href="today.html">‹ Tillbaka</a>
+    <div class="nav-title">Profil</div>
+    <a href="../wearables.html" class="nav-icon" title="Inställningar">⚙</a>
+  </nav>
+
+  <div class="loading" id="loading">
+    <div class="loading-dots"><span></span><span></span><span></span></div>
+    <div class="loading-text">Laddar profil</div>
+  </div>
+
+  <div id="main" style="display:none;"></div>
+
+  <div class="bottom-nav">
+    <a class="bn-item" href="today.html"><div class="bn-dot"></div><span>Idag</span></a>
+    <a class="bn-item" href="trends.html"><div class="bn-dot"></div><span>Trender</span></a>
+    <a class="bn-item" href="checkin.html"><div class="bn-dot"></div><span>Check-in</span></a>
+    <a class="bn-item" href="chat.html"><div class="bn-dot"></div><span>Samtal</span></a>
+  </div>
+
+</div>
+
+<script>
+function token(){ return localStorage.getItem('prv_token') || ''; }
+function authHeaders(){ const t = token(); return t ? { 'Authorization': 'Bearer ' + t } : {}; }
+if (!token()) window.location.href = '/login.html?from=' + encodeURIComponent(location.pathname);
+
+async function fetchJSON(url) {
+  const r = await fetch(url, { headers: authHeaders() });
+  if (r.status === 401) { localStorage.removeItem('prv_token'); window.location.href = '/login.html'; throw new Error('unauthenticated'); }
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+function avg(arr) { if (!arr.length) return null; return arr.reduce((s,x) => s+x, 0) / arr.length; }
+
+async function init() {
+  try {
+    const [me, profile, checkins, integrations, labResp] = await Promise.all([
+      fetchJSON('/api/me').catch(() => null),
+      fetchJSON('/api/profile').catch(() => null),
+      fetchJSON('/api/checkins').catch(() => []),
+      fetchJSON('/api/integrations').catch(() => []),
+      fetchJSON('/api/lab/tests').catch(() => ({ tests: [] })),
+    ]);
+
+    const labTests = (labResp && labResp.tests) || [];
+    const labCount = labTests.length;
+    const latestLabDate = labCount > 0 ? labTests[0].date : null;
+
+    document.getElementById('loading').style.display = 'none';
+
+    const garmin = integrations?.find(i => i.provider === 'garmin')?.data || {};
+    const dexcom = integrations?.find(i => i.provider === 'dexcom');
+    const strava = integrations?.find(i => i.provider === 'strava');
+
+    const profileData = profile?.data || {};
+    const name = profileData.q3_1 || me?.email?.split('@')[0] || 'Forsyne-användare';
+    const age = profileData.q3_2 || '';
+    const sex = profileData.q3_3 || '';
+    const occupation = profileData.q4_1 || '';
+    const conditions = profileData.q5_1 || profileData.kroniska || '';
+
+    const identityMeta = [age && (age + ' år'), sex, occupation].filter(Boolean).join(' · ');
+    const conditionsLine = conditions ? `<div class="identity-meta" style="margin-top:0.4rem;">${conditions}</div>` : '';
+
+    // HRV baseline
+    const hrvData = garmin.hrv || [];
+    const hrvBaseline = hrvData.length > 0 ? Math.round(avg(hrvData.slice(0, 30).map(d => d.avg_hrv))) : null;
+    const hrvRecent = hrvData.length >= 7 ? Math.round(avg(hrvData.slice(0, 7).map(d => d.avg_hrv))) : null;
+
+    // RHR baseline
+    const rhrData = garmin.resting_hr || [];
+    const rhrBaseline = rhrData.length > 0 ? Math.round(avg(rhrData.slice(0, 30).map(d => d.bpm))) : null;
+    const rhrRecent = rhrData.length >= 7 ? Math.round(avg(rhrData.slice(0, 7).map(d => d.bpm))) : null;
+
+    // Sleep baseline (from checkins.sleep)
+    const sleepVals = checkins.filter(c => c.sleep != null).map(c => c.sleep);
+    const sleepBaseline = sleepVals.length > 0 ? avg(sleepVals.slice(0, 30)) : null;
+
+    let html = `
+      <div class="identity">
+        <div class="identity-name">${name}${age ? ', ' + age : ''}</div>
+        <div class="identity-meta">${[sex, occupation].filter(Boolean).join(' · ') || 'Profil ej fullständig än'}</div>
+        ${conditionsLine}
+      </div>
+
+      <div class="section">
+        <div class="section-header">Biologi</div>
+
+        <div class="bio-card">
+          <div class="bio-head">
+            <div class="bio-label">DNA</div>
+            <div class="bio-source empty">Lägg till</div>
+          </div>
+          <div class="bio-meta">Ladda upp 23&Me- eller AncestryDNA-rapport — agenten använder den för att kalibrera prediktioner.</div>
+          <div class="bio-cta">Ladda upp →</div>
+        </div>
+
+        <div class="bio-card">
+          <div class="bio-head">
+            <div class="bio-label">Blodprover</div>
+            <div class="bio-source empty">Lägg till</div>
+          </div>
+          <div class="bio-meta">Ladda upp PDF från senaste blodprovet. Agenten parser:ar och bygger biokontext.</div>
+          <div class="bio-cta">Ladda upp PDF →</div>
+        </div>
+
+        <div class="bio-card">
+          <div class="bio-head">
+            <div class="bio-label">Hormoner & CGM</div>
+            <div class="bio-source ${dexcom ? '' : 'empty'}">${dexcom ? 'Dexcom' : 'Ej kopplad'}</div>
+          </div>
+          <div class="bio-meta">${dexcom ? 'Glukos-data sammanställs.' : 'Anslut Dexcom eller liknande för CGM-data.'}</div>
+        </div>
+
+        <a href="lab.html" style="text-decoration:none;color:inherit;">
+          <div class="bio-card">
+            <div class="bio-head">
+              <div class="bio-label">Labbtester</div>
+              <div class="bio-source ${labCount > 0 ? '' : 'empty'}">${labCount > 0 ? (labCount + ' test' + (labCount === 1 ? '' : 'er')) : 'Lägg till'}</div>
+            </div>
+            <div class="bio-meta">${labCount > 0 && latestLabDate ? 'Senast ' + latestLabDate + '. Matas in som biomarkörer i agentens kontext.' : 'VO2 max, laktattrösklar, kroppssammansättning. Matas in som biomarkörer till agenten.'}</div>
+            <div class="bio-cta">${labCount > 0 ? 'Visa och hantera →' : 'Lägg till första →'}</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="section">
+        <div class="section-header">Baseliner — systemets bild av dig</div>
+
+        <div class="baseline-card">
+          <div class="bl-row">
+            <div class="bl-key">HRV-baseline</div>
+            <div class="bl-val">${hrvBaseline ? hrvBaseline + ' ms' : '—'}</div>
+          </div>
+          <div class="bl-meta">${hrvData.length > 0 ? 'baserad på ' + Math.min(hrvData.length, 30) + ' dagar' : 'Behöver HRV-data'}</div>
+        </div>
+
+        <div class="baseline-card">
+          <div class="bl-row">
+            <div class="bl-key">Vilopuls-baseline</div>
+            <div class="bl-val">${rhrBaseline ? rhrBaseline + ' bpm' : '—'}</div>
+          </div>
+          <div class="bl-meta">${rhrData.length > 0 ? 'baserad på ' + Math.min(rhrData.length, 30) + ' dagar' : 'Logga vilopuls dagligen'}</div>
+        </div>
+
+        <div class="baseline-card">
+          <div class="bl-row">
+            <div class="bl-key">Sömn-baseline</div>
+            <div class="bl-val">${sleepBaseline ? Math.floor(sleepBaseline) + 'h' + Math.round((sleepBaseline % 1) * 60).toString().padStart(2, '0') : '—'}</div>
+          </div>
+          <div class="bl-meta">${sleepVals.length > 0 ? 'baserad på ' + Math.min(sleepVals.length, 30) + ' check-ins' : 'Logga sömn dagligen'}</div>
+        </div>
+      </div>
+
+      <div class="section" style="padding-bottom: 1.4rem;">
+        <div class="section-header">Källor</div>
+        <div class="sources">
+          <div class="source-row">
+            <div class="source-name ${garmin.activities ? '' : 'empty'}">Garmin</div>
+            <div class="source-meta">${garmin.activities ? (garmin.activities.length || 0) + ' aktiviteter' : 'Ej kopplad'}</div>
+          </div>
+          <div class="source-row">
+            <div class="source-name ${dexcom ? '' : 'empty'}">Dexcom</div>
+            <div class="source-meta">${dexcom ? 'Aktiv' : 'Ej kopplad'}</div>
+          </div>
+          <div class="source-row">
+            <div class="source-name ${strava ? '' : 'empty'}">Strava</div>
+            <div class="source-meta">${strava ? 'Aktiv' : 'Ej kopplad'}</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('main').innerHTML = html;
+    document.getElementById('main').style.display = 'block';
+
+  } catch (e) {
+    console.error(e);
+    document.getElementById('loading').innerHTML = '<div class="loading-text" style="color:var(--danger)">Kunde inte ladda. ' + e.message + '</div>';
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>

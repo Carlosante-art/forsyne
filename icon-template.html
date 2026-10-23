@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<title>Forsyne — icon template</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: #050605;
+  padding: 40px 20px;
+  font-family: 'Jost', system-ui, sans-serif;
+  color: #8A8E89;
+}
+.row {
+  max-width: 1200px;
+  margin: 0 auto 40px;
+  display: flex;
+  gap: 40px;
+  align-items: flex-end;
+}
+.icon-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.icon-label {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.icon-512, .icon-192 {
+  background: linear-gradient(180deg, #0F1210, #131714);
+  color: #F2F0EA;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 19%;
+  box-shadow: 0 0 80px -30px rgba(143,174,138,0.4);
+  overflow: hidden;
+  position: relative;
+}
+.icon-512 {
+  width: 512px;
+  height: 512px;
+  font-size: 360px;
+}
+.icon-192 {
+  width: 192px;
+  height: 192px;
+  font-size: 135px;
+}
+.icon-512::before, .icon-192::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(143,174,138,0.08), transparent 60%);
+}
+.icon-512 span, .icon-192 span {
+  position: relative;
+  z-index: 1;
+  transform: translateY(4%);
+}
+
+.instruction {
+  max-width: 900px;
+  margin: 40px auto 0;
+  line-height: 1.7;
+  font-size: 13px;
+}
+.instruction strong { color: #8FAE8A; font-weight: 400; }
+.instruction code {
+  background: rgba(255,255,255,0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  color: #F2F0EA;
+}
+</style>
+</head>
+<body>
+
+<div class="row">
+  <div class="icon-wrap">
+    <div class="icon-512"><span>F</span></div>
+    <div class="icon-label">512 × 512</div>
+  </div>
+  <div class="icon-wrap">
+    <div class="icon-192"><span>F</span></div>
+    <div class="icon-label">192 × 192</div>
+  </div>
+</div>
+
+<div class="instruction">
+  <p><strong>Instruktion:</strong> Tryck <strong>Windows + Shift + S</strong> och dra en ruta runt <strong>exakt kvadraten 512×512</strong> (den större). Spara som <code>icon-512.png</code>.</p>
+  <p>Gör samma för den mindre 192×192-kvadraten. Spara som <code>icon-192.png</code>.</p>
+  <p>Båda sparas i <code>C:\Users\ckarj\Pictures\Screenshots\</code> så kopierar jag in dem i repot.</p>
+</div>
+
+</body>
+</html>

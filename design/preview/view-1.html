@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0F1210">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Forsyne">
+<title>Forsyne — Today (preview)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#0F1210; --ink2:#131714;
+  --fg:#F2F0EA; --fg2:#CCC9BF; --fg3:#8A8E89; --fg4:#4a4e49;
+  --accent:#8FAE8A; --warn:#C4875A; --danger:#A85C5C; --trust:#5B7FA6;
+  --border:rgba(242,240,234,0.06);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Jost',system-ui,sans-serif;
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+
+html, body {
+  background: linear-gradient(to bottom, var(--ink) 0%, var(--ink2) 100%);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-weight: 300;
+  line-height: 1.7;
+  min-height: 100vh;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;
+}
+
+/* Phone-frame for desktop preview, full-width on mobile */
+.frame {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 500px) {
+  body {
+    background: #050605;
+    padding: 2rem 0;
+  }
+  .frame {
+    background: linear-gradient(to bottom, var(--ink) 0%, var(--ink2) 100%);
+    border-radius: 36px;
+    overflow: hidden;
+    box-shadow: 0 0 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+    margin-top: 1rem;
+    padding-bottom: 1rem;
+  }
+}
+
+/* ── NAV ── */
+nav {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(15,18,16,0.85);
+  backdrop-filter: blur(32px) saturate(1.5);
+  -webkit-backdrop-filter: blur(32px) saturate(1.5);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  color: var(--fg);
+}
+.nav-date {
+  font-family: var(--serif);
+  font-size: 0.9rem;
+  color: var(--fg2);
+}
+.nav-icon {
+  font-size: 1.1rem;
+  color: var(--fg3);
+  cursor: pointer;
+}
+
+/* ── ALERT BAND (conditional) ── */
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.95rem 1.5rem;
+  background: rgba(168, 92, 92, 0.08);
+  border-top: 1px solid rgba(168, 92, 92, 0.18);
+  border-bottom: 1px solid rgba(168, 92, 92, 0.18);
+  cursor: pointer;
+  animation: alertPulse 2.6s ease-in-out infinite;
+  transition: opacity 0.3s ease;
+}
+.alert.hidden { display: none; }
+.alert-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--danger);
+}
+.alert-text {
+  font-size: 0.85rem;
+  color: var(--fg2);
+  flex: 1;
+  line-height: 1.4;
+}
+.alert-arrow {
+  color: var(--fg3);
+  font-size: 1.2rem;
+}
+@keyframes alertPulse {
+  0%, 100% { opacity: 0.92; }
+  50% { opacity: 1; }
+}
+
+/* ── HERO ── */
+.hero {
+  padding: 2.5rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.composite-ring {
+  width: 200px;
+  height: 200px;
+  position: relative;
+}
+.composite-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.composite-ring .ring-bg {
+  fill: none;
+  stroke: rgba(242,240,234,0.05);
+  stroke-width: 4;
+}
+.composite-ring .ring-fg {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 565;
+  stroke-dashoffset: 565;
+  animation: ringDraw 1s ease forwards;
+}
+.composite-ring.zone-good .ring-fg { stroke: var(--accent); }
+.composite-ring.zone-caution .ring-fg {
+  stroke: var(--warn);
+  stroke-dasharray: 565;
+  stroke-dashoffset: 565;
+}
+.composite-ring.zone-strain .ring-fg {
+  stroke: var(--danger);
+  animation: ringDraw 1s ease forwards, ringPulse 2.5s ease 1.2s infinite;
+}
+.composite-ring .ring-number {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 5rem;
+  line-height: 1;
+  color: var(--fg);
+}
+@keyframes ringDraw {
+  to { stroke-dashoffset: var(--ring-offset, 169); }
+}
+@keyframes ringPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.78; }
+}
+
+.interpretation {
+  margin-top: 1.4rem;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--fg2);
+  line-height: 1.4;
+  max-width: 320px;
+}
+
+/* ── CONTRIBUTOR CHIPS ── */
+.chips {
+  display: flex;
+  gap: 0.55rem;
+  padding: 1.5rem 1.25rem 1.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  border-bottom: 1px solid var(--border);
+}
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  padding: 0.85rem 0.7rem;
+  background: rgba(242,240,234,0.025);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.2s ease;
+}
+.chip:active { transform: scale(0.97); }
+.chip.positive { background: rgba(143,174,138,0.06); border-color: rgba(143,174,138,0.18); }
+.chip.negative { background: rgba(168,92,92,0.06); border-color: rgba(168,92,92,0.18); }
+.chip-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chip-value {
+  font-size: 0.95rem;
+  color: var(--fg);
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+.chip-arrow {
+  font-size: 0.78rem;
+  color: var(--fg3);
+}
+.chip.positive .chip-arrow { color: var(--accent); }
+.chip.negative .chip-arrow { color: var(--danger); }
+
+/* ── ACTION BAND ── */
+.action {
+  padding: 1.5rem 1.5rem 1.4rem;
+  border-bottom: 1px solid var(--border);
+}
+.action-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  margin-bottom: 0.6rem;
+}
+.action-text {
+  font-size: 1.0rem;
+  color: var(--fg);
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+.action-buttons {
+  display: flex;
+  gap: 0.6rem;
+}
+.action-btn {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg2);
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.action-btn:hover { background: rgba(242,240,234,0.04); }
+.action-btn.done.active {
+  border-color: rgba(143,174,138,0.5);
+  background: rgba(143,174,138,0.12);
+  color: var(--accent);
+}
+.action-btn.skip.active {
+  border-color: var(--fg4);
+  color: var(--fg3);
+}
+
+/* ── TREND PREVIEW ── */
+.trend {
+  padding: 1.4rem 1.5rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+.trend-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  margin-bottom: 0.7rem;
+}
+.trend-svg {
+  width: 100%;
+  height: 38px;
+  display: block;
+}
+.trend-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: trendDraw 1.4s ease 0.4s forwards;
+}
+.trend-fill {
+  fill: url(#trendGradient);
+  opacity: 0;
+  animation: trendFillFade 0.8s ease 1.4s forwards;
+}
+.trend-today {
+  fill: var(--accent);
+  opacity: 0;
+  animation: dotAppear 0.4s ease 1.6s forwards;
+}
+@keyframes trendDraw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes trendFillFade {
+  to { opacity: 1; }
+}
+@keyframes dotAppear {
+  to { opacity: 1; }
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--border);
+  background: rgba(15,18,16,0.85);
+  backdrop-filter: blur(20px);
+  position: sticky;
+  bottom: 0;
+}
+.bn-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.85rem 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding-bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px));
+}
+.bn-item { text-decoration: none; }
+.bn-item.active { color: var(--fg); }
+.bn-item:hover { color: var(--fg2); }
+.bn-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.bn-item.active .bn-dot { opacity: 1; }
+
+/* ── DEMO CONTROLS (preview only — not in real app) ── */
+.demo-controls {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  background: rgba(0,0,0,0.85);
+  border: 1px solid var(--fg4);
+  border-radius: 4px;
+  font-size: 0.65rem;
+  z-index: 1000;
+  backdrop-filter: blur(16px);
+}
+.demo-controls button {
+  background: transparent;
+  color: var(--fg2);
+  border: 1px solid var(--fg4);
+  padding: 0.3rem 0.6rem;
+  font-family: var(--sans);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.demo-controls button:hover { color: var(--fg); border-color: var(--fg2); }
+.demo-controls button.active { background: var(--accent); color: var(--ink); border-color: var(--accent); }
+.demo-controls .demo-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg4);
+  align-self: center;
+  padding: 0 0.3rem;
+}
+@media (max-width: 500px) {
+  .demo-controls { font-size: 0.6rem; flex-wrap: wrap; max-width: 90%; }
+  .demo-controls button { padding: 0.25rem 0.4rem; font-size: 0.6rem; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="frame">
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo">forsyne</div>
+    <div class="nav-date" id="navDate">19 apr</div>
+    <div style="display:flex;gap:0.9rem;align-items:center;">
+      <a href="view-5.html" class="nav-icon" title="Profil" style="text-decoration:none">◈</a>
+      <span class="nav-icon">⚙</span>
+    </div>
+  </nav>
+
+  <!-- ALERT (conditional, toggle via demo controls) -->
+  <div class="alert hidden" id="alert">
+    <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+      <line x1="12" y1="9" x2="12" y2="13"></line>
+      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+    </svg>
+    <div class="alert-text" id="alertText">RHR +9 bpm i 3 dagar — möjlig värmeökning eller ingående infektion</div>
+    <div class="alert-arrow">›</div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="composite-ring zone-good" id="ring">
+      <svg viewBox="0 0 200 200">
+        <circle class="ring-bg" cx="100" cy="100" r="90"></circle>
+        <circle class="ring-fg" cx="100" cy="100" r="90" id="ringFg"></circle>
+      </svg>
+      <div class="ring-number" id="composite">0</div>
+    </div>
+    <div class="interpretation" id="interpretation">Du är välåterhämtad. Push-läge ok idag.</div>
+  </div>
+
+  <!-- CONTRIBUTOR CHIPS -->
+  <div class="chips">
+    <div class="chip negative">
+      <div class="chip-label">HRV</div>
+      <div class="chip-value">54ms <span class="chip-arrow">↘ 4d</span></div>
+    </div>
+    <div class="chip positive">
+      <div class="chip-label">Sömn</div>
+      <div class="chip-value">7h22 <span class="chip-arrow">↗</span></div>
+    </div>
+    <div class="chip">
+      <div class="chip-label">Energi</div>
+      <div class="chip-value">4/5 <span class="chip-arrow">→</span></div>
+    </div>
+  </div>
+
+  <!-- ACTION BAND -->
+  <div class="action">
+    <div class="action-label">Föreslagen åtgärd</div>
+    <div class="action-text" id="actionText">Lugnt morgon-pass eller vila. Boost protein vid lunch — du har två dagar med låg återhämtning.</div>
+    <div class="action-buttons">
+      <button class="action-btn done" onclick="markAction(this, 'done')">✓ Gjorde</button>
+      <button class="action-btn skip" onclick="markAction(this, 'skip')">✗ Hoppade</button>
+    </div>
+  </div>
+
+  <!-- TREND PREVIEW -->
+  <div class="trend" onclick="alert('I riktig app: navigerar till View 2 (Trends)')">
+    <div class="trend-label">Composite — 7 dagar</div>
+    <svg class="trend-svg" viewBox="0 0 280 38" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#8FAE8A" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#8FAE8A" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path class="trend-fill" d="M0,28 L14,24 L42,26 L70,18 L98,22 L126,20 L154,16 L182,24 L210,18 L238,12 L266,8 L280,10 L280,38 L0,38 Z"></path>
+      <path class="trend-line" d="M0,28 L14,24 L42,26 L70,18 L98,22 L126,20 L154,16 L182,24 L210,18 L238,12 L266,8 L280,10"></path>
+      <circle class="trend-today" cx="280" cy="10" r="3.5"></circle>
+    </svg>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <a class="bn-item active" href="view-1.html">
+      <div class="bn-dot"></div>
+      <span>Today</span>
+    </a>
+    <a class="bn-item" href="view-2.html">
+      <div class="bn-dot"></div>
+      <span>Trends</span>
+    </a>
+    <a class="bn-item" href="view-3.html">
+      <div class="bn-dot"></div>
+      <span>Check-in</span>
+    </a>
+    <a class="bn-item" href="view-4.html">
+      <div class="bn-dot"></div>
+      <span>Insights</span>
+    </a>
+  </div>
+
+</div>
+
+<!-- DEMO CONTROLS (only here in preview — never in real app) -->
+<div class="demo-controls">
+  <span class="demo-label">demo</span>
+  <button onclick="setComposite(82, 'good')" id="btnGood" class="active">82 grön</button>
+  <button onclick="setComposite(58, 'caution')" id="btnCaution">58 gul</button>
+  <button onclick="setComposite(34, 'strain')" id="btnStrain">34 röd</button>
+  <button onclick="toggleAlert()" id="btnAlert">alert</button>
+</div>
+
+<script>
+// Set today's date
+const today = new Date();
+const months = ['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'];
+document.getElementById('navDate').textContent = `${today.getDate()} ${months[today.getMonth()]}`;
+
+// Composite logic
+let currentValue = 82;
+let currentZone = 'good';
+
+const interpretations = {
+  good: [
+    'Du är välåterhämtad. Push-läge ok idag.',
+    'Sällsynt fönster. Använd det.',
+    'Stark dag — kroppen är öppen för stimulus.',
+  ],
+  caution: [
+    'Lugnt läge. Lyssna på kroppen idag.',
+    'Halvkapacitet. Välj vad du lägger den på.',
+    'Inte dåligt, inte starkt. Underhåll.',
+  ],
+  strain: [
+    'Kroppen vill ha vila. Lyssna idag.',
+    'Något pågår — sänk intensitet, höj kontaktytor.',
+    'Recovery first. Allt annat sen.',
+  ],
+};
+
+const actions = {
+  good: 'Bra fönster för hård träning. Bibehåll sömn-rytmen.',
+  caution: 'Lugnt morgon-pass eller vila. Boost protein vid lunch — du har två dagar med låg återhämtning.',
+  strain: 'Skippa hård träning. Gå utomhus 20 min, ät tidigt, sov före 22:30.',
+};
+
+function setComposite(value, zone) {
+  // Update zone class on ring
+  const ring = document.getElementById('ring');
+  ring.className = 'composite-ring zone-' + zone;
+  currentZone = zone;
+
+  // Set ring offset (circumference 565 ≈ 2 * π * 90)
+  const circumference = 565;
+  const offset = circumference - (value / 100) * circumference;
+  const ringFg = document.getElementById('ringFg');
+  ringFg.style.setProperty('--ring-offset', offset);
+  ringFg.style.animation = 'none';
+  ringFg.offsetHeight; // force reflow
+  ringFg.style.animation = '';
+  ringFg.style.strokeDashoffset = offset;
+
+  // Animate number count-up
+  const numEl = document.getElementById('composite');
+  const start = currentValue;
+  const end = value;
+  const duration = 800;
+  const t0 = performance.now();
+  function step(t) {
+    const p = Math.min(1, (t - t0) / duration);
+    const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+    const v = Math.round(start + (end - start) * eased);
+    numEl.textContent = v;
+    if (p < 1) requestAnimationFrame(step);
+    else currentValue = end;
+  }
+  requestAnimationFrame(step);
+
+  // Pick a random interpretation for this zone
+  const opts = interpretations[zone];
+  document.getElementById('interpretation').textContent = opts[Math.floor(Math.random() * opts.length)];
+  document.getElementById('actionText').textContent = actions[zone];
+
+  // Update demo button active states
+  document.querySelectorAll('.demo-controls button').forEach(b => {
+    if (b.id === 'btnAlert') return;
+    b.classList.toggle('active', b.onclick.toString().includes(value));
+  });
+}
+
+function toggleAlert() {
+  const alert = document.getElementById('alert');
+  const btn = document.getElementById('btnAlert');
+  alert.classList.toggle('hidden');
+  btn.classList.toggle('active', !alert.classList.contains('hidden'));
+}
+
+function markAction(btn, kind) {
+  document.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// Initial render — set to 82 with stagger for nice load
+setTimeout(() => setComposite(82, 'good'), 100);
+
+</script>
+
+</body>
+</html>

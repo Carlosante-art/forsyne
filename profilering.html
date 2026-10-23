@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Profilering</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<style>
+:root{--ink:#0F1210;--ink2:#131714;--ink3:#171c18;--fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;--accent:#8FAE8A;--warn:#C4875A;--danger:#A85C5C;--trust:#5B7FA6;--serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;--border:rgba(242,240,234,0.06);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;line-height:1.7;min-height:100vh;overflow-x:hidden;}
+.page-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;}
+.page-bg-img{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.18) saturate(0.4);}
+.page-bg-veil{position:absolute;inset:0;background:linear-gradient(to bottom,var(--ink) 0%,rgba(15,18,16,0.72) 9%,rgba(15,18,16,0.06) 26%,rgba(15,18,16,0.06) 74%,rgba(15,18,16,0.72) 91%,var(--ink) 100%);}
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(2rem,5vw,4rem);height:64px;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.85);backdrop-filter:blur(32px);}
+.logo{font-family:var(--serif);font-size:1.1rem;font-weight:400;letter-spacing:0.18em;color:var(--fg);text-decoration:none;}
+.nav-center{font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+.nav-meta{display:flex;align-items:center;gap:1.5rem;}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(143,174,138,0.6);animation:pulse 2.5s ease infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.nav-date{font-family:var(--serif);font-size:0.9rem;color:var(--fg2);}
+.nav-user{font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg3);text-decoration:none;}
+.nav-signal{display:none;font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--danger);text-decoration:none;align-items:center;gap:0.4rem;}
+.nav-signal::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);animation:sig-pulse 1.6s ease infinite;}
+.nav-signal.show{display:flex;}
+@keyframes sig-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(168,92,92,0.6)}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(168,92,92,0)}}
+main{position:relative;z-index:1;flex:1;min-width:0;overflow-y:auto;height:100%;}
+
+/* PAGE HEADER — app-vy */
+.page-header{padding:1.8rem 2rem 1.4rem;border-bottom:1px solid var(--border);}
+.page-header-title{font-family:var(--serif);font-size:1.8rem;font-weight:300;font-style:italic;line-height:1.1;color:var(--fg);margin-bottom:0.3rem;}
+.page-header-sub{font-size:0.62rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--fg4);}
+
+/* SEKTION 1 — BORTTAGEN, ersatt av page-header */
+
+/* SEKTIONER */
+.s-section{padding:clamp(2.5rem,4vw,3.5rem) clamp(2rem,6vw,5rem);border-bottom:1px solid var(--border);}
+.s-ey{font-size:0.56rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.5rem;display:flex;align-items:center;gap:0.7rem;}
+.s-ey::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+.ot{font-family:var(--serif);font-size:clamp(1.8rem,3.2vw,2.8rem);font-weight:300;font-style:italic;line-height:1.3;color:var(--fg);text-shadow:0 2px 40px rgba(15,18,16,0.9);max-width:720px;min-height:2em;}
+.ol{font-size:0.56rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);opacity:0;transition:opacity 0.5s ease 0.3s;display:flex;align-items:center;gap:0.7rem;margin-top:1.5rem;}
+.ol.vis{opacity:1;}
+.ol::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+.dots{display:flex;gap:0.4rem;}.dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:dp 1.4s ease infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.load-row{display:flex;align-items:center;gap:0.8rem;}
+.load-txt{font-size:0.6rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+
+/* PROFIL-GRID */
+.prof-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:2.5rem;}
+.prof-item{background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);padding:1.8rem;}
+.prof-label{font-size:0.56rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);margin-bottom:0.6rem;}
+.prof-val{font-family:var(--serif);font-size:1.3rem;font-weight:300;color:var(--fg);margin-bottom:0.5rem;}
+.prof-desc{font-size:0.78rem;color:var(--fg3);line-height:1.7;}
+
+/* INSIKTER */
+.dt{font-family:var(--serif);font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:300;line-height:1.2;color:var(--fg);max-width:680px;margin-bottom:2.5rem;}
+.di-wrap{display:flex;flex-direction:column;gap:1rem;max-width:580px;}
+.di{display:flex;gap:0.8rem;align-items:flex-start;opacity:0;transform:translateY(8px);transition:opacity 0.4s ease,transform 0.4s ease;font-size:0.84rem;color:var(--fg2);line-height:1.7;}
+.di.vis{opacity:1;transform:translateY(0);}
+.dm{font-size:1.2rem;line-height:1;margin-top:0.1rem;flex-shrink:0;}
+
+/* KONFIDENSGRAD */
+.conf-bar-wrap{height:1px;background:var(--border);margin:1rem 0 0.5rem;max-width:500px;}
+.conf-bar{height:100%;background:var(--accent);width:0%;transition:width 1.4s ease 0.3s;}
+.conf-label{font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg4);}
+.conf-label em{color:var(--accent);font-style:normal;}
+
+/* BIG FIVE */
+.bf-section{margin-top:0;}
+.bf-trait{display:flex;flex-direction:column;gap:0.5rem;padding:1.4rem 0;border-bottom:1px solid var(--border);}
+.bf-trait:last-child{border-bottom:none;}
+.bf-trait-header{display:flex;align-items:baseline;justify-content:space-between;}
+.bf-trait-name{font-size:0.58rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--fg4);}
+.bf-trait-score{font-family:var(--serif);font-size:1.1rem;font-weight:300;color:var(--fg);}
+.bf-bar-wrap{height:1px;background:var(--border);position:relative;}
+.bf-bar{height:100%;position:absolute;top:0;left:0;transition:width 1s ease 0.2s;}
+.bf-trait-desc{font-size:0.72rem;color:var(--fg4);line-height:1.7;margin-top:0.15rem;}
+.bf-cta{display:inline-flex;align-items:center;gap:0.5rem;font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);border:1px solid rgba(143,174,138,0.2);padding:0.55rem 1.1rem;cursor:pointer;background:none;font-family:var(--sans);transition:border-color 0.2s ease;margin-top:1rem;}
+.bf-cta:hover{border-color:rgba(143,174,138,0.4);}
+.bf-assessment{display:none;margin-top:2rem;}
+.bf-assessment.open{display:block;}
+.bf-q{margin-bottom:2rem;}
+.bf-q-text{font-size:0.84rem;color:var(--fg2);line-height:1.7;margin-bottom:0.8rem;}
+.bf-q-labels{display:flex;justify-content:space-between;font-size:0.56rem;letter-spacing:0.1em;color:var(--fg4);margin-bottom:0.5rem;}
+.bf-scale{display:flex;gap:0.4rem;}
+.bf-sb{flex:1;height:40px;background:none;border:1px solid var(--border);color:var(--fg3);font-family:var(--sans);font-size:0.82rem;font-weight:300;cursor:pointer;transition:all 0.15s;}
+.bf-sb:hover{border-color:rgba(143,174,138,0.3);color:var(--fg2);}
+.bf-sb.sel{border-color:var(--accent);color:var(--accent);background:rgba(143,174,138,0.05);}
+.bf-submit{display:inline-flex;align-items:center;gap:0.5rem;font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink);background:var(--accent);border:none;padding:0.7rem 1.6rem;cursor:pointer;font-family:var(--sans);transition:opacity 0.2s;margin-top:0.5rem;}
+.bf-submit:disabled{opacity:0.3;cursor:not-allowed;}
+
+/* KRONISKA TILLSTÅND */
+.ch-intro{font-size:0.8rem;color:var(--fg3);line-height:1.8;max-width:520px;margin-bottom:1.8rem;}
+.ch-grid{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.6rem;}
+.ch-item{font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg3);border:1px solid var(--border);padding:0.42rem 0.9rem;cursor:pointer;background:none;font-family:var(--sans);transition:all 0.15s ease;user-select:none;}
+.ch-item:hover{color:var(--fg2);border-color:rgba(242,240,234,0.15);}
+.ch-item.sel{color:var(--warn);border-color:rgba(196,135,90,0.35);background:rgba(196,135,90,0.04);}
+.ch-notes{display:flex;flex-direction:column;gap:0.6rem;max-width:600px;}
+.ch-note{padding:0.7rem 1rem 0.7rem 1.2rem;border-left:1px solid rgba(196,135,90,0.3);font-size:0.72rem;color:var(--fg3);line-height:1.75;opacity:0;transform:translateY(4px);transition:opacity 0.3s ease,transform 0.3s ease;}
+.ch-note.vis{opacity:1;transform:translateY(0);}
+.ch-note-lbl{font-size:0.48rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--warn);margin-bottom:0.3rem;}
+
+/* DIN FORMEL — Agent 9 */
+.formel-box{border-left:2px solid var(--accent);padding:1.4rem 1.8rem;background:rgba(143,174,138,0.04);margin:2rem 0;max-width:640px;}
+.formel-box-label{font-size:0.54rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--accent);opacity:0.7;margin-bottom:0.8rem;}
+.formel-text{font-family:var(--serif);font-size:clamp(1.2rem,2vw,1.6rem);font-weight:300;font-style:italic;color:var(--fg);line-height:1.45;}
+.formel-list{display:flex;flex-direction:column;gap:0;max-width:580px;margin-top:1.8rem;}
+.formel-item{display:flex;align-items:flex-start;gap:1rem;padding:0.8rem 0;border-bottom:1px solid var(--border);opacity:0;transform:translateY(6px);transition:opacity 0.4s ease,transform 0.4s ease;}
+.formel-item.vis{opacity:1;transform:translateY(0);}
+.formel-item:last-child{border-bottom:none;}
+.formel-item-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);opacity:0.5;flex-shrink:0;margin-top:0.55rem;}
+.formel-item-txt{font-size:0.82rem;color:var(--fg2);line-height:1.7;}
+.formel-q{font-family:var(--serif);font-style:italic;font-size:0.88rem;color:var(--fg3);margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);max-width:480px;line-height:1.7;}
+
+.s-footer{padding:clamp(2rem,4vw,3rem) clamp(2rem,6vw,5rem);font-family:var(--serif);font-style:italic;font-size:0.7rem;color:var(--fg4);}
+.content-wrap{display:flex;align-items:flex-start;height:calc(100vh - 64px);overflow:hidden;}
+.sidebar{width:210px;height:100%;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:rgba(15,18,16,0.4);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;z-index:50;padding:2.5rem 0 1.8rem;}
+.sidebar::-webkit-scrollbar{display:none;}
+.ng{margin-bottom:0;}
+.ngl{font-size:0.44rem;letter-spacing:0.32em;text-transform:uppercase;color:var(--fg4);padding:0.7rem 1.8rem 0.2rem;}
+.nl{display:block;padding:0.22rem 1.8rem;font-size:0.76rem;letter-spacing:0.06em;color:var(--fg3);text-decoration:none;transition:color 0.2s,border-left-color 0.2s;border-left:1px solid transparent;cursor:pointer;}
+.nl:hover{color:var(--fg2);}
+.nl.active{color:var(--fg);border-left-color:var(--accent);background:rgba(143,174,138,0.04);}
+.nl.signal-link{color:var(--danger);display:flex;align-items:center;gap:0.5rem;}
+.nl.signal-link::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+.selvitas-wrap{margin-top:auto;padding-top:0.5rem;border-top:1px solid var(--border);}.selvitas-nav{display:block;padding:0.6rem 1.8rem 0.3rem;font-family:var(--serif);font-style:italic;font-size:0.78rem;letter-spacing:0.08em;color:var(--fg3);text-decoration:none;transition:color 0.2s;}.selvitas-nav:hover{color:var(--fg2);}
+
+@media(max-width:860px){
+  .sidebar{display:none!important;}
+  .content-wrap,.page-wrap,.layout-wrap{display:block!important;}
+  #main,.main-content,.page-content{width:100%!important;max-height:none!important;overflow-y:auto!important;}
+  .mg,.pred-grid,.today-plan-grid,.bio-grid,.src-grid,.prof-grid{grid-template-columns:1fr 1fr!important;}
+  .pred-grid,.prof-grid{grid-template-columns:1fr!important;}
+}
+</style>
+</head>
+<body>
+<script>checkAuth();</script>
+<div class="page-bg">
+  <div class="page-bg-img" style="background-image:url('images/DALL·E 2026-04-11 15.31.41 - An abstract, minimal scene using dark portrait-style lighting with no people. A single object or form—such as a sculptural shape, draped fabric, or si.webp')"></div>
+  <div class="page-bg-veil"></div>
+</div>
+<nav>
+  <a href="dashboard.html" class="logo">Forsyne</a>
+  <span class="nav-center">Profilering</span>
+  <div class="nav-meta">
+    <div class="nav-dot"></div>
+    <span class="nav-date" id="topDate"></span>
+    <a class="nav-user" id="topUser" href="profile.html"></a>
+  </div>
+</nav>
+<div class="content-wrap">
+<aside class="sidebar">
+  <div class="ng">
+    <div class="ngl">Idag</div>
+    <a class="nl" href="dashboard.html">Dashboard</a>
+    <a class="nl" href="checkin.html">Check-in</a>
+    <a class="nl signal-link" id="nav-signal" href="signal.html">Signalen</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Mönster</div>
+    <a class="nl" href="sleep.html">Sömn</a>
+    <a class="nl" href="energy.html">Energi</a>
+    <a class="nl" href="stress.html">Stress</a>
+    <a class="nl" href="training.html">Träning</a>
+    <a class="nl" href="kostlogg.html">Måltidslogg</a>
+    <a class="nl" href="nutrition.html">Kost</a>
+    <a class="nl" href="wearables.html">Wearables</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Biologi</div>
+    <a class="nl" href="biologi.html">Biomarkörer</a>
+    <a class="nl" href="dna.html">DNA</a>
+    <a class="nl" href="journal.html">Journal</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Helhet</div>
+    <a class="nl" href="profilering.html">Profilering</a>
+    <a class="nl" href="systemkarta.html">Systemkarta</a>
+    <a class="nl" href="analys.html">Analys</a>
+  </div>
+  <div class="selvitas-wrap">
+    <a class="selvitas-nav" href="selvitas.html">Selvitas</a>
+    <div class="ng" style="margin-bottom:0;">
+      <div class="ngl">Coach</div>
+      <a class="nl" href="coach.html">Coach-portal</a>
+    </div>
+  </div>
+</aside>
+<main>
+
+  <!-- PAGE HEADER -->
+  <header class="page-header">
+    <div class="page-header-title">Profilering</div>
+    <div class="page-header-sub">Förstå dig själv · Systemets modell av dig</div>
+  </header>
+
+  <!-- SEKTION 2 — Varför det spelar roll -->
+  <section class="s-section" id="s-why" style="opacity:0;transition:opacity 0.6s ease;">
+    <div class="s-ey">Varför det spelar roll</div>
+    <div class="ot" id="ot"><span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></div>
+    <div class="ol" id="ol">Profilering · Baserat på din data</div>
+  </section>
+
+  <!-- SEKTION 3 — Profil -->
+  <section class="s-section" id="s2" style="opacity:0;transition:opacity 0.5s ease;">
+    <div class="s-ey">Din profil</div>
+    <div class="load-row" id="s2-load"><span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span><span class="load-txt">Hämtar profil</span></div>
+    <div class="prof-grid" id="prof-grid" style="display:none;"></div>
+  </section>
+
+  <!-- SEKTION 3b — Big Five -->
+  <section class="s-section" id="s-bf" style="opacity:0;transition:opacity 0.5s ease;">
+    <div class="s-ey">Personlighetsprofil · Big Five</div>
+    <div class="bf-section" id="bf-content">
+      <!-- filled by JS -->
+    </div>
+  </section>
+
+  <!-- SEKTION 3c — Kroniska tillstånd -->
+  <section class="s-section" id="s-chronic" style="opacity:0;transition:opacity 0.5s ease;">
+    <div class="s-ey">Biologiska förutsättningar · Kroniska tillstånd</div>
+    <div class="ch-intro">
+      Dessa tillstånd skapar systematiska biologiska mönster som systemet annars kan feltolka som livsstilsval.
+      Välj det som gäller dig — systemet justerar tolkningen av dina värden.
+    </div>
+    <div class="ch-grid" id="ch-grid"></div>
+    <div class="ch-notes" id="ch-notes"></div>
+  </section>
+
+  <!-- SEKTION 4 — Systemets insikter -->
+  <section class="s-section" id="a3" style="opacity:0;transition:opacity 0.5s ease;">
+    <div class="s-ey">Systemets analys</div>
+    <div class="load-row" id="a3-load"><span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span><span class="load-txt">Systemet formulerar</span></div>
+    <div id="a3-body" style="display:none;"><div class="dt" id="a3-dom"></div><div class="di-wrap" id="a3-items"></div></div>
+  </section>
+
+  <!-- SEKTION 5 — Din formel (Agent 9) -->
+  <section class="s-section" id="s-formel" style="opacity:0;transition:opacity 0.5s ease;">
+    <div class="s-ey">Din formel</div>
+    <div class="load-row" id="formel-load"><span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span><span class="load-txt">Systemet söker vad som fungerar</span></div>
+    <div id="formel-body" style="display:none;">
+      <div class="dt" id="formel-styrka"></div>
+      <div class="formel-box" id="formel-box" style="display:none;">
+        <div class="formel-box-label">Systemet bekräftar ett mönster</div>
+        <div class="formel-text" id="formel-text"></div>
+      </div>
+      <div class="formel-list" id="formel-list"></div>
+      <div class="formel-q" id="formel-q"></div>
+    </div>
+  </section>
+
+  <!-- SEKTION 6 — Konfidensgrad -->
+  <section class="s-section">
+    <div class="s-ey">Modellens konfidensgrad</div>
+    <div style="font-size:0.78rem;color:var(--fg3);max-width:480px;line-height:1.7;margin-bottom:1.5rem;">Precisionen ökar med varje check-in. Full modell aktiveras efter 30 dagar.</div>
+    <div class="conf-bar-wrap"><div class="conf-bar" id="conf-bar"></div></div>
+    <div class="conf-label" id="conf-label">Beräknar...</div>
+  </section>
+
+  <footer class="s-footer">Inte baserat på genomsnitt. Baserat på dig.</footer>
+
+</main>
+</div>
+
+<script>
+// ── Sidebar: auto-active baserat på URL ──
+(function(){
+  const page = location.pathname.split('/').pop() || 'dashboard.html';
+  document.querySelectorAll('.sidebar a.nl').forEach(a => {
+    if (a.getAttribute('href') === page) a.classList.add('active');
+  });
+})();
+
+function tw(el,text,ms,cb){let i=0;el.textContent='';const t=()=>{if(i<text.length){el.textContent+=text[i++];setTimeout(t,ms);}else if(cb)cb();};t();}
+
+const PROFILE_FIELDS=[
+  {key:'kronotyp',label:'Kronotyp',fallback:'Ej fastställd',desc:'Din biologiska dygnsrytm — när kroppen naturligt vill sova och prestera.'},
+  {key:'energiprofil',label:'Energiprofil',fallback:'Analyseras',desc:'Ditt naturliga energimönster under dagen.'},
+  {key:'stressmönster',label:'Stressmönster',fallback:'Analyseras',desc:'Hur du biologiskt hanterar kognitiv och emotionell belastning.'},
+  {key:'primär_smärtpunkt',label:'Primär smärtpunkt',fallback:'Analyseras',desc:'Vad som konsekvent begränsar din kapacitet.'},
+  {key:'återhämtningsprofil',label:'Återhämtningsprofil',fallback:'Analyseras',desc:'Hur effektivt du återhämtar dig och vad som hjälper mest.'},
+  {key:'modellkonfidensgrad',label:'Modellkonfidensgrad',fallback:'—',desc:'Hur träffsäker systemets modell av dig är baserat på insamlad data.'}
+];
+
+(async()=>{
+  const d=new Date();
+  const DAYS=['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+  const MONTHS=['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+  const dateEl=document.getElementById('topDate'),userEl=document.getElementById('topUser');
+  if(dateEl)dateEl.textContent=DAYS[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()];
+  if(userEl){const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');const u=API&&API.user?API.user():null;userEl.textContent=(ob.q3_1||(u?u.email.split('@')[0]:'')||'').toUpperCase();}
+
+  let checkins=[];
+  try{const r=await fetch('/api/checkins',{headers:{'Authorization':'Bearer '+API.token()}});if(r.ok){const data=await r.json();checkins=Array.isArray(data)?data:(data.checkins||[]);}}catch(e){}
+  const last14=checkins.slice(-14);
+  const profile=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+
+  try{const signalEl=document.getElementById('nav-signal');const recent=(checkins||[]).slice(-3);if(recent.filter(c=>c.stress>=7&&c.sleep<=5).length>=2&&signalEl)signalEl.classList.add('show');}catch(e){}
+
+  // Sektion 2 — agent-genererad text
+  const otEl=document.getElementById('ot'),olEl=document.getElementById('ol');
+  let opening='Systemet har börjat se vem du är — inte vem du tror att du är.';
+  try{
+    let _ai=PCache.get('insights_profilering_opening');
+    if(!_ai){const r=await fetch('/api/agent/insights/generate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.token()},body:JSON.stringify({checkins:last14,profile,context:'profilering_opening'})});if(r.ok){_ai=await r.json();PCache.set('insights_profilering_opening',_ai);}}
+    if(_ai?.insikt)opening=_ai.insikt;
+  }catch(e){}
+
+  setTimeout(()=>{
+    document.getElementById('s-why').style.opacity='1';
+    tw(otEl,opening,16,()=>{
+      olEl.classList.add('vis');
+      setTimeout(async()=>{
+        document.getElementById('s2').style.opacity='1';
+
+        let profileData={};
+        try{const r=await fetch('/api/profile',{headers:{'Authorization':'Bearer '+API.token()}});if(r.ok){const j=await r.json();profileData=j.profile||j||{};}}catch(e){}
+
+        const grid=document.getElementById('prof-grid');
+        PROFILE_FIELDS.forEach(f=>{
+          const val=profileData[f.key]||f.fallback;
+          const item=document.createElement('div');
+          item.className='prof-item';
+          item.innerHTML=`<div class="prof-label">${f.label}</div><div class="prof-val">${val}</div><div class="prof-desc">${f.desc}</div>`;
+          grid.appendChild(item);
+        });
+        document.getElementById('s2-load').style.display='none';
+        grid.style.display='grid';
+
+        // ── Big Five ─────────────────────────────────────────
+        document.getElementById('s-bf').style.opacity='1';
+        renderBigFive();
+
+        // ── Kroniska tillstånd ────────────────────────────────
+        document.getElementById('s-chronic').style.opacity='1';
+        renderChronic();
+
+        const confPct=Math.min(Math.round((checkins.length/30)*100),100);
+        const daysLeft=Math.max(0,30-checkins.length);
+        setTimeout(()=>{document.getElementById('conf-bar').style.width=confPct+'%';},400);
+        document.getElementById('conf-label').innerHTML=confPct>=100?'<em>Full precision uppnådd</em>':confPct>0?`<em>${confPct}%</em> — Full precision efter ${daysLeft} dagar till`:'Inga check-ins loggade ännu';
+
+        document.getElementById('a3').style.opacity='1';
+        let domText='Systemet lär sig dig — varje dag ökar träffsäkerheten.';
+        let ins1='Din onboarding-profil är grunden. Check-ins bygger precisionen.';
+        let ins2='Patterns syns när data ackumuleras — just nu är vi i kalibreringsfas.';
+        let ins3='Fortsätt logga dagliga check-ins för att aktivera fullständig profilering.';
+        try{
+          let _ai=PCache.get('insights_profilering_full');
+          if(!_ai){const r=await fetch('/api/agent/insights/generate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.token()},body:JSON.stringify({checkins:last14,profile:profileData,context:'profilering_full'})});if(r.ok){_ai=await r.json();PCache.set('insights_profilering_full',_ai);}}
+          if(_ai){if(_ai.insikt)domText=_ai.insikt;if(_ai.styrka)ins1=_ai.styrka;if(_ai.risk)ins2=_ai.risk;if(_ai.rekommendation)ins3=_ai.rekommendation;}
+        }catch(e){}
+        document.getElementById('a3-load').style.display='none';
+        document.getElementById('a3-dom').textContent=domText;
+        document.getElementById('a3-items').innerHTML=`<div class="di"><span class="dm" style="color:var(--accent);">↑</span><span>${ins1}</span></div><div class="di"><span class="dm" style="color:var(--warn);">·</span><span>${ins2}</span></div><div class="di"><span class="dm" style="color:var(--trust);">→</span><span>${ins3}</span></div>`;
+        document.getElementById('a3-body').style.display='block';
+        document.querySelectorAll('#a3-items .di').forEach((di,i)=>setTimeout(()=>di.classList.add('vis'),300+i*120));
+
+        // SEKTION 5 — Din formel (Agent 9)
+        setTimeout(async()=>{
+          document.getElementById('s-formel').style.opacity='1';
+          const agent3Out={insikt:domText,styrka:ins1,risk:ins2,rekommendation:ins3};
+          let bal=PCache.get('agent9_balance');
+          if(!bal){
+            try{
+              const rb=await fetch('/api/agent/balance/generate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.token()},body:JSON.stringify({checkins:last14,profile:profileData,agent3_output:agent3Out})});
+              if(rb.ok){const jb=await rb.json();if(jb.producerade_output){bal=jb;PCache.set('agent9_balance',bal);}}
+            }catch(e){}
+          }
+
+          document.getElementById('formel-load').style.display='none';
+
+          if(!bal){
+            // Inte tillräckligt med data ännu
+            document.getElementById('formel-styrka').textContent='Systemet behöver mer data för att bekräfta ett mönster. Fortsätt logga.';
+            document.getElementById('formel-body').style.display='block';
+            return;
+          }
+
+          document.getElementById('formel-styrka').textContent=bal.styrkeinsikt||'Systemet ser vad som fungerar i din data.';
+
+          if(bal.formel_bekräftad&&bal.formel_text){
+            document.getElementById('formel-text').textContent=bal.formel_text;
+            document.getElementById('formel-box').style.display='block';
+          }
+
+          const listEl=document.getElementById('formel-list');
+          const items=Array.isArray(bal.avvärjnings_förstärkare)?bal.avvärjnings_förstärkare:[];
+          if(items.length>0){
+            items.forEach((txt,i)=>{
+              const div=document.createElement('div');
+              div.className='formel-item';
+              div.innerHTML=`<span class="formel-item-dot"></span><span class="formel-item-txt">${txt}</span>`;
+              listEl.appendChild(div);
+              setTimeout(()=>div.classList.add('vis'),200+i*110);
+            });
+          }
+
+          if(bal.check_in_avslutning){
+            document.getElementById('formel-q').textContent=bal.check_in_avslutning;
+          }
+
+          document.getElementById('formel-body').style.display='block';
+        },400);
+      },500);
+    });
+  },600);
+})();
+
+// ── Big Five ─────────────────────────────────────────────────
+const BF_QUESTIONS=[
+  {id:'e1',trait:'E',text:'Jag ser mig som reserverad och tillbakadragen',labelL:'Reserverad',labelR:'Utåtriktad',reverse:true},
+  {id:'a1',trait:'A',text:'Jag ser mig som kritisk och ifrågasättande',labelL:'Kritisk',labelR:'Varm & omtänksam',reverse:true},
+  {id:'c1',trait:'C',text:'Jag ser mig som pålitlig och självdisciplinerad',labelL:'Slarvig',labelR:'Disciplinerad',reverse:false},
+  {id:'n1',trait:'N',text:'Jag ser mig som lugn och emotionellt stabil',labelL:'Stabil',labelR:'Lättuppsatt',reverse:true},
+  {id:'o1',trait:'O',text:'Jag ser mig som öppen för nya upplevelser',labelL:'Konventionell',labelR:'Öppen & nyfiken',reverse:false},
+  {id:'e2',trait:'E',text:'Jag ser mig som energisk och full av liv',labelL:'Stilla',labelR:'Energisk',reverse:false},
+  {id:'a2',trait:'A',text:'Jag ser mig som hjälpsam och osjälvisk',labelL:'Kall & distanserad',labelR:'Hjälpsam & generös',reverse:false},
+  {id:'c2',trait:'C',text:'Jag ser mig som noggrann och grundlig',labelL:'Ovarsam',labelR:'Noggrann',reverse:false},
+  {id:'n2',trait:'N',text:'Jag ser mig som lätt att störa ur balans',labelL:'Stabil',labelR:'Känslosam',reverse:false},
+  {id:'o2',trait:'O',text:'Jag har en aktiv fantasi och rik inre värld',labelL:'Praktisk',labelR:'Kreativ',reverse:false},
+];
+const BF_TRAITS={
+  E:{label:'Extraversion',desc:'Hur du hämtar och ger energi i sociala sammanhang.',lo:'Introvert — ensamhet ger energi',hi:'Extrovert — socialt samspel ger energi',color:'var(--trust)'},
+  A:{label:'Vänlighet',desc:'Din naturliga orientering mot andra människor.',lo:'Skeptisk & kritisk',hi:'Varm & tillitsfull',color:'var(--accent)'},
+  C:{label:'Samvetsgrannhet',desc:'Hur du hanterar struktur, disciplin och långsiktighet.',lo:'Flexibel & spontan',hi:'Strukturerad & självdisciplinerad',color:'var(--accent)'},
+  N:{label:'Neuroticism',desc:'Din biologiska stressreaktivitet — hur HPA-axeln svarar.',lo:'Emotionellt stabil',hi:'Reaktiv — hög stressreaktivitet',color:'var(--warn)'},
+  O:{label:'Öppenhet',desc:'Din nyfikenhet och förmåga att anpassa sig till ny information.',lo:'Konventionell',hi:'Kreativ & utforskande',color:'var(--accent)'},
+};
+
+function bfScore(trait){
+  const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+  const items=BF_QUESTIONS.filter(q=>q.trait===trait);
+  const vals=items.map(q=>{
+    const raw=parseInt(ob['bf_'+q.id]);
+    if(isNaN(raw))return null;
+    return q.reverse?6-raw:raw;
+  }).filter(v=>v!==null);
+  return vals.length===items.length?vals.reduce((s,v)=>s+v,0)/vals.length:null;
+}
+
+function bfComplete(){
+  const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+  return BF_QUESTIONS.every(q=>ob['bf_'+q.id]!=null);
+}
+
+function renderBigFive(){
+  const el=document.getElementById('bf-content');
+  if(bfComplete()){
+    showBfResults(el);
+  }else{
+    el.innerHTML=`
+      <p style="font-size:0.8rem;color:var(--fg3);line-height:1.8;max-width:520px;margin-bottom:0.5rem;">
+        Big Five är det enda validerade personlighetsmåttet med bevisad prediktiv kraft för hälsoutfall.
+        Neuroticism förutspår stressreaktivitet. Samvetsgrannhet förutspår konsekvens.
+        Systemet använder din profil för att tolka dina dagliga mätvärden korrekt.
+      </p>
+      <button class="bf-cta" onclick="openBfAssessment()">Genomför bedömning →</button>
+      <div class="bf-assessment" id="bf-assessment"></div>`;
+  }
+}
+
+function openBfAssessment(){
+  const wrap=document.getElementById('bf-assessment');
+  wrap.classList.add('open');
+  const bfSel={};
+  function renderQ(){
+    wrap.innerHTML=BF_QUESTIONS.map(q=>{
+      const cur=bfSel[q.id];
+      const btns=[1,2,3,4,5].map(v=>`<button class="bf-sb${cur===v?' sel':''}" onclick="bfSelect('${q.id}',${v},this)">${v}</button>`).join('');
+      return`<div class="bf-q">
+        <div class="bf-q-text">${q.text}</div>
+        <div class="bf-q-labels"><span>${q.labelL}</span><span>${q.labelR}</span></div>
+        <div class="bf-scale">${btns}</div>
+      </div>`;
+    }).join('')+
+    `<button class="bf-submit" id="bf-submit-btn" onclick="saveBf()" ${Object.keys(bfSel).length<10?'disabled':''}>Spara profil</button>`;
+  }
+  window.bfSelect=function(id,val,btn){
+    bfSel[id]=val;
+    // update selected state
+    const parent=btn.closest('.bf-scale');
+    parent.querySelectorAll('.bf-sb').forEach(b=>b.classList.remove('sel'));
+    btn.classList.add('sel');
+    const submitBtn=document.getElementById('bf-submit-btn');
+    if(submitBtn)submitBtn.disabled=Object.keys(bfSel).length<10;
+  };
+  window.saveBf=function(){
+    const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+    BF_QUESTIONS.forEach(q=>{if(bfSel[q.id]!=null)ob['bf_'+q.id]=bfSel[q.id];});
+    localStorage.setItem('forsyne_onboarding',JSON.stringify(ob));
+    showBfResults(document.getElementById('bf-content'));
+  };
+  renderQ();
+}
+
+function showBfResults(el){
+  const traits=['N','C','E','A','O'];
+  const rows=traits.map(t=>{
+    const tr=BF_TRAITS[t];
+    const score=bfScore(t);
+    if(score===null)return'';
+    const pct=Math.round((score-1)/4*100);
+    const desc=pct>60?tr.hi:pct<40?tr.lo:tr.label+' — balanserad profil';
+    return`<div class="bf-trait">
+      <div class="bf-trait-header">
+        <span class="bf-trait-name">${tr.label}</span>
+        <span class="bf-trait-score">${pct}</span>
+      </div>
+      <div class="bf-bar-wrap"><div class="bf-bar" data-w="${pct}" style="background:${tr.color};width:0%;"></div></div>
+      <div class="bf-trait-desc">${desc} — ${tr.desc}</div>
+    </div>`;
+  }).join('');
+  const neuro=bfScore('N');
+  const cons=bfScore('C');
+  let interpretation='';
+  if(neuro!==null&&cons!==null){
+    const nPct=Math.round((neuro-1)/4*100);
+    const cPct=Math.round((cons-1)/4*100);
+    if(nPct>65)interpretation='Hög stressreaktivitet identifierad — systemet justerar tolkningen av dina stressvärden.';
+    else if(cPct>65)interpretation='Hög samvetsgrannhet — systemet förväntar sig konsekvent beteendemönster i din data.';
+    else interpretation='Balanserad profil — systemet kalibrerar tolkningen utifrån dina faktiska data.';
+  }
+  el.innerHTML=`
+    ${rows}
+    ${interpretation?`<p style="font-size:0.72rem;color:var(--fg4);margin-top:1.2rem;line-height:1.75;max-width:480px;border-left:1px solid var(--border);padding-left:1rem;">${interpretation}</p>`:''}
+    <button class="bf-cta" style="margin-top:1.2rem;" onclick="resetBf()">Gör om bedömningen</button>`;
+  // Animate bars
+  setTimeout(()=>{
+    el.querySelectorAll('.bf-bar').forEach(b=>{
+      b.style.width=(b.getAttribute('data-w')||'0')+'%';
+    });
+  },100);
+}
+
+window.resetBf=function(){
+  const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+  BF_QUESTIONS.forEach(q=>delete ob['bf_'+q.id]);
+  localStorage.setItem('forsyne_onboarding',JSON.stringify(ob));
+  renderBigFive();
+};
+
+// ── Kroniska tillstånd ────────────────────────────────────────
+const CH_CONDITIONS=[
+  {id:'allergi',    label:'Säsongsallergi',              note:'Inflammationsmarkörerna stiger under pollensäsongen. Systemet förväntar sig lägre energi och förhöjd stress mars–juni utan att tolka det som livsstilsproblem.'},
+  {id:'astma',      label:'Astma',                       note:'Luftvägsinflammation påverkar sömnkvalitet och syresättning. Systemet väger in detta vid tolkning av sömndata och energimönster.'},
+  {id:'sköldkörtel',label:'Sköldkörtelproblem',          note:'Hyper- eller hypotyreos skapar basala skillnader i ämnesomsättning och energi. Systemet justerar normalvärden och tolkar energifluktuationer med detta i åtanke.'},
+  {id:'autoimmun',  label:'Autoimmun sjukdom',           note:'Kronisk låggradig inflammation påverkar energi, kognition och återhämtning systematiskt. Systemet tolkar fluktuationer som biologiska — inte beteendemässiga.'},
+  {id:'ibs',        label:'IBS / Tarmbesvär',            note:'Tarm-hjärna-axeln påverkar stressnivåer och kognitiv kapacitet. Systemet korrelerar tarmbesvär med humör och fokus i mönsteranalysen.'},
+  {id:'migrän',     label:'Migrän',                      note:'Migräncykler skapar förutsägbara dalar i energi och fokus. Systemet identifierar mönster kring triggerperioder och justerar förväntad kapacitet.'},
+  {id:'adhd',       label:'ADHD / ADD',                  note:'Dopaminreglering påverkar fokus, motivation och impulskontroll icke-linjärt. Systemet tolkar variationer i fokus och motivation med en annan baslinje.'},
+  {id:'kronisk_smärta',label:'Kronisk smärta',           note:'Smärta aktiverar stressresponsen kontinuerligt. Systemet räknar med ett förhöjt stressbaslinjevärde och justerar tolkningen av stressmätningar.'},
+  {id:'diabetes',   label:'Diabetes / Blodsockerproblematik', note:'Glukosfluktuationer påverkar energi och kognition direkt. Systemet är extra uppmärksamt på energidippar och kopplar dem till matmönster.'},
+  {id:'sömnappné',  label:'Sömnappné',                   note:'Sömnfragmentering reducerar återhämtningsvärdet av sömn oavsett antal timmar. Systemet anpassar sömnscoring för att reflektera faktisk återhämtning.'},
+];
+
+function getChronicSelected(){
+  const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+  return Array.isArray(ob.chronic_conditions)?ob.chronic_conditions:[];
+}
+
+function saveChronicSelected(ids){
+  const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+  ob.chronic_conditions=ids;
+  localStorage.setItem('forsyne_onboarding',JSON.stringify(ob));
+}
+
+function renderChronic(){
+  const grid=document.getElementById('ch-grid');
+  const notes=document.getElementById('ch-notes');
+  if(!grid||!notes) return;
+  let selected=getChronicSelected();
+
+  function redraw(){
+    grid.innerHTML=CH_CONDITIONS.map(c=>`
+      <div class="ch-item${selected.includes(c.id)?' sel':''}" data-id="${c.id}" onclick="toggleChronic('${c.id}')">${c.label}</div>
+    `).join('');
+
+    const selConditions=CH_CONDITIONS.filter(c=>selected.includes(c.id));
+    if(selConditions.length){
+      notes.innerHTML=selConditions.map((c,i)=>`
+        <div class="ch-note" id="ch-note-${c.id}">
+          <div class="ch-note-lbl">${c.label} · Systemjustering</div>
+          ${c.note}
+        </div>`).join('');
+      setTimeout(()=>{
+        selConditions.forEach((c,i)=>{
+          setTimeout(()=>{
+            const el=document.getElementById('ch-note-'+c.id);
+            if(el) el.classList.add('vis');
+          },i*80);
+        });
+      },50);
+    } else {
+      notes.innerHTML=`<div style="font-size:0.72rem;color:var(--fg4);font-style:italic;">Inga tillstånd valda — systemet arbetar med standardtolkning.</div>`;
+    }
+  }
+
+  window.toggleChronic=function(id){
+    if(selected.includes(id)) selected=selected.filter(x=>x!==id);
+    else selected=[...selected,id];
+    saveChronicSelected(selected);
+    redraw();
+  };
+
+  redraw();
+}
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

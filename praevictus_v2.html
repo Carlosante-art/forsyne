@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — System v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#0F1210;--ink2:#131714;--ink3:#171c18;
+  --fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;
+  --accent:#8FAE8A;--warn:#C4875A;--danger:#A85C5C;--trust:#5B7FA6;--beige:#D6CFC0;
+  --serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;
+  --border:rgba(242,240,234,0.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;line-height:1.7;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.5;}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 20% 0%,rgba(143,174,138,0.04) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 100%,rgba(91,127,166,0.03) 0%,transparent 60%);pointer-events:none;z-index:0;}
+
+.layout{display:grid;grid-template-columns:210px 1fr;grid-template-rows:64px 1fr;min-height:100vh;position:relative;z-index:1;}
+
+/* TOPBAR */
+.topbar{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem;height:64px;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.92);backdrop-filter:blur(32px);position:sticky;top:0;z-index:100;}
+.topbar-logo{font-family:var(--serif);font-size:1.15rem;font-weight:400;letter-spacing:0.18em;color:var(--fg);}
+.topbar-center{display:flex;align-items:center;gap:0.6rem;}
+.tp{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(143,174,138,0.6);animation:pulse 2.5s ease infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.ts{font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg3);}
+.tr{display:flex;align-items:center;gap:2rem;}
+.td{font-family:var(--serif);font-size:0.9rem;color:var(--fg2);}
+.tu{font-size:0.68rem;letter-spacing:0.14em;color:var(--fg3);text-transform:uppercase;}
+
+/* SIDEBAR */
+.sidebar{border-right:1px solid var(--border);padding:1.8rem 0;position:sticky;top:64px;height:calc(100vh - 64px);display:flex;flex-direction:column;background:rgba(15,18,16,0.4);overflow-y:auto;}
+.ng{margin-bottom:1.2rem;}
+.ngl{font-size:0.5rem;letter-spacing:0.32em;text-transform:uppercase;color:var(--fg4);padding:0 1.8rem;margin-bottom:0.4rem;}
+.nl{display:block;padding:0.42rem 1.8rem;font-size:0.76rem;letter-spacing:0.06em;color:var(--fg3);text-decoration:none;transition:all 0.2s;border-left:1px solid transparent;cursor:pointer;}
+.nl:hover{color:var(--fg2);background:rgba(143,174,138,0.03);}
+.nl.active{color:var(--fg);border-left-color:var(--accent);background:rgba(143,174,138,0.04);}
+.nl.signal-link{color:var(--danger);}
+.nl.signal-link.active{border-left-color:var(--danger);}
+.sf{margin-top:auto;padding:1.2rem 1.8rem 0;border-top:1px solid var(--border);font-family:var(--serif);font-style:italic;font-size:0.62rem;color:var(--fg4);line-height:1.8;}
+
+/* MAIN */
+.main{overflow-y:auto;}
+.page{display:none;}.page.active{display:block;}
+
+/* SHARED */
+.sp{padding:3rem 3.5rem;}
+.sb{border-bottom:1px solid var(--border);}
+.lbl{font-size:0.58rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);display:flex;align-items:center;gap:0.7rem;margin-bottom:1.8rem;}
+.lbl::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+.lbl.al{color:var(--accent);opacity:0.9;}
+.lbl.dl{color:var(--danger);opacity:0.9;}
+.lbl.dl::before{background:var(--danger);}
+
+.dots{display:flex;gap:0.4rem;}.dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:dp 1.4s ease infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+
+/* PAGE HERO */
+.ph{padding:4rem 3.5rem 3rem;border-bottom:1px solid var(--border);}
+.pt{font-family:var(--serif);font-size:clamp(2rem,4vw,3.2rem);font-weight:300;line-height:1.15;margin-bottom:0.8rem;}
+.pt em{font-style:italic;color:var(--fg2);}
+.ps{font-size:0.84rem;color:var(--fg3);max-width:500px;line-height:1.8;}
+
+/* CORR GRID */
+.cg{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:2.5rem;}
+.ci{background:var(--ink2);padding:1.3rem 1.5rem;}
+.cl{font-size:0.56rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--fg4);margin-bottom:0.5rem;}
+.cv{font-family:var(--serif);font-size:1.9rem;font-weight:300;line-height:1;color:var(--fg);margin-bottom:0.3rem;}
+.cv small{font-size:0.45em;color:var(--fg3);font-family:var(--sans);}
+.cd{font-size:0.68rem;color:var(--fg3);}
+.cd.up{color:var(--accent);}.cd.dn{color:var(--danger);}.cd.wn{color:var(--warn);}
+
+/* DATA ROWS */
+.dl-wrap{display:flex;flex-direction:column;border:1px solid var(--border);}
+.dr{display:grid;grid-template-columns:100px 1fr 70px;align-items:center;gap:1.4rem;padding:0.85rem 1.4rem;border-bottom:1px solid var(--border);background:var(--ink2);position:relative;transition:background 0.15s;opacity:0;transform:translateX(-10px);}
+.dr:last-child{border-bottom:none;}.dr:hover{background:var(--ink3);}
+.dr.vis{opacity:1;transform:translateX(0);transition:opacity 0.45s ease,transform 0.45s ease;}
+.dd{font-size:0.7rem;color:var(--fg3);letter-spacing:0.05em;white-space:nowrap;}
+.dbw{height:2px;background:rgba(242,240,234,0.05);position:relative;}
+.db{height:100%;width:0%;transition:width 0.65s ease;position:absolute;left:0;top:0;}
+.dv{font-family:var(--serif);font-size:0.95rem;font-weight:300;color:var(--fg2);text-align:right;opacity:0;transition:opacity 0.3s ease 0.6s;}
+.dr.vis .dv{opacity:1;}
+.dtt{position:absolute;left:1.4rem;bottom:calc(100% + 6px);background:var(--ink);border:1px solid rgba(143,174,138,0.1);padding:0.45rem 0.8rem;font-family:var(--serif);font-style:italic;font-size:0.78rem;color:var(--fg3);line-height:1.5;pointer-events:none;opacity:0;transition:opacity 0.18s ease;z-index:20;max-width:320px;box-shadow:0 4px 20px rgba(0,0,0,0.4);}
+.dr:hover .dtt{opacity:1;}
+.dr.empty .db{width:12%!important;background:rgba(242,240,234,0.08)!important;}
+.dr.empty .dv{color:var(--fg4);font-style:italic;}
+
+/* AKT 1 */
+.a1{min-height:38vh;display:flex;flex-direction:column;justify-content:center;padding:4rem 3.5rem 3rem;border-bottom:1px solid var(--border);}
+.ot{font-family:var(--serif);font-size:clamp(1.8rem,3.2vw,2.6rem);font-weight:300;font-style:italic;line-height:1.3;color:var(--fg);text-shadow:0 1px 24px rgba(15,18,16,0.85);max-width:680px;margin-bottom:1.2rem;min-height:2em;}
+.ol{font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);opacity:0;transition:opacity 0.5s ease 0.3s;display:flex;align-items:center;gap:0.7rem;}
+.ol.vis{opacity:1;}
+.ol::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+
+/* AKT 3 */
+.a3{padding:4rem 3.5rem;border-bottom:1px solid var(--border);opacity:0;transform:translateY(16px);transition:opacity 0.6s ease,transform 0.6s ease;}
+.a3.vis{opacity:1;transform:translateY(0);}
+.dt{font-family:var(--serif);font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:300;line-height:1.2;color:var(--fg);max-width:680px;margin-bottom:2.5rem;}
+.di-wrap{display:flex;flex-direction:column;gap:1rem;max-width:580px;}
+.di{display:flex;gap:0.8rem;align-items:flex-start;opacity:0;transform:translateY(8px);transition:opacity 0.4s ease,transform 0.4s ease;font-size:0.84rem;color:var(--fg2);line-height:1.7;}
+.di.vis{opacity:1;transform:translateY(0);}
+.dm{font-size:1.2rem;line-height:1;margin-top:0.1rem;flex-shrink:0;}
+
+/* STATUS */
+.a4{padding:2rem 3.5rem 3rem;}
+.st{height:1px;background:var(--border);margin-bottom:0.8rem;overflow:hidden;}
+.sf-bar{height:100%;background:var(--accent);width:0%;transition:width 1.4s ease 0.3s;}
+.sm{display:flex;justify-content:space-between;font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg4);}
+.sm em{color:var(--accent);font-style:normal;}
+
+/* METRICS */
+.mg{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);}
+.mc{background:var(--ink2);padding:1.4rem 1.6rem;position:relative;}
+.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--mbc,rgba(143,174,138,0.3));}
+.ml{font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--fg3);margin-bottom:0.6rem;}
+.mv{font-family:var(--serif);font-size:2.2rem;font-weight:300;line-height:1;color:var(--fg);margin-bottom:0.4rem;}
+.mv small{font-size:0.45em;color:var(--fg3);font-family:var(--sans);}
+.mdelta{font-size:0.7rem;color:var(--fg3);}
+.mdelta.up{color:var(--accent);}.mdelta.dn{color:var(--danger);}.mdelta.wn{color:var(--warn);}
+
+/* WEEK */
+.ws-row{display:flex;gap:0;border:1px solid var(--border);margin-bottom:2rem;}
+.ws{flex:1;padding:1rem;text-align:center;border-right:1px solid var(--border);background:var(--ink2);}
+.ws:last-child{border-right:none;}
+.wsd{font-size:0.56rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg4);margin-bottom:0.4rem;}
+.wsv{font-family:var(--serif);font-size:1.6rem;font-weight:300;color:var(--fg3);}
+.wsv.today{color:var(--accent);}.wsv.hi{color:var(--fg);}.wsv.lo{color:var(--danger);}
+
+/* PSI */
+.psi-wrap{position:relative;flex-shrink:0;}
+.psi-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.psi-n{font-family:var(--serif);font-size:3.2rem;font-weight:300;line-height:1;color:var(--fg);}
+.psi-l{font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg4);margin-top:0.3rem;}
+
+/* SIGNAL */
+.signal-banner{background:linear-gradient(135deg,rgba(168,92,92,0.1) 0%,var(--ink2) 60%);border:1px solid rgba(168,92,92,0.25);border-left:3px solid var(--danger);padding:2rem 2.5rem;margin:0 3.5rem 2rem;display:flex;gap:1.5rem;align-items:flex-start;}
+.signal-dot-wrap{display:flex;flex-direction:column;align-items:center;gap:0.4rem;flex-shrink:0;}
+.sdot{width:10px;height:10px;border-radius:50%;background:var(--danger);box-shadow:0 0 12px rgba(168,92,92,0.6);animation:spulse 1.8s ease infinite;}
+@keyframes spulse{0%,100%{box-shadow:0 0 12px rgba(168,92,92,0.6)}50%{box-shadow:0 0 24px rgba(168,92,92,0.9)}}
+.sdl{font-size:0.52rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--danger);}
+.signal-body{}
+.signal-ey{font-size:0.56rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--danger);margin-bottom:0.5rem;}
+.signal-msg{font-size:0.86rem;color:var(--fg2);line-height:1.75;}
+.signal-msg strong{color:var(--fg);font-weight:400;}
+
+/* BIO MARKERS */
+.bio-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:2.5rem;}
+.bio-card{background:var(--ink2);padding:1.6rem;position:relative;overflow:hidden;}
+.bio-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;}
+.bio-card.ok::before{background:var(--accent);}
+.bio-card.warn::before{background:var(--warn);}
+.bio-card.low::before{background:var(--danger);}
+.bio-card.empty::before{background:var(--fg4);opacity:0.3;}
+.bio-name{font-size:0.66rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg3);margin-bottom:0.5rem;}
+.bio-val{font-family:var(--serif);font-size:2rem;font-weight:300;line-height:1;margin-bottom:0.3rem;}
+.bio-val.ok{color:var(--accent);}
+.bio-val.warn{color:var(--warn);}
+.bio-val.low{color:var(--danger);}
+.bio-val.empty{color:var(--fg4);}
+.bio-ref{font-size:0.64rem;color:var(--fg4);margin-bottom:0.5rem;}
+.bio-insight{font-family:var(--serif);font-style:italic;font-size:0.8rem;color:var(--fg3);line-height:1.6;border-top:1px solid var(--border);padding-top:0.8rem;margin-top:0.6rem;}
+.bio-empty-msg{font-size:0.78rem;color:var(--fg4);font-style:italic;line-height:1.7;}
+
+/* SOURCES */
+.src-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);}
+.src{background:var(--ink2);padding:1.8rem 1.6rem;transition:background 0.2s;}
+.src:hover{background:var(--ink3);}
+.src.connected::before{content:'';display:block;width:100%;height:1px;background:var(--accent);margin-bottom:1.2rem;opacity:0.4;}
+.src.available::before{content:'';display:block;width:100%;height:1px;background:var(--fg4);margin-bottom:1.2rem;opacity:0.3;}
+.src.soon::before{content:'';display:block;width:100%;height:1px;background:var(--trust);margin-bottom:1.2rem;opacity:0.3;}
+.sn{font-size:0.82rem;font-weight:400;letter-spacing:0.06em;color:var(--fg);margin-bottom:0.3rem;}
+.sd{font-size:0.78rem;color:var(--fg3);line-height:1.6;margin-bottom:0.8rem;}
+.stag{font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;padding:0.2rem 0.55rem;border:1px solid;display:inline-block;}
+.tl{color:var(--accent);border-color:rgba(143,174,138,0.3);}
+.ta{color:var(--fg3);border-color:rgba(138,142,137,0.25);}
+.ts2{color:var(--trust);border-color:rgba(91,127,166,0.3);}
+.sm2{font-size:0.66rem;color:var(--fg4);letter-spacing:0.08em;margin-top:0.6rem;}
+
+/* PROFILERING */
+.prof-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:2rem;}
+.prof-item{background:var(--ink2);padding:1.8rem;}
+.prof-label{font-size:0.56rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);margin-bottom:0.6rem;}
+.prof-val{font-family:var(--serif);font-size:1.3rem;font-weight:300;color:var(--fg);margin-bottom:0.5rem;}
+.prof-desc{font-size:0.78rem;color:var(--fg3);line-height:1.7;}
+.conf-bar-wrap{height:1px;background:var(--border);margin:1.5rem 0 0.5rem;}
+.conf-bar{height:100%;background:var(--accent);transition:width 1.2s ease;}
+.conf-label{font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg4);}
+.conf-label em{color:var(--accent);font-style:normal;}
+
+/* TOTAL ANALYS */
+.at-btn{display:inline-flex;align-items:center;gap:0.8rem;background:none;border:1px solid rgba(143,174,138,0.3);color:var(--accent);font-family:var(--sans);font-size:0.78rem;letter-spacing:0.18em;text-transform:uppercase;padding:0.9rem 2rem;cursor:pointer;transition:all 0.3s;}
+.at-btn:hover{background:rgba(143,174,138,0.06);border-color:var(--accent);}
+.at-opening{font-family:var(--serif);font-size:clamp(1.6rem,3vw,2.4rem);font-weight:300;font-style:italic;line-height:1.3;color:var(--fg);max-width:680px;margin-bottom:3rem;padding-bottom:2rem;border-bottom:1px solid var(--border);}
+.at-sec{padding:2rem 0;border-bottom:1px solid var(--border);}
+.at-sec:last-child{border-bottom:none;}
+.at-sl{font-size:0.58rem;letter-spacing:0.26em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:0.6rem;}
+.at-sl::before{content:'';width:14px;height:1px;opacity:0.5;}
+.sl-s{color:var(--accent);}.sl-s::before{background:var(--accent);}
+.sl-r{color:var(--danger);}.sl-r::before{background:var(--danger);}
+.sl-m{color:var(--warn);}.sl-m::before{background:var(--warn);}
+.sl-x{color:var(--trust);}.sl-x::before{background:var(--trust);}
+.at-text{font-family:var(--serif);font-size:1.05rem;font-weight:300;font-style:italic;line-height:1.85;color:var(--fg2);max-width:600px;}
+.at-text strong{color:var(--fg);font-style:normal;font-weight:400;}
+.at-meta{font-size:0.6rem;color:var(--fg4);letter-spacing:0.12em;margin-top:0.8rem;}
+.pr-c{border-left:2px solid var(--danger);padding-left:1.2rem;}
+.pr-h{border-left:2px solid var(--warn);padding-left:1.2rem;}
+.pr-n{border-left:2px solid var(--accent);padding-left:1.2rem;}
+
+/* SYSMAP */
+.node{cursor:pointer;}
+.nc{transition:all 0.3s ease;}
+.node:hover .nc{filter:brightness(1.3);}
+.nl2{font-family:'Jost',sans-serif;font-size:10px;fill:#8A8E89;letter-spacing:0.08em;text-transform:uppercase;}
+.nv{font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;fill:#F2F0EA;font-weight:300;}
+.edge{stroke:rgba(242,240,234,0.05);stroke-width:1;fill:none;}
+.edge-a{stroke:rgba(143,174,138,0.18);stroke-width:1;stroke-dasharray:4 4;animation:dash 3s linear infinite;}
+.edge-w{stroke:rgba(196,135,90,0.15);stroke-width:1;stroke-dasharray:4 4;animation:dash 4s linear infinite;}
+@keyframes dash{to{stroke-dashoffset:-16;}}
+
+/* SIGNAL PAGE */
+.signal-page{padding:4rem 3.5rem;}
+.signal-page-header{display:flex;align-items:center;gap:1.5rem;margin-bottom:3rem;}
+.signal-big-dot{width:16px;height:16px;border-radius:50%;background:var(--danger);box-shadow:0 0 20px rgba(168,92,92,0.8);animation:spulse 1.5s ease infinite;flex-shrink:0;}
+.signal-title{font-family:var(--serif);font-size:clamp(2rem,4vw,3rem);font-weight:300;line-height:1.15;}
+.signal-cards{display:flex;flex-direction:column;gap:1px;border:1px solid rgba(168,92,92,0.2);}
+.sc{background:var(--ink2);padding:1.8rem 2rem;border-bottom:1px solid rgba(168,92,92,0.1);}
+.sc:last-child{border-bottom:none;}
+.sc-day{font-size:0.54rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--danger);margin-bottom:0.5rem;}
+.sc-msg{font-size:0.88rem;color:var(--fg2);line-height:1.75;}
+.sc-msg strong{color:var(--fg);font-weight:400;}
+.sc-data{display:flex;gap:1.5rem;margin-top:1rem;flex-wrap:wrap;}
+.sc-dp{font-size:0.68rem;color:var(--fg4);letter-spacing:0.1em;}
+.sc-dp span{color:var(--warn);}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<header class="topbar">
+  <span class="topbar-logo">Forsyne</span>
+  <div class="topbar-center"><div class="tp"></div><span class="ts">Systemet är aktivt</span></div>
+  <div class="tr"><span class="td">Torsdag 9 april</span><span class="tu">Carl</span></div>
+</header>
+
+<aside class="sidebar">
+  <div class="ng">
+    <div class="ngl">Idag</div>
+    <a class="nl active" id="nav-dashboard" onclick="go('dashboard')">Dashboard</a>
+    <a class="nl" id="nav-checkin" onclick="go('checkin')">Check-in</a>
+    <a class="nl signal-link" id="nav-signal" onclick="go('signal')">⚠ Signalen aktiv</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Din data</div>
+    <a class="nl" id="nav-sleep" onclick="go('sleep')">Sömn</a>
+    <a class="nl" id="nav-energy" onclick="go('energy')">Energi</a>
+    <a class="nl" id="nav-stress" onclick="go('stress')">Stress</a>
+    <a class="nl" id="nav-training" onclick="go('training')">Träning</a>
+    <a class="nl" id="nav-nutrition" onclick="go('nutrition')">Kost</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Biologi</div>
+    <a class="nl" id="nav-blood" onclick="go('blood')">Blodmarkörer</a>
+    <a class="nl" id="nav-hormoner" onclick="go('hormoner')">Hormoner</a>
+    <a class="nl" id="nav-genetik" onclick="go('genetik')">Genetik</a>
+    <a class="nl" id="nav-fystest" onclick="go('fystest')">Fysiska tester</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Modellen</div>
+    <a class="nl" id="nav-profilering" onclick="go('profilering')">Profilering</a>
+    <a class="nl" id="nav-analys" onclick="go('analys')">Total analys</a>
+    <a class="nl" id="nav-sysmap" onclick="go('sysmap')">Systemkarta</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Källor</div>
+    <a class="nl" id="nav-wearables" onclick="go('wearables')">Wearables & appar</a>
+    <a class="nl" id="nav-biotests" onclick="go('biotests')">Biologiska tester</a>
+  </div>
+  <div class="sf">Inte baserat på genomsnitt.<br>Baserat på dig.</div>
+</aside>
+
+<main class="main" id="main"></main>
+</div>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━ DATA ━━━━━━━━━━━━━━━━━━━━
+const PAGES={
+  sleep:{name:'SÖMN & ÅTERHÄMTNING',usp:'Hur återhämtar sig min kropp?',
+    opening:'Sex timmar med tre uppvaknanden är inte sömn — det är överlevnad.',
+    corr:[{l:'Snitt sömn · 14 dagar',v:'6.1',u:'h',d:'↓ 0.4h vs förra veckan',c:'dn'},{l:'Sömnlatens · snitt',v:'24',u:'min',d:'↑ 8 min vs norm',c:'wn'},{l:'Uppvaknanden/natt',v:'2.4',u:'st',d:'Högt — norm under 1',c:'wn'},{l:'Stress → sömn',v:'0.81',u:'',d:'Stark negativ koppling',c:'wn'}],
+    rows:[{d:'Mån 24 mar',v:5.5,m:10,t:'Hög stress dagen innan. Kortisol syns direkt i sömndjupet.'},{d:'Tis 25 mar',v:6.2,m:10,t:'Kaffe efter 14:00 fördröjde insomning med ~35 min.'},{d:'Ons 26 mar',v:7.8,m:10,t:'Träningsfri dag + tidig läggdags. Kroppen fick det den behöver.'},{d:'Tor 27 mar',v:4.9,m:10,t:'Under 5h. HPA-axeln är aktiverad imorgon.'},{d:'Fre 28 mar',v:6.0,m:10,t:'Tre uppvaknanden. Inte återhämtning — bara tid i sängen.'},{d:'Lör 29 mar',v:8.2,m:10,t:'Längsta sömnen på 2 veckor. Kroppen kompenserade.'},{d:'Sön 30 mar',v:7.1,m:10,t:'Konsekvent. Det är detta mönstret systemet vill se.'},{d:'Mån 31 mar',v:5.8,m:10,t:'Måndag-dipp. Söndagskvällen saboterar veckan.'},{d:'Tis 1 apr',v:null,m:10,t:null},{d:'Ons 2 apr',v:6.5,m:10,t:'Mellanläge — systemet vill se tre nätter över 7h i rad.'},{d:'Tor 3 apr',v:5.2,m:10,t:'Kvällsskärm > 23:00. Melatonin supprimeras.'},{d:'Fre 4 apr',v:7.4,m:10,t:'Bra. Energi-delta imorgon förutsägs vara positivt.'},{d:'Lör 5 apr',v:8.0,m:10,t:'Helg-kompensation. Fungerar kortsiktigt.'},{d:'Sön 6 apr',v:6.8,m:10,t:'Acceptabel. Systemet väntar på tre nätter > 7h i rad.'}],
+    cf:v=>v>=7?'var(--accent)':v>=6?'var(--warn)':'var(--danger)',
+    dom:'Ditt sömnmönster visar en kropp som aldrig är helt återhämtad.',
+    s:{c:'var(--accent)',t:'Helgerna ger faktisk återhämtning — 7h+ bekräftat lördag och söndag.'},
+    r:{c:'var(--danger)',t:'Vardagsnätterna 5–6h skapar ett ackumulerat underskott helgen inte reparerar.'},
+    x:{c:'var(--trust)',t:'Flytta läggdags 45 min tidigare tre vardagar i rad — inget annat ändras ännu.'}},
+  energy:{name:'ENERGI & KAPACITET',usp:'När är jag kapabel och varför?',
+    opening:'Din energi kraschar varje torsdag — och det är inte slumpmässigt.',
+    corr:[{l:'Energi · senaste',v:'7',u:'/10',d:'↑ 2 vs veckosnitt',c:'up'},{l:'Snitt · 14 dagar',v:'5.8',u:'/10',d:'Under optimal',c:'wn'},{l:'Sömn → energi',v:'0.76',u:'',d:'Stark positiv koppling',c:'up'},{l:'Energidal · tid',v:'14:00',u:'',d:'Konsekvent varje dag',c:'wn'}],
+    rows:[{d:'Mån 24 mar',v:4,m:10,t:'Direkt koppling till sömnunderskott. Kroppen minns.'},{d:'Tis 25 mar',v:5,m:10,t:'Kaffe maskerar — fokus och prestation fortfarande nedsatta.'},{d:'Ons 26 mar',v:8,m:10,t:'Vilodag + bra sömn = systemet fungerar som det ska.'},{d:'Tor 27 mar',v:3,m:10,t:'Under 5h sömn syns direkt och omedelbart i energin.'},{d:'Fre 28 mar',v:5,m:10,t:'Veckans ackumulerade trötthet når toppen.'},{d:'Lör 29 mar',v:9,m:10,t:'Fridag utan press. Miljön avgör kapaciteten.'},{d:'Sön 30 mar',v:8,m:10,t:'Bibehållen. Helgmönstret håller.'},{d:'Mån 31 mar',v:5,m:10,t:'Måndag-dipp är ett dokumenterat mönster. Inte motivation.'},{d:'Tis 1 apr',v:null,m:10,t:null},{d:'Ons 2 apr',v:6,m:10,t:'Mittenveckan håller. Ovanligt positivt för dig.'},{d:'Tor 3 apr',v:4,m:10,t:'Torsdagsmönstret bekräftas. Sömnkvalitet avgörande.'},{d:'Fre 4 apr',v:7,m:10,t:'Stigande. Bättre än förra fredagen.'},{d:'Lör 5 apr',v:10,m:10,t:'Maximal kapacitet. Bygg buffer — dessa dagar räknas.'},{d:'Sön 6 apr',v:7,m:10,t:'Hållbar. Systemet föredrar 7 konsekvent framför toppar.'}],
+    cf:v=>v>=8?'var(--accent)':v>=5?'var(--warn)':'var(--danger)',
+    dom:'Din energi följer ett veckomönster som är exakt förutsägbart — och därför påverkbart.',
+    s:{c:'var(--accent)',t:'Helgvärdena 8–10 visar att systemet kan prestera när belastningen minskar.'},
+    r:{c:'var(--danger)',t:'Torsdag är konsekvent lägst — och du lägger troligen mest press på den dagen.'},
+    x:{c:'var(--trust)',t:'Flytta ditt tyngsta arbete till onsdagen. Torsdagen klarar inte mer.'}},
+  stress:{name:'STRESS & BELASTNING',usp:'Vad belastar mig och när?',
+    opening:'Tre dagar i rad över 7 — kroppen är inte belastad, den är utmattad.',
+    corr:[{l:'Stress · senaste',v:'3',u:'/10',d:'↓ 5 vs veckans topp',c:'up'},{l:'Snitt · 14 dagar',v:'6.1',u:'/10',d:'Kroniskt förhöjt',c:'dn'},{l:'Stress → sömn +1',v:'0.81',u:'',d:'Hög stress förstör sömn',c:'wn'},{l:'Högst dag',v:'Torsdag',u:'',d:'Bekräftat 3 veckor',c:'wn'}],
+    rows:[{d:'Mån 24 mar',v:8,m:10,t:'HPA-axeln aktiverad. Kortisol syns i sömndata natten efter.'},{d:'Tis 25 mar',v:7,m:10,t:'Andra dagen i rad > 7 — det är en trend, inte tillfällighet.'},{d:'Ons 26 mar',v:4,m:10,t:'Naturlig stressdipp. Kroppen reglerar ned.'},{d:'Tor 27 mar',v:9,m:10,t:'Nästan kritiskt. Systemet i alarmberedskap.'},{d:'Fre 28 mar',v:8,m:10,t:'Tredje höga dagen. Återhämtning biologiskt omöjlig.'},{d:'Lör 29 mar',v:2,m:10,t:'Helg-reset. Det är biologi — inte svaghet.'},{d:'Sön 30 mar',v:3,m:10,t:'Fortfarande lågt. 48h låg stress för full återhämtning.'},{d:'Mån 31 mar',v:7,m:10,t:'Måndagsmönster — stress stiger med veckostart.'},{d:'Tis 1 apr',v:null,m:10,t:null},{d:'Ons 2 apr',v:5,m:10,t:'Mittenveckan håller. Ovanligt — notera vad du gjorde.'},{d:'Tor 3 apr',v:8,m:10,t:'Torsdagsmönstret håller för tredje veckan.'},{d:'Fre 4 apr',v:6,m:10,t:'Lägre än förra fredagen. Positiv trend.'},{d:'Lör 5 apr',v:1,m:10,t:'Lägsta veckan. Kroppen vet att den kan vila.'},{d:'Sön 6 apr',v:2,m:10,t:'Fortsatt lågt. Samla kapacitet inför veckan.'}],
+    cf:v=>v<=3?'var(--accent)':v<=6?'var(--warn)':'var(--danger)',
+    dom:'Din stress följer ett veckomönster — torsdagen är konsekvent kritisk.',
+    s:{c:'var(--accent)',t:'Helgerna ger fullständig biologisk återhämtning.'},
+    r:{c:'var(--danger)',t:'Torsdag > 7 tre veckor i rad är strukturellt, inte situationellt.'},
+    x:{c:'var(--trust)',t:'Schemalägg ingenting krävande på torsdagar de närmaste två veckorna.'}},
+  training:{name:'TRÄNING & RÖRELSE',usp:'Bygger jag kroppen eller bryter jag ner den?',
+    opening:'Du tränar hårt — men kroppen återhämtar sig inte i samma takt.',
+    corr:[{l:'Pass · 14 dagar',v:'8',u:'av 14',d:'57% träningsdagar',c:'up'},{l:'Återhämtning +1',v:'4.2',u:'/10',d:'Under acceptabel nivå',c:'dn'},{l:'Träning → energi',v:'-0.6',u:'',d:'Negativ korrelation nu',c:'wn'},{l:'Intensitet · snitt',v:'7.8',u:'/10',d:'Möjlig överträning',c:'wn'}],
+    rows:[{d:'Mån 24 mar',v:8,m:10,t:'Hårt pass. Återhämtning +1 var 3/10.'},{d:'Tis 25 mar',v:0,m:10,t:'Vilodag. Rätt beslut baserat på återhämtningsdata.'},{d:'Ons 26 mar',v:7,m:10,t:'Medelintensitet. Energi +1 var 8 — det optimala fönstret.'},{d:'Tor 27 mar',v:9,m:10,t:'Maxintensitet på hög stressdag. Biologiskt kontraproduktivt.'},{d:'Fre 28 mar',v:0,m:10,t:'Vilodag. Belastning från igår kvarstår fortfarande.'},{d:'Lör 29 mar',v:8,m:10,t:'Sömn 8h natten innan. Kroppen var redo.'},{d:'Sön 30 mar',v:0,m:10,t:'Aktiv vila. Bättre än total passivitet.'},{d:'Mån 31 mar',v:7,m:10,t:'Energi var 5 — kroppen inte fullt återhämtad.'},{d:'Tis 1 apr',v:null,m:10,t:null},{d:'Ons 2 apr',v:6,m:10,t:'Lägre intensitet. Energi +1 var 6 — bättre korrelation.'},{d:'Tor 3 apr',v:9,m:10,t:'Hårt pass + stress 8. Kombinationen är farlig.'},{d:'Fre 4 apr',v:0,m:10,t:'Nödvändig vilodag. Kroppen signalerade tydligt.'},{d:'Lör 5 apr',v:8,m:10,t:'Sömn 8h natten innan. Perfekt tajming.'},{d:'Sön 6 apr',v:0,m:10,t:'Vila. Aktiv återhämtning rekommenderas.'}],
+    cf:v=>v===0?'var(--trust)':v>=8?'var(--warn)':'var(--accent)',
+    vf:v=>v===0?'Vila':v+'/10',
+    dom:'Du tränar med hög intensitet — men återhämtningen matchar inte belastningen.',
+    s:{c:'var(--accent)',t:'8 pass på 14 dagar är disciplin de flesta saknar.'},
+    r:{c:'var(--danger)',t:'Återhämtning 4.2/10 dagen efter hårt pass — volymen är för hög just nu.'},
+    x:{c:'var(--trust)',t:'Sänk torsdagens intensitet till 5–6/10 de närmaste två veckorna.'}},
+  nutrition:{name:'KOST & NÄRING',usp:'Hur påverkar det jag äter hur jag fungerar?',
+    opening:'Du hoppar frukost tre av fem vardagar — energidalen 14:00 är konsekvensen.',
+    corr:[{l:'Måltider/dag',v:'2.3',u:'st',d:'Under rekommenderat 3+',c:'wn'},{l:'Hoppar frukost',v:'60%',u:'',d:'Av registrerade dagar',c:'dn'},{l:'Koffein · senaste',v:'15:30',u:'',d:'Sent — påverkar sömn',c:'wn'},{l:'Kost → energi',v:'0.68',u:'',d:'Tydlig koppling',c:'up'}],
+    rows:[{d:'Mån 24 mar',v:4,m:10,t:'Hoppade frukost. Energidal 13:00 korrelerar direkt.'},{d:'Tis 25 mar',v:6,m:10,t:'Tre måltider men oregelbundna tider.'},{d:'Ons 26 mar',v:8,m:10,t:'Konsekvent timing + bra val. Optimal energiprofil den dagen.'},{d:'Tor 27 mar',v:3,m:10,t:'Stressdag = sämre kostval. Dokumenterat mönster.'},{d:'Fre 28 mar',v:5,m:10,t:'Fredag: färre måltider, mer koffein.'},{d:'Lör 29 mar',v:9,m:10,t:'Helg = tid att äta rätt. Energi 9 den dagen.'},{d:'Sön 30 mar',v:8,m:10,t:'Konsekvent. Två bra dagar sätter positiv trend.'},{d:'Mån 31 mar',v:4,m:10,t:'Måndag = stressstart = frukost hoppas.'},{d:'Tis 1 apr',v:null,m:10,t:null},{d:'Ons 2 apr',v:7,m:10,t:'Bättre än vanlig onsdag. Systemet noterar.'},{d:'Tor 3 apr',v:3,m:10,t:'Torsdagsmönster — hög stress, sämre kost, kaffe sent.'},{d:'Fre 4 apr',v:6,m:10,t:'Lägre koffeinintag. Positiv trend.'},{d:'Lör 5 apr',v:9,m:10,t:'Helgens kostkvalitet konsekvent hög.'},{d:'Sön 6 apr',v:7,m:10,t:'Bra. Förbered morgondagens frukost ikväll.'}],
+    cf:v=>v>=8?'var(--accent)':v>=5?'var(--warn)':'var(--danger)',
+    dom:'Din kostkvalitet halveras på vardagar — energin följer exakt samma mönster.',
+    s:{c:'var(--accent)',t:'Helgernas 8–9 visar att du vet hur det ska se ut.'},
+    r:{c:'var(--danger)',t:'Koffein efter 14:00 nio av 14 dagar — förlänger sömnlatensen direkt.'},
+    x:{c:'var(--trust)',t:'Förbered frukost kvällen innan tre dagar i rad. Inget annat ändras ännu.'}}
+};
+
+// ━━━━━━━━━━━━━━━━━━━━ UTILS ━━━━━━━━━━━━━━━━━━━━
+function tw(el,text,ms,cb){let i=0;el.textContent='';const t=()=>{if(i<text.length){el.textContent+=text[i++];setTimeout(t,ms);}else if(cb)cb();};t();}
+
+function buildDataPage(key){
+  const d=PAGES[key];
+  const valid=d.rows.filter(r=>r.v!==null).length;
+  const pct=Math.min(100,Math.round((valid/21)*100));
+  const rem=Math.max(0,21-valid);
+  const corrH=d.corr.map(c=>`<div class="ci"><div class="cl">${c.l}</div><div class="cv">${c.v}<small>${c.u}</small></div><div class="cd ${c.c}">${c.d}</div></div>`).join('');
+  const rowsH=d.rows.map((r,i)=>{
+    const empty=r.v===null;
+    const fmt=d.vf?d.vf(r.v):(r.v!==null?r.v+'':'–');
+    const bw=empty?12:Math.max(4,Math.round((r.v/r.m)*82));
+    const bc=empty?'rgba(242,240,234,0.08)':d.cf(r.v);
+    return `<div class="dr${empty?' empty':''}" data-i="${i}" data-bw="${bw}" data-bc="${bc}"><div class="dd">${r.d}</div><div class="dbw"><div class="db" style="background:${bc}"></div></div><div class="dv">${fmt}</div><div class="dtt">${r.t||'Ingen data registrerad.'}</div></div>`;
+  }).join('');
+  return `<div class="page active">
+    <div class="a1" id="a1-${key}">
+      <div id="al-${key}"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div style="font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:var(--fg4);margin-top:.6rem;">Systemet analyserar</div></div>
+      <div id="ac-${key}" style="display:none"><div class="ot" id="ot-${key}"></div><div class="ol" id="ol-${key}">— ${d.name} · ${new Date().toLocaleDateString('sv-SE',{weekday:'long',day:'numeric',month:'long'})}</div></div>
+    </div>
+    <div class="sp sb" id="a2-${key}" style="opacity:0;transition:opacity .5s ease;">
+      <div class="lbl">${d.usp}</div>
+      <div class="cg">${corrH}</div>
+      <div style="font-size:.54rem;letter-spacing:.22em;text-transform:uppercase;color:var(--fg4);margin-bottom:1rem;">DAGLIG DATA · HOVER FÖR SYSTEMETS KOMMENTAR</div>
+      <div class="dl-wrap" id="dl-${key}">${rowsH}</div>
+    </div>
+    <div class="a3" id="a3-${key}">
+      <div class="lbl al">Systemets analys</div>
+      <div class="dt">${d.dom}</div>
+      <div class="di-wrap">
+        <div class="di"><span class="dm" style="color:${d.s.c}">·</span><span>${d.s.t}</span></div>
+        <div class="di" style="transition-delay:.18s"><span class="dm" style="color:${d.r.c}">·</span><span>${d.r.t}</span></div>
+        <div class="di" style="transition-delay:.36s"><span class="dm" style="color:${d.x.c}">·</span><span>${d.x.t}</span></div>
+      </div>
+    </div>
+    <div class="a4"><div class="st"><div class="sf-bar" id="sf-${key}" data-pct="${pct}"></div></div><div class="sm"><span>Baserat på <em>${valid} datapunkter</em></span><span>${rem>0?`Full precision efter <em>${rem} till</em>`:'<em>Modellen är kalibrerad</em>'}</span></div></div>
+  </div>`;
+}
+
+function animDataPage(key){
+  setTimeout(()=>{
+    const al=document.getElementById('al-'+key),ac=document.getElementById('ac-'+key);
+    if(al)al.style.display='none';if(ac)ac.style.display='block';
+    tw(document.getElementById('ot-'+key),PAGES[key].opening,16,()=>{
+      const ol=document.getElementById('ol-'+key);if(ol)ol.classList.add('vis');
+      setTimeout(()=>{
+        const a2=document.getElementById('a2-'+key);if(a2)a2.style.opacity='1';
+        document.querySelectorAll('#dl-'+key+' .dr').forEach((r,i)=>{
+          setTimeout(()=>{r.classList.add('vis');const b=r.querySelector('.db');if(b)setTimeout(()=>{b.style.width=r.dataset.bw+'%';},60);},i*50);
+        });
+        setTimeout(()=>{const sf=document.getElementById('sf-'+key);if(sf)sf.style.width=sf.dataset.pct+'%';},700);
+      },500);
+    });
+  },500);
+  setTimeout(()=>{
+    const a3=document.getElementById('a3-'+key);if(!a3)return;
+    new IntersectionObserver(e=>{if(e[0].isIntersecting){a3.classList.add('vis');a3.querySelectorAll('.di').forEach(r=>setTimeout(()=>r.classList.add('vis'),300));}},{threshold:.2}).observe(a3);
+  },200);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━ DASHBOARD ━━━━━━━━━━━━━━━━━━━━
+function buildDashboard(){
+  return `<div class="page active">
+    <div class="signal-banner">
+      <div class="signal-dot-wrap"><div class="sdot"></div><div class="sdl">Dag 3</div></div>
+      <div class="signal-body">
+        <div class="signal-ey">Systemet varnar</div>
+        <div class="signal-msg"><strong>Stress ≥ 7 och sömn ≤ 5h tre dagar i rad.</strong> Kroppen är inte belastad — den är utmattad. Kortisolkurvan är förhöjd och återhämtning är biologiskt omöjlig utan intervention.</div>
+      </div>
+    </div>
+    <div style="padding:3rem 3.5rem 2rem;border-bottom:1px solid var(--border);display:flex;gap:4rem;align-items:center;">
+      <div class="psi-wrap">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r="54" fill="none" stroke="rgba(242,240,234,0.04)" stroke-width="1.5"/>
+          <circle cx="70" cy="70" r="54" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="339.3" stroke-dashoffset="85" stroke-linecap="round" transform="rotate(-90 70 70)" style="transition:stroke-dashoffset 1.4s ease;"/>
+        </svg>
+        <div class="psi-c"><div class="psi-n" id="psi-n">0</div><div class="psi-l">Systemkapacitet</div></div>
+      </div>
+      <div style="flex:1">
+        <div style="display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .8rem;border:1px solid rgba(143,174,138,0.3);font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;">● Optimal</div>
+        <div style="font-family:var(--serif);font-size:clamp(1.4rem,2.8vw,2rem);font-weight:300;font-style:italic;line-height:1.3;color:var(--fg);max-width:560px;margin-bottom:.8rem;">"Det här är din starkaste lördag på två veckor — systemet är laddat."</div>
+        <div style="font-size:.7rem;color:var(--fg3);margin-bottom:.3rem;">Prediktion: Om torsdagsmönstret håller — PSI sjunker under 45 om 4 dagar.</div>
+        <div style="font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.2rem;">Dag 9 — första mönster synliga</div>
+        <button style="background:var(--beige);color:var(--ink);font-size:.78rem;font-weight:500;letter-spacing:.2em;text-transform:uppercase;padding:.85rem 2rem;cursor:pointer;border:none;transition:all .3s;" onclick="go('checkin')">Mata systemet idag →</button>
+      </div>
+    </div>
+    <div style="padding:2.5rem 3.5rem;border-bottom:1px solid var(--border);">
+      <div class="lbl">Systemkapacitet · Senaste 7 dagar</div>
+      <div class="ws-row">${['Mån','Tis','Ons','Tor','Fre','Lör','Sön'].map((d,i)=>{const v=[55,48,63,41,58,85,75][i];const c=i===6?'today':v>65?'hi':v<50?'lo':'';return `<div class="ws"><div class="wsd">${d}</div><div class="wsv ${c}">${v}</div></div>`;}).join('')}</div>
+      <div class="mg">
+        <div class="mc" style="--mbc:rgba(143,174,138,0.4)"><div class="ml">Sömn · Senaste natt</div><div class="mv">6.8<small>h</small></div><div class="mdelta wn">↓ 0.4h vs snitt</div></div>
+        <div class="mc" style="--mbc:rgba(168,92,92,0.4)"><div class="ml">Stress · Idag</div><div class="mv">3<small>/10</small></div><div class="mdelta up">↓ 5 vs veckans topp</div></div>
+        <div class="mc" style="--mbc:rgba(143,174,138,0.4)"><div class="ml">Energi · Idag</div><div class="mv">7<small>/10</small></div><div class="mdelta up">↑ 2 vs veckosnitt</div></div>
+      </div>
+    </div>
+    <div style="padding:2rem 3.5rem 3rem;">
+      <div class="st"><div class="sf-bar" style="width:43%;"></div></div>
+      <div class="sm"><span>Modellen · <em>9 av 21 dagar</em></span><span>Full precision efter <em>12 dagar till</em></span></div>
+    </div>
+  </div>`;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━ SIGNAL ━━━━━━━━━━━━━━━━━━━━
+function buildSignal(){
+  return `<div class="page active">
+    <div class="signal-page">
+      <div class="signal-page-header">
+        <div class="signal-big-dot"></div>
+        <div class="signal-title" style="font-family:var(--serif);font-weight:300;color:var(--fg);">Systemet<br><em style="font-style:italic;color:var(--danger)">varnar dig.</em></div>
+      </div>
+      <div class="lbl dl">Aktiv signal · Dag 3 av mönster</div>
+      <div class="signal-cards">
+        <div class="sc"><div class="sc-day">Tor 3 apr · Dag 1</div><div class="sc-msg"><strong>Stress 8/10 + sömn 5.2h.</strong> Kortisolnivån förhöjd. HPA-axeln aktiverad. Kroppen prioriterar överlevnad framför prestation.</div><div class="sc-data"><div class="sc-dp">Stress: <span>8/10</span></div><div class="sc-dp">Sömn: <span>5.2h</span></div><div class="sc-dp">PSI: <span>41</span></div></div></div>
+        <div class="sc"><div class="sc-day">Fre 4 apr · Dag 2</div><div class="sc-msg"><strong>Stress 6/10 + sömn 4.9h.</strong> Andra dagen under tröskeln. Ackumulerat underskott byggs upp. Återhämtning biologiskt omöjlig under pågående belastning.</div><div class="sc-data"><div class="sc-dp">Stress: <span>6/10</span></div><div class="sc-dp">Sömn: <span>4.9h</span></div><div class="sc-dp">PSI: <span>38</span></div></div></div>
+        <div class="sc"><div class="sc-day">Lör 5 apr · Dag 3 — Idag</div><div class="sc-msg"><strong>Systemet rekommenderar omedelbar intervention.</strong> Tre dagar är gränsen där kortisolmönstret börjar påverka immunförsvaret och kognitiv funktion mätbart.</div><div class="sc-data"><div class="sc-dp">Stress: <span>mäts nu</span></div><div class="sc-dp">Sömn: <span>8.0h ✓</span></div><div class="sc-dp">PSI: <span>85 ↑</span></div></div></div>
+      </div>
+      <div style="margin-top:2.5rem;padding:1.8rem 2rem;background:var(--ink2);border:1px solid var(--border);border-left:2px solid var(--trust);max-width:560px;">
+        <div style="font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;color:var(--trust);margin-bottom:.8rem;">Systemets rekommendation</div>
+        <div style="font-family:var(--serif);font-style:italic;font-size:1rem;color:var(--fg2);line-height:1.8;">Helgen är din räddning. Sömn 8h+ båda nätterna. Ingen träning hårdare än 5/10. Inget arbete efter 18:00. Systemet förutsäger PSI 70+ på måndag om dessa hålls.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━ BIOLOGI ━━━━━━━━━━━━━━━━━━━━
+function buildBioPage(type){
+  const configs={
+    blood:{
+      title:'Blodmarkörer',sub:'Dina blodvärden korrelerade mot daglig prestandadata. Inte bara referensintervall — vad värdena faktiskt betyder för hur du fungerar.',
+      markers:[
+        {n:'Testosteron',v:'12.4',u:'nmol/L',ref:'9–29 nmol/L',s:'warn',i:'Under optimalt för din träningsvolym och ålder. Systemet ser direkt koppling till återhämtning 4.2/10 och energidal varje torsdag.'},
+        {n:'Kortisol (morgon)',v:'18.2',u:'nmol/L',ref:'170–500 nmol/L',s:'ok',i:'Inom normalintervall. Men mönstret tre dagar i rad med stress >7 höjer detta mätbart.'},
+        {n:'D-vitamin',v:'42',u:'nmol/L',ref:'75–200 nmol/L',s:'low',i:'Otillräckligt. D-vitaminbrist korrelerar med sömnkvalitet och immunfunktion — systemet flaggar detta.'},
+        {n:'Järn / Ferritin',v:'28',u:'µg/L',ref:'30–400 µg/L',s:'warn',i:'Lågt. Järnbrist påverkar syretransport och uthållighet — kan förklara energidalen 14:00.'},
+        {n:'TSH',v:'1.8',u:'mIE/L',ref:'0.4–4.0 mIE/L',s:'ok',i:'Sköldkörtelfunktion normal. Ingen koppling till aktuella mönster.'},
+        {n:'HbA1c',v:'34',u:'mmol/mol',ref:'<42 mmol/mol',s:'ok',i:'Långtidsblodsocker normalt. Glykemisk kontroll inte en aktiv riskfaktor.'},
+      ]
+    },
+    hormoner:{
+      title:'Hormoner',sub:'Hormonprofil och hur den påverkar din dagliga kapacitet, återhämtning och humör.',
+      markers:[
+        {n:'Testosteron',v:'12.4',u:'nmol/L',ref:'Optimalt: 15–25',s:'warn',i:'15% under optimalt för din profil. Påverkar muskelsyntesen och motivationsreglering.'},
+        {n:'Kortisol · Morgon',v:'18.2',u:'nmol/L',ref:'Optimalt: 200–400',s:'low',i:'Lägre än optimalt på morgonen — kan förklara svårighet att komma igång tidigt.'},
+        {n:'DHEA-S',v:'–',u:'',ref:'Ej testat',s:'empty',i:''},
+        {n:'Östradiol',v:'–',u:'',ref:'Ej relevant',s:'empty',i:''},
+        {n:'Insulin (fasta)',v:'–',u:'',ref:'Ej testat',s:'empty',i:''},
+        {n:'IGF-1',v:'–',u:'',ref:'Ej testat',s:'empty',i:''},
+      ]
+    },
+    genetik:{
+      title:'Genetik',sub:'Genetiska predispositioner relevanta för prestation och återhämtning. Inte diagnoser — tendenser och risker att vara medveten om.',
+      markers:[
+        {n:'ACTN3 · Muskeltyp',v:'RX',u:'genotyp',ref:'RR/RX/XX',s:'ok',i:'Blandad fiber-profil. Lämpad för både styrka och uthållighet. Optimal träningsrespons vid variation.'},
+        {n:'COMT · Stress',v:'Met/Met',u:'genotyp',ref:'Val/Val/Met',s:'warn',i:'Långsammare dopaminnedbrytning. Tenderar att hålla stress längre. Förklarar torsdagsmönstret delvis.'},
+        {n:'MTHFR · B-vitamin',v:'C677T',u:'hetero',ref:'Variant',s:'warn',i:'Reducerad folatmetabolism. Kan påverka energiproduktion och sömnkvalitet.'},
+        {n:'VDR · D-vitamin',v:'–',u:'',ref:'Ej testat',s:'empty',i:''},
+        {n:'CYP1A2 · Koffein',v:'–',u:'',ref:'Ej testat',s:'empty',i:''},
+        {n:'APOE · Hjärthälsa',v:'–',u:'',ref:'Ej testat',s:'empty',i:''},
+      ]
+    },
+    fystest:{
+      title:'Fysiska tester',sub:'Objektivt uppmätt kapacitet. Inte hur du mår — hur din kropp faktiskt presterar.',
+      markers:[
+        {n:'VO2max',v:'48',u:'ml/kg/min',ref:'Bra: 45–52',s:'ok',i:'Över genomsnittet för din ålder och kön. Aerob kapacitet är en styrka — men inte maximalt utnyttjad.'},
+        {n:'Vilpuls (HRV)',v:'38',u:'ms (RMSSD)',ref:'Optimalt: 50–100',s:'warn',i:'Under optimalt. HRV är det känsligaste måttet på återhämtning — bekräftar sömndata.'},
+        {n:'Vilpuls (RHR)',v:'58',u:'bpm',ref:'Bra: 50–60',s:'ok',i:'God kardiell kondition. Inga avvikelser.'},
+        {n:'Kroppskomposition',v:'–',u:'',ref:'Ej testat',s:'empty',i:''},
+        {n:'Grip strength',v:'–',u:'',ref:'Ej testat',s:'empty',i:''},
+        {n:'Rörlighetstester',v:'–',u:'',ref:'Ej testat',s:'empty',i:''},
+      ]
+    }
+  };
+  const c=configs[type];
+  const hasData=c.markers.filter(m=>m.s!=='empty').length;
+  const bioH=c.markers.map(m=>`
+    <div class="bio-card ${m.s}">
+      <div class="bio-name">${m.n}</div>
+      ${m.s==='empty'?`<div class="bio-val empty">–</div><div class="bio-ref">Ej testat</div><div class="bio-empty-msg" style="font-size:.72rem;color:var(--fg4);margin-top:.5rem;">Lägg till detta test för djupare biologisk förståelse.</div>`:`<div class="bio-val ${m.s}">${m.v}<small style="font-size:.4em;font-family:var(--sans);color:var(--fg3);margin-left:.2rem;">${m.u}</small></div><div class="bio-ref">${m.ref}</div>${m.i?`<div class="bio-insight">${m.i}</div>`:''}`}
+    </div>`).join('');
+  return `<div class="page active">
+    <div class="ph">
+      <div class="lbl al">Biologi · ${c.title}</div>
+      <h1 class="pt">${c.title}.<br><em>Vad din biologi faktiskt säger.</em></h1>
+      <p class="ps">${c.sub}</p>
+    </div>
+    <div class="sp sb">
+      <div class="lbl">${c.title.toUpperCase()} · DINA VÄRDEN</div>
+      <div class="bio-grid">${bioH}</div>
+    </div>
+    ${hasData>0?`<div class="a3 vis sp">
+      <div class="lbl al">Systemets biologiska analys</div>
+      <div class="dt">Din biologi förklarar mönster som daglig data ensam inte kan.</div>
+      <div class="di-wrap">
+        <div class="di vis"><span class="dm" style="color:var(--warn)">·</span><span>Testosteron 15% under optimalt för din träningsvolym — påverkar återhämtning och motivation direkt.</span></div>
+        <div class="di vis" style="transition-delay:.1s"><span class="dm" style="color:var(--danger)">·</span><span>D-vitaminbrist (42 nmol/L) korrelerar med sömnkvalitet och immunfunktion — prioritera tillskott omedelbart.</span></div>
+        <div class="di vis" style="transition-delay:.2s"><span class="dm" style="color:var(--trust)">·</span><span>COMT Met/Met-genotypen förklarar delvis varför du håller stress längre — det är biologi, inte karaktär.</span></div>
+      </div>
+    </div>`:''}
+    <div class="a4"><div class="st"><div class="sf-bar" style="width:${Math.round((hasData/c.markers.length)*100)}%;"></div></div><div class="sm"><span><em>${hasData} av ${c.markers.length}</em> markörer testade</span><span>${hasData<c.markers.length?`Full bild efter <em>${c.markers.length-hasData} tester till</em>`:'<em>Komplett biologisk profil</em>'}</span></div></div>
+  </div>`;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━ PROFILERING ━━━━━━━━━━━━━━━━━━━━
+function buildProfilering(){
+  return `<div class="page active">
+    <div class="ph">
+      <div class="lbl al">Profilering</div>
+      <h1 class="pt">Systemets modell<br><em>av dig.</em></h1>
+      <p class="ps">Inte vad du tror om dig själv. Vad 9 dagars faktisk data visar om hur du fungerar — och vad systemet ännu inte vet.</p>
+    </div>
+    <div class="sp sb">
+      <div class="lbl">Din profil · Bekräftad av data</div>
+      <div class="prof-grid">
+        <div class="prof-item"><div class="prof-label">Kronotyp</div><div class="prof-val">Kväll / Flexibel</div><div class="prof-desc">Energidata visar konsekvent stigande kapacitet från 16:00. Morgnar under 7h sömn är biologiskt suboptimala för dig.</div></div>
+        <div class="prof-item"><div class="prof-label">Energiprofil</div><div class="prof-val">Cyklisk — veckostyrd</div><div class="prof-desc">Tydlig 7-dagarscykel med topp lördag–söndag och dal torsdag. Inte slumpmässigt — strukturellt.</div></div>
+        <div class="prof-item"><div class="prof-label">Stressmönster</div><div class="prof-val">Ackumulerande</div><div class="prof-desc">Stress byggs upp måndag–torsdag och faller helgen. COMT-genotypen bekräftar: du håller stress biologiskt längre än genomsnittet.</div></div>
+        <div class="prof-item"><div class="prof-label">Återhämtningsprofil</div><div class="prof-val">Sömn-beroende</div><div class="prof-desc">0.81 korrelation sömn→prestation. Du återhämtar dig primärt via sömn — inte aktiv vila. Sömnkvalitet är din viktigaste variabel.</div></div>
+        <div class="prof-item"><div class="prof-label">Primär smärtpunkt</div><div class="prof-val">Torsdagskraschen</div><div class="prof-desc">PSI under 45 tre veckor i rad. Systemet har identifierat detta som strukturellt — inte situationellt.</div></div>
+        <div class="prof-item"><div class="prof-label">Blind fläck</div><div class="prof-val">Koffein-timing</div><div class="prof-desc">Koffein efter 14:00 nio av 14 dagar. Du kompenserar trötthet med koffein — och saboterar sömnkvaliteten som orsakar tröttheten.</div></div>
+      </div>
+      <div class="conf-bar-wrap"><div class="conf-bar" id="conf-bar" style="width:0%"></div></div>
+      <div class="conf-label">Modellens konfidensgrad: <em>43% — Medel</em> · Full precision efter 12 dagar till</div>
+    </div>
+    <div class="sp sb">
+      <div class="lbl">Vad systemet ännu inte vet</div>
+      <div style="display:flex;flex-direction:column;gap:1px;border:1px solid var(--border);">
+        ${[['Hormonell profil','Testosteron och kortisol-kurva över dygnet. Lägg till hormonpanel.'],['Genetiska predispositioner','DNA-test skulle bekräfta eller avfärda tre aktiva hypoteser.'],['Sömnarkitektur','Wearable-data från Oura eller Whoop ger djup- och REM-fördelning.'],['Glykemisk respons','Hur din energi reagerar på specifika livsmedel. CGM-sensor löser detta.']].map(([t,d])=>`<div style="padding:1.2rem 1.6rem;background:var(--ink2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:2rem;"><div><div style="font-size:.74rem;color:var(--fg2);margin-bottom:.2rem;">${t}</div><div style="font-size:.72rem;color:var(--fg4);">${d}</div></div><span class="stag ta">Saknas</span></div>`).join('')}
+      </div>
+    </div>
+    <div class="a4"><div class="st"><div class="sf-bar" style="width:43%;"></div></div><div class="sm"><span>Modellen · <em>9 dagars data</em></span><span>Bekräftade mönster: <em>3 av 6</em></span></div></div>
+  </div>`;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━ TOTAL ANALYS ━━━━━━━━━━━━━━━━━━━━
+let analysRunning=false;
+function buildAnalys(){
+  return `<div class="page active">
+    <div class="ph">
+      <div class="lbl al">Total analys</div>
+      <h1 class="pt">Systemets samlade<br><em>bild av dig.</em></h1>
+      <p class="ps">Agenten korrelerar sömn, energi, stress, träning, kost och biologi. En samlad analys specifik för dig. Inte generell. Inte baserad på genomsnitt.</p>
+      <button class="at-btn" id="at-btn" onclick="runAnalys()">Kör total analys →</button>
+    </div>
+    <div style="display:none;align-items:center;gap:1rem;padding:2rem 3.5rem;" id="at-load">
+      <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <div style="font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--fg4);" id="at-status">Systemet korrelerar alla datapunkter</div>
+    </div>
+    <div style="display:none;padding:0 3.5rem 4rem;" id="at-result">
+      <div class="at-opening" id="at-opening"></div>
+      <div>
+        <div class="at-sec"><div class="at-sl sl-s">Systemet ser detta som din styrka</div><div class="at-text pr-n" id="at-s"></div><div class="at-meta">Baserat på 14 dagars data · Konfidensgrad: Hög</div></div>
+        <div class="at-sec"><div class="at-sl sl-r">Kritisk riskflagga</div><div class="at-text pr-c" id="at-r"></div><div class="at-meta">Bekräftat mönster · 3 veckor i rad · Kräver åtgärd</div></div>
+        <div class="at-sec"><div class="at-sl sl-m">Systemet förutsäger detta mönster</div><div class="at-text pr-h" id="at-m"></div><div class="at-meta">Prediktion baserad på 28 dagars data · Tidshorisont: 3 veckor</div></div>
+        <div class="at-sec"><div class="at-sl sl-x">Konkret nästa steg</div><div class="at-text pr-h" id="at-x"></div><div class="at-meta">Förväntat utfall: PSI +8–12 enheter inom 14 dagar</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function runAnalys(){
+  if(analysRunning)return;analysRunning=true;
+  const btn=document.getElementById('at-btn');
+  const load=document.getElementById('at-load');
+  const result=document.getElementById('at-result');
+  if(btn)btn.style.display='none';
+  if(load)load.style.display='flex';
+  const steps=['Systemet korrelerar alla datapunkter','Analyserar sömnmönster · 14 nätter','Korrelerar stress och energi','Identifierar veckomönster','Integrerar biologiska markörer','Formulerar analys'];
+  let si=0;const stEl=document.getElementById('at-status');
+  const st=setInterval(()=>{si++;if(si<steps.length&&stEl)stEl.textContent=steps[si];else clearInterval(st);},700);
+  setTimeout(()=>{
+    if(load)load.style.display='none';
+    if(result)result.style.display='block';
+    const opening="Du fungerar i cykler om sju dagar — och torsdagen är konsekvent din svagaste länk.";
+    tw(document.getElementById('at-opening'),opening,22,()=>{
+      setTimeout(()=>{
+        const data={
+          's':'Din <strong>helgkapacitet</strong> är exceptionell. PSI 75–85, sömn 7–8h och stress under 3 varje helg. Det är ett biologiskt system som fungerar när belastningen matchar kapaciteten.',
+          'r':'<strong>Torsdag är systemets kritiska punkt.</strong> Tre veckor i rad: PSI under 45, stress över 7, sömnkvalitet nedsatt. Hög träningsintensitet och hög stress samma dag skapar en biologisk belastning kroppen inte kan hantera.',
+          'm':'Det finns ett <strong>sömnunderskottsmönster</strong> som ackumuleras måndag–torsdag och kompenseras helgen. Systemet förutsäger att vardags-PSI sjunker under 40 konsekvent om mönstret håller ytterligare 3 veckor.',
+          'x':'<strong>Två förändringar:</strong> Flytta läggdags 45 minuter tidigare måndag–onsdag. Sänk torsdagens träningsintensitet till 5–6/10. Systemet förutsäger PSI-ökning med 8–12 enheter inom 14 dagar.'
+        };
+        ['s','r','m','x'].forEach((k,i)=>{
+          setTimeout(()=>{
+            const el=document.getElementById('at-'+k);
+            if(el){el.innerHTML=data[k];el.style.opacity='0';el.style.transform='translateY(8px)';el.style.transition='opacity .5s ease,transform .5s ease';requestAnimationFrame(()=>{el.style.opacity='1';el.style.transform='translateY(0)';});}
+          },i*400);
+        });
+      },500);
+    });
+  },4500);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━ SYSTEMKARTA ━━━━━━━━━━━━━━━━━━━━
+function buildSysmap(){
+  return `<div class="page active">
+    <div class="ph">
+      <div class="lbl al">Systemkarta</div>
+      <h1 class="pt">Hur systemet<br><em>förstår dig.</em></h1>
+      <p class="ps">Varje nod är ett mätområde. Linjerna visar aktiva korrelationer systemet identifierat i din data. Klicka på en nod för att se detaljdata.</p>
+    </div>
+    <div style="padding:2rem 3.5rem 1rem;position:relative;">
+      <svg width="100%" viewBox="0 0 860 460" xmlns="http://www.w3.org/2000/svg">
+        <line x1="430" y1="230" x2="130" y2="115" class="edge-a"/>
+        <line x1="430" y1="230" x2="130" y2="230" class="edge-a"/>
+        <line x1="430" y1="230" x2="130" y2="345" class="edge-w"/>
+        <line x1="430" y1="230" x2="730" y2="115" class="edge-a"/>
+        <line x1="430" y1="230" x2="730" y2="230" class="edge"/>
+        <line x1="430" y1="230" x2="730" y2="345" class="edge"/>
+        <line x1="430" y1="230" x2="430" y2="60" class="edge-a"/>
+        <line x1="130" y1="115" x2="130" y2="230" class="edge"/>
+        <line x1="730" y1="115" x2="730" y2="230" class="edge"/>
+
+        <!-- PSI CENTER -->
+        <g class="node" onclick="go('dashboard')">
+          <circle cx="430" cy="230" r="58" fill="rgba(143,174,138,0.08)" stroke="rgba(143,174,138,0.3)" stroke-width="1" class="nc"/>
+          <circle cx="430" cy="230" r="48" fill="rgba(143,174,138,0.04)" stroke="rgba(143,174,138,0.12)" stroke-width="1"/>
+          <text x="430" y="222" text-anchor="middle" class="nv">75</text>
+          <text x="430" y="240" text-anchor="middle" class="nl2">PSI</text>
+          <text x="430" y="254" text-anchor="middle" style="font-family:'Jost',sans-serif;font-size:9px;fill:var(--fg4);letter-spacing:.1em;text-transform:uppercase;">Systemkapacitet</text>
+          <animateTransform attributeName="transform" type="rotate" from="0 430 230" to="360 430 230" dur="40s" repeatCount="indefinite" additive="sum"/>
+        </g>
+
+        <!-- BIOLOGI TOP -->
+        <g class="node" onclick="go('blood')">
+          <circle cx="430" cy="60" r="34" fill="rgba(91,127,166,0.08)" stroke="rgba(91,127,166,0.25)" stroke-width="1" class="nc"/>
+          <text x="430" y="56" text-anchor="middle" class="nv" style="font-size:14px;fill:var(--trust);">Bio</text>
+          <text x="430" y="71" text-anchor="middle" class="nl2">Biologi</text>
+        </g>
+
+        <!-- SÖMN -->
+        <g class="node" onclick="go('sleep')">
+          <circle cx="130" cy="115" r="40" fill="rgba(143,174,138,0.07)" stroke="rgba(143,174,138,0.28)" stroke-width="1" class="nc"/>
+          <text x="130" y="110" text-anchor="middle" class="nv" style="font-size:17px;">6.8h</text>
+          <text x="130" y="126" text-anchor="middle" class="nl2">Sömn</text>
+        </g>
+
+        <!-- ENERGI -->
+        <g class="node" onclick="go('energy')">
+          <circle cx="130" cy="230" r="40" fill="rgba(143,174,138,0.07)" stroke="rgba(143,174,138,0.28)" stroke-width="1" class="nc"/>
+          <text x="130" y="225" text-anchor="middle" class="nv" style="font-size:17px;">7</text>
+          <text x="130" y="241" text-anchor="middle" class="nl2">Energi</text>
+        </g>
+
+        <!-- STRESS -->
+        <g class="node" onclick="go('stress')">
+          <circle cx="130" cy="345" r="40" fill="rgba(196,135,90,0.07)" stroke="rgba(196,135,90,0.22)" stroke-width="1" class="nc"/>
+          <text x="130" y="340" text-anchor="middle" class="nv" style="font-size:17px;fill:var(--warn);">3</text>
+          <text x="130" y="356" text-anchor="middle" class="nl2">Stress</text>
+        </g>
+
+        <!-- TRÄNING -->
+        <g class="node" onclick="go('training')">
+          <circle cx="730" cy="115" r="40" fill="rgba(91,127,166,0.07)" stroke="rgba(91,127,166,0.22)" stroke-width="1" class="nc"/>
+          <text x="730" y="110" text-anchor="middle" class="nv" style="font-size:17px;fill:var(--trust);">7.8</text>
+          <text x="730" y="126" text-anchor="middle" class="nl2">Träning</text>
+        </g>
+
+        <!-- KOST -->
+        <g class="node" onclick="go('nutrition')">
+          <circle cx="730" cy="230" r="40" fill="rgba(143,174,138,0.04)" stroke="rgba(143,174,138,0.14)" stroke-width="1" class="nc"/>
+          <text x="730" y="225" text-anchor="middle" class="nv" style="font-size:17px;">6.4</text>
+          <text x="730" y="241" text-anchor="middle" class="nl2">Kost</text>
+        </g>
+
+        <!-- PROFIL -->
+        <g class="node" onclick="go('profilering')">
+          <circle cx="730" cy="345" r="40" fill="rgba(168,92,92,0.04)" stroke="rgba(168,92,92,0.14)" stroke-width="1" class="nc"/>
+          <text x="730" y="340" text-anchor="middle" class="nv" style="font-size:14px;fill:var(--fg3);">43%</text>
+          <text x="730" y="356" text-anchor="middle" class="nl2">Profil</text>
+        </g>
+
+        <!-- ROTATING RING -->
+        <circle cx="430" cy="230" r="62" fill="none" stroke="rgba(143,174,138,0.06)" stroke-width="1" stroke-dasharray="8 4">
+          <animateTransform attributeName="transform" type="rotate" from="0 430 230" to="360 430 230" dur="25s" repeatCount="indefinite"/>
+        </circle>
+      </svg>
+    </div>
+    <div style="display:flex;gap:2rem;padding:0 3.5rem 2rem;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:1.5rem;">
+      <div style="display:flex;align-items:center;gap:.5rem;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--fg4);"><div style="width:8px;height:8px;border-radius:50%;background:var(--accent)"></div>Aktiv korrelation</div>
+      <div style="display:flex;align-items:center;gap:.5rem;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--fg4);"><div style="width:8px;height:8px;border-radius:50%;background:var(--warn)"></div>Varningskorrelation</div>
+      <div style="display:flex;align-items:center;gap:.5rem;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--fg4);"><div style="width:8px;height:8px;border-radius:50%;background:rgba(242,240,234,0.15)"></div>Passiv koppling</div>
+    </div>
+  </div>`;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━ SOURCES ━━━━━━━━━━━━━━━━━━━━
+function buildSources(type){
+  const wearables=[
+    {n:'Oura Ring 4',d:'Sömn, HRV, temperatur, aktivitet, readiness.',m:'Sömn · Återhämtning · Temp · HRV',s:'connected',tag:'tl',tl:'Ansluten'},
+    {n:'Apple Health',d:'Steg, aktiv energi, puls, rörelse.',m:'Rörelse · Puls · Kalorier',s:'connected',tag:'tl',tl:'Ansluten'},
+    {n:'Whoop 5.0',d:'Strain, recovery, sömnarkitektur, HRV.',m:'Strain · Recovery · Sömn',s:'available',tag:'ta',tl:'Tillgänglig'},
+    {n:'Garmin',d:'GPS-träning, VO2max, stresspoäng.',m:'Träning · VO2max · Stress',s:'available',tag:'ta',tl:'Tillgänglig'},
+    {n:'Google Fit',d:'Aktivitet och rörelsedata.',m:'Rörelse · Aktivitet',s:'available',tag:'ta',tl:'Tillgänglig'},
+    {n:'Dexcom / Libre',d:'Kontinuerlig blodsockermätning.',m:'Glukos · Variabilitet',s:'soon',tag:'ts2',tl:'Kommer snart'},
+  ];
+  const biotests=[
+    {n:'Blodpanel · Bas',d:'Järn, ferritin, B12, D-vitamin, TSH, HbA1c, CRP.',m:'Metabol hälsa · Näringsstatus',s:'connected',tag:'tl',tl:'Tillagd'},
+    {n:'Hormonpanel · Bas',d:'Testosteron, kortisol (morgon/kväll), DHEA-S.',m:'Hormonstatus · Stressaxel',s:'connected',tag:'tl',tl:'Tillagd'},
+    {n:'23andMe / Ancestry',d:'Genetiska predispositioner och hälsorisker.',m:'Genetik · Predispositioner',s:'available',tag:'ta',tl:'Kan läggas till'},
+    {n:'Fullständig hormonpanel',d:'IGF-1, östradiol, insulin, sköldkörtel T3/T4.',m:'Fullständig hormonstatus',s:'available',tag:'ta',tl:'Kan läggas till'},
+    {n:'VO2max-test',d:'Objektivt mätt aerob kapacitet.',m:'Kondition · Kapacitet',s:'available',tag:'ta',tl:'Kan läggas till'},
+    {n:'Mikrobiom-analys',d:'Tarmflora och påverkan på energi och sömn.',m:'Gut · Energi · Immunitet',s:'soon',tag:'ts2',tl:'Kommer snart'},
+  ];
+  const src=type==='wearables'?wearables:biotests;
+  const title=type==='wearables'?'Wearables & appar':'Biologiska tester';
+  const sub=type==='wearables'?'Enheter och appar som ger systemet kontinuerlig data om hur du fungerar i realtid.':'Blodprover, hormonpaneler och genetiska tester som förklarar varför du fungerar som du gör.';
+  const srcH=src.map(s=>`<div class="src ${s.s}"><div class="sn">${s.n}</div><div class="sd">${s.d}</div><div class="sm2">${s.m}</div><div style="margin-top:.8rem"><span class="stag ${s.tag}">${s.tl}</span></div></div>`).join('');
+  const connected=src.filter(s=>s.s==='connected').length;
+  return `<div class="page active">
+    <div class="ph">
+      <div class="lbl al">Källor · ${title}</div>
+      <h1 class="pt">${title}.<br><em>Vad systemet ser.</em></h1>
+      <p class="ps">${sub}</p>
+    </div>
+    <div class="sp sb"><div class="src-grid">${srcH}</div></div>
+    <div class="a4"><div class="st"><div class="sf-bar" style="width:${Math.round((connected/src.length)*100)}%;"></div></div><div class="sm"><span><em>${connected} av ${src.length}</em> källor aktiva</span><span>${connected<src.length?`Mer precision med <em>${src.length-connected} källor till</em>`:'<em>Alla källor aktiva</em>'}</span></div></div>
+  </div>`;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━ NAVIGATE ━━━━━━━━━━━━━━━━━━━━
+let cur=null;
+function go(key){
+  if(cur===key)return;cur=key;
+  document.querySelectorAll('.nl').forEach(l=>l.classList.remove('active'));
+  const nl=document.getElementById('nav-'+key);if(nl)nl.classList.add('active');
+  const main=document.getElementById('main');
+  if(key==='dashboard'){main.innerHTML=buildDashboard();setTimeout(()=>{let n=0;const t=setInterval(()=>{n+=3;if(n>=75){n=75;clearInterval(t);}const el=document.getElementById('psi-n');if(el)el.textContent=n;},20);},100);}
+  else if(key==='signal')main.innerHTML=buildSignal();
+  else if(key==='profilering'){main.innerHTML=buildProfilering();setTimeout(()=>{const b=document.getElementById('conf-bar');if(b)b.style.width='43%';},500);}
+  else if(key==='analys'){main.innerHTML=buildAnalys();analysRunning=false;}
+  else if(key==='sysmap')main.innerHTML=buildSysmap();
+  else if(key==='wearables')main.innerHTML=buildSources('wearables');
+  else if(key==='biotests')main.innerHTML=buildSources('biotests');
+  else if(['blood','hormoner','genetik','fystest'].includes(key))main.innerHTML=buildBioPage(key);
+  else if(PAGES[key]){main.innerHTML=buildDataPage(key);animDataPage(key);}
+  else main.innerHTML=`<div class="page active"><div class="sp"><div class="lbl al">${key}</div><p style="color:var(--fg3);font-size:.84rem;">Sidan körs mot din live-server på localhost:3000.</p></div></div>`;
+  main.scrollTop=0;
+}
+go('dashboard');
+</script>
+</body>
+</html>

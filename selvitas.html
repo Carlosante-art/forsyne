@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Selvitas</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<script src="cache.js"></script>
+<style>
+:root {
+  --ink:#0F1210;--ink2:#131714;
+  --fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;
+  --accent:#8FAE8A;--warn:#C4875A;--danger:#A85C5C;--trust:#5B7FA6;
+  --serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;
+  --border:rgba(242,240,234,0.06);
+  --pad:clamp(3rem,5vw,5rem);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;line-height:1.7;overflow-x:hidden;}
+
+/* ── BAKGRUND ── */
+.page-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;}
+.page-bg-img{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.22) saturate(0.4);}
+.page-bg-veil{position:absolute;inset:0;background:linear-gradient(to bottom,var(--ink) 0%,rgba(15,18,16,0.72) 9%,rgba(15,18,16,0.06) 26%,rgba(15,18,16,0.06) 74%,rgba(15,18,16,0.72) 91%,var(--ink) 100%);}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(2rem,5vw,4rem);height:64px;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.85);backdrop-filter:blur(32px);}
+.logo{font-family:var(--serif);font-size:1.1rem;font-weight:400;letter-spacing:0.18em;color:var(--fg);text-decoration:none;}
+.nav-center{font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+.nav-meta{display:flex;align-items:center;gap:1.5rem;}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(143,174,138,0.6);animation:pulse 2.5s ease infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.nav-date{font-family:var(--serif);font-size:0.9rem;color:var(--fg2);}
+.nav-user{font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg3);text-decoration:none;}
+
+/* ── LAYOUT ── */
+.content-wrap{display:flex;align-items:flex-start;height:calc(100vh - 64px);overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:210px;height:100%;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:rgba(15,18,16,0.4);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;z-index:50;padding:2.5rem 0 1.8rem;}
+.sidebar::-webkit-scrollbar{display:none;}
+.ng{margin-bottom:1.0rem;}
+.ngl{font-size:0.5rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);padding:0 1.8rem;margin-bottom:0.4rem;}
+.nl{display:block;padding:0.28rem 1.8rem;font-size:0.76rem;letter-spacing:0.06em;color:var(--fg3);text-decoration:none;transition:color 0.2s,border-left-color 0.2s;border-left:1px solid transparent;cursor:pointer;}
+.nl:hover{color:var(--fg2);}
+.nl.active{color:var(--fg);border-left-color:var(--accent);}
+.nl.signal-link{color:var(--danger);display:flex;align-items:center;gap:0.5rem;}
+.nl.signal-link::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+@keyframes sig-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(168,92,92,0.6)}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(168,92,92,0)}}
+.selvitas-wrap{margin-top:auto;padding-top:0.8rem;border-top:1px solid var(--border);}
+.selvitas-nav{display:block;padding:0.8rem 1.8rem 0.4rem;font-family:var(--serif);font-style:italic;font-size:0.76rem;letter-spacing:0.1em;color:var(--fg4);text-decoration:none;transition:color 0.2s;}
+.selvitas-nav:hover{color:var(--fg2);}
+
+/* ── MAIN ── */
+main{position:relative;z-index:1;flex:1;min-width:0;overflow-y:auto;height:100%;}
+
+/* ── PAGE HEADER ── */
+.page-header{padding:1.8rem 2rem 1.4rem;border-bottom:1px solid var(--border);}
+.page-header-title{font-family:var(--serif);font-size:1.8rem;font-weight:300;line-height:1.1;color:var(--fg);margin-bottom:0.3rem;}
+.page-header-sub{font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);}
+
+/* ── DOTS ── */
+.dots{display:flex;gap:0.4rem;}
+.dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:dp 1.4s ease infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.load-row{display:flex;align-items:center;gap:0.8rem;}
+.load-txt{font-size:0.6rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+
+/* ── LOADING / EMPTY ── */
+.sv-loading{padding:var(--pad) clamp(2rem,6vw,5rem);}
+.sv-empty{padding:var(--pad) clamp(2rem,6vw,5rem);max-width:680px;margin:0 auto;}
+.sv-empty-title{font-family:var(--serif);font-size:1.4rem;font-weight:300;color:var(--fg2);margin-bottom:1rem;}
+.sv-empty-sub{font-size:0.82rem;color:var(--fg4);line-height:1.8;}
+.sv-empty-link{display:inline-block;margin-top:1.5rem;font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);text-decoration:none;border:1px solid rgba(143,174,138,0.3);padding:0.7rem 1.6rem;transition:all 0.2s;}
+.sv-empty-link:hover{background:rgba(143,174,138,0.06);}
+
+/* ── SI INDEX ── */
+.sv-index{padding:2rem clamp(2rem,6vw,5rem) 1.6rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:3rem;flex-wrap:wrap;}
+.sv-index-main{}
+.sv-index-label{font-size:0.48rem;letter-spacing:0.32em;text-transform:uppercase;color:var(--fg4);margin-bottom:0.5rem;}
+.sv-index-number{font-family:var(--serif);font-size:5rem;font-weight:300;line-height:1;color:var(--fg);transition:color 0.4s ease;}
+.sv-index-unit{font-size:0.52rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);margin-top:0.3rem;}
+.sv-index-components{display:flex;flex-direction:column;gap:0.5rem;padding-top:0.4rem;}
+.sv-ic{display:flex;align-items:baseline;gap:0.6rem;}
+.sv-ic-label{font-size:0.5rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);min-width:130px;}
+.sv-ic-bar{width:90px;height:2px;background:rgba(242,240,234,0.06);overflow:hidden;flex-shrink:0;}
+.sv-ic-fill{height:100%;background:var(--accent);opacity:0.6;transition:width 0.6s ease;}
+.sv-ic-val{font-family:var(--serif);font-size:0.82rem;color:var(--fg3);}
+
+/* ── SECTIONS ── */
+.sv-section{padding:2.4rem clamp(2rem,6vw,5rem);max-width:800px;margin:0 auto;border-bottom:1px solid var(--border);opacity:0;transform:translateY(12px);transition:opacity 0.55s ease,transform 0.55s ease;}
+.sv-section.vis{opacity:1;transform:translateY(0);}
+.sv-label{font-size:0.52rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1rem;display:flex;align-items:center;gap:0.6rem;}
+.sv-label::before{content:'';width:10px;height:1px;background:var(--accent);opacity:0.4;}
+.sv-label.warn{color:var(--warn);}
+.sv-label.warn::before{background:var(--warn);}
+.sv-text{font-family:var(--serif);font-size:clamp(1rem,1.8vw,1.15rem);font-weight:300;line-height:1.85;color:var(--fg2);}
+
+/* ── DOM — KLIMAX ── */
+.sv-dom-wrap{padding:var(--pad) clamp(2rem,6vw,5rem) 3rem;max-width:800px;margin:0 auto;opacity:0;transform:translateY(16px);transition:opacity 0.7s ease 0.1s,transform 0.7s ease 0.1s;}
+.sv-dom-wrap.vis{opacity:1;transform:translateY(0);}
+.sv-dom-label{font-size:0.5rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.5rem;}
+.sv-dom{font-family:var(--serif);font-size:clamp(1.6rem,3vw,2.4rem);font-weight:300;line-height:1.3;color:var(--fg);font-style:italic;}
+
+/* ── PREDICTION CARD ── */
+.sv-pred-card{padding:1.8rem clamp(2rem,6vw,5rem);border-bottom:1px solid var(--border);display:none;}
+.sv-pred-card.show{display:block;}
+.sv-pred-inner{max-width:800px;margin:0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:2rem;flex-wrap:wrap;}
+.sv-pred-main{}
+.sv-pred-label{font-size:0.48rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--fg4);margin-bottom:0.8rem;display:flex;align-items:center;gap:0.6rem;}
+.sv-pred-label::before{content:'';width:10px;height:1px;background:var(--trust);opacity:0.5;}
+.sv-pred-text{font-family:var(--serif);font-size:clamp(1rem,1.8vw,1.2rem);font-weight:300;color:var(--fg2);line-height:1.7;max-width:560px;}
+.sv-pred-meta{display:flex;align-items:center;gap:1.2rem;margin-top:0.8rem;}
+.sv-pred-conf{font-size:0.52rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg4);}
+.sv-pred-conf em{color:var(--trust);font-style:normal;}
+.sv-pred-status{}
+.sv-pred-status-badge{font-size:0.5rem;letter-spacing:0.22em;text-transform:uppercase;padding:0.2rem 0.55rem;border:1px solid;}
+.sv-pred-status-badge.pending{color:var(--fg4);border-color:var(--border);}
+.sv-pred-status-badge.correct{color:var(--accent);border-color:rgba(143,174,138,0.25);}
+.sv-pred-status-badge.wrong{color:var(--warn);border-color:rgba(196,135,90,0.25);}
+
+/* ── MANIFESTO ── */
+.sv-manifesto{padding:var(--pad) clamp(2rem,6vw,5rem);max-width:680px;margin:0 auto;border-top:1px solid var(--border);}
+.sv-manifesto-text{font-family:var(--serif);font-size:0.88rem;font-weight:300;line-height:2;color:var(--fg4);}
+.sv-manifesto-text p{margin-bottom:1.2rem;}
+.sv-manifesto-text p:last-child{margin-bottom:0;}
+
+/* ── FOOTER ── */
+.s-footer{padding:2rem clamp(2rem,6vw,5rem);border-top:1px solid var(--border);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--fg4);}
+
+@media(max-width:860px){
+  .sidebar{display:none!important;}
+  .content-wrap,.page-wrap,.layout-wrap{display:block!important;}
+  #main,.main-content,.page-content{width:100%!important;max-height:none!important;overflow-y:auto!important;}
+  .mg,.pred-grid,.today-plan-grid,.bio-grid,.src-grid,.prof-grid{grid-template-columns:1fr 1fr!important;}
+  .pred-grid,.prof-grid{grid-template-columns:1fr!important;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="dashboard.html" class="logo">Forsyne</a>
+  <div class="nav-center">Selvitas</div>
+  <div class="nav-meta">
+    <div class="nav-dot"></div>
+    <div class="nav-date" id="nav-date"></div>
+    <a href="profile.html" class="nav-user" id="nav-user">Profil</a>
+  </div>
+</nav>
+
+<div class="page-bg">
+  <div class="page-bg-img" style="background-image:url('images/sleep-bg.webp');"></div>
+  <div class="page-bg-veil"></div>
+</div>
+
+<div class="content-wrap">
+
+<aside class="sidebar">
+  <div class="ng">
+    <div class="ngl">Idag</div>
+    <a class="nl" href="dashboard.html">Dashboard</a>
+    <a class="nl" href="checkin.html">Check-in</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Mönster</div>
+    <a class="nl" href="sleep.html">Sömn</a>
+    <a class="nl" href="energy.html">Energi</a>
+    <a class="nl" href="stress.html">Stress</a>
+    <a class="nl" href="training.html">Träning</a>
+    <a class="nl" href="kostlogg.html">Kost</a>
+    <a class="nl" href="wearables.html">Wearables</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Djupet</div>
+    <a class="nl" href="biologi.html">Biologi</a>
+    <a class="nl" href="dna.html">DNA</a>
+    <a class="nl" href="journal.html">Journal</a>
+    <a class="nl" href="analys.html">Analys</a>
+    <a class="nl" href="coach.html">Coach</a>
+  </div>
+</aside>
+
+<main>
+  <div class="page-header">
+    <div class="page-header-title">Selvitas</div>
+    <div class="page-header-sub">Systemets samlade dom</div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="sv-loading" id="sv-loading">
+    <div class="load-row">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Systemet syntetiserar</span>
+    </div>
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div class="sv-empty" id="sv-empty" style="display:none;">
+    <div class="sv-empty-title">Systemet bygger sin modell av dig.</div>
+    <div class="sv-empty-sub">
+      Selvitas uppstår när systemet har tillräckligt med data — typiskt efter 7–14 dagliga check-ins.<br>
+      Fortsätt logga, så tar systemet form.
+    </div>
+    <a href="checkin.html" class="sv-empty-link">Gå till check-in</a>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="sv-content" style="display:none;">
+
+    <!-- SI INDEX -->
+    <div class="sv-index" id="sv-index-wrap">
+      <div class="sv-index-main">
+        <div class="sv-index-label">Selvitas Index</div>
+        <div class="sv-index-number" id="sv-si-num">—</div>
+        <div class="sv-index-unit">av 100</div>
+      </div>
+      <div class="sv-index-components">
+        <div class="sv-ic">
+          <div class="sv-ic-label">Datamognad</div>
+          <div class="sv-ic-bar"><div class="sv-ic-fill" id="sv-si-dm" style="width:0%"></div></div>
+          <div class="sv-ic-val" id="sv-si-dm-v">—</div>
+        </div>
+        <div class="sv-ic">
+          <div class="sv-ic-label">Genomsnittsgap</div>
+          <div class="sv-ic-bar"><div class="sv-ic-fill" id="sv-si-gg" style="width:0%;background:var(--warn);"></div></div>
+          <div class="sv-ic-val" id="sv-si-gg-v">—</div>
+        </div>
+        <div class="sv-ic">
+          <div class="sv-ic-label">Modellprecision</div>
+          <div class="sv-ic-bar"><div class="sv-ic-fill" id="sv-si-mp" style="width:0%"></div></div>
+          <div class="sv-ic-val" id="sv-si-mp-v">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sv-section" id="sv-s-bio">
+      <div class="sv-label">Biologisk identitet</div>
+      <div class="sv-text" id="sv-bio"></div>
+    </div>
+
+    <div class="sv-section" id="sv-s-monster">
+      <div class="sv-label">Funktionsmönster</div>
+      <div class="sv-text" id="sv-monster"></div>
+    </div>
+
+    <div class="sv-section" id="sv-s-gap" style="display:none;">
+      <div class="sv-label warn">Avvikelse</div>
+      <div class="sv-text" id="sv-gap"></div>
+    </div>
+
+    <div class="sv-section" id="sv-s-pred">
+      <div class="sv-label">Prediktion</div>
+      <div class="sv-text" id="sv-pred"></div>
+    </div>
+
+    <!-- DOM — klimax -->
+    <div class="sv-dom-wrap" id="sv-dom-wrap">
+      <div class="sv-dom-label">Systemets dom</div>
+      <div class="sv-dom" id="sv-dom"></div>
+    </div>
+
+    <!-- KONKRET PREDIKTION -->
+    <div class="sv-pred-card" id="sv-pred-card">
+      <div class="sv-pred-inner">
+        <div class="sv-pred-main">
+          <div class="sv-pred-label">Konkret prediktion</div>
+          <div class="sv-pred-text" id="sv-pred-text">—</div>
+          <div class="sv-pred-meta">
+            <div class="sv-pred-conf">Konfidens <em id="sv-pred-conf">—</em></div>
+            <div class="sv-pred-status"><span class="sv-pred-status-badge pending" id="sv-pred-badge">Väntar på verifiering</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MANIFESTO — statisk text som bakgrund -->
+    <div class="sv-manifesto">
+      <div class="sv-manifesto-text">
+        <p>Selvitas är ett tillstånd av systemisk självförståelse — att se hur delarna hänger ihop och driver varandra. Distinktionen är avgörande: att veta vad man borde göra är trivial kunskap. Att förstå varför man faktiskt fungerar som man gör kräver något djupare.</p>
+        <p>Forsyne är inte ett verktyg för råd. Det är ett system för att bygga den modellen — individuellt, utifrån din faktiska biologi och ditt faktiska beteende.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="s-footer">Inte baserat på genomsnitt. Baserat på dig.</footer>
+
+</main>
+</div>
+
+<script>
+// ── Sidebar: auto-active baserat på URL ──
+(function(){
+  const page = location.pathname.split('/').pop() || 'dashboard.html';
+  document.querySelectorAll('.sidebar a.nl').forEach(a => {
+    if (a.getAttribute('href') === page) a.classList.add('active');
+  });
+})();
+
+(async () => {
+  // Nav datum
+  document.getElementById('nav-date').textContent = new Date().toLocaleDateString('sv-SE', { weekday:'long', day:'numeric', month:'long' });
+
+  const session = await checkAuth();
+  if (!session) return;
+  document.getElementById('nav-user').textContent = session.user?.email?.split('@')[0] || 'Profil';
+
+  // Hämta data från localStorage
+  const checkins = (() => {
+    try { return JSON.parse(localStorage.getItem('forsyne_checkins') || '[]'); } catch { return []; }
+  })();
+  const profile = (() => {
+    try { return JSON.parse(localStorage.getItem('forsyne_profile') || '{}'); } catch { return {}; }
+  })();
+
+  if (checkins.length < 5) {
+    document.getElementById('sv-loading').style.display = 'none';
+    document.getElementById('sv-empty').style.display = 'block';
+    return;
+  }
+
+  // Anropa selvitas-agenten
+  let sv = PCache.get('selvitas_dom');
+  if (!sv) {
+    try {
+      const last90 = checkins.slice(-90);
+      const r = await fetch('/api/selvitas/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API.token() },
+        body: JSON.stringify({ checkins: last90, profile })
+      });
+      if (r.ok) { sv = await r.json(); PCache.set('selvitas_dom', sv); }
+    } catch(e) {}
+  }
+
+  document.getElementById('sv-loading').style.display = 'none';
+
+  if (!sv || sv.error || !sv.selvitas_dom) {
+    document.getElementById('sv-empty').style.display = 'block';
+    return;
+  }
+
+  // Fyll i content
+  document.getElementById('sv-bio').textContent     = sv.biologisk_identitet || '—';
+  document.getElementById('sv-monster').textContent = sv.funktionsmönster     || '—';
+  document.getElementById('sv-pred').textContent    = sv.prediktion            || '—';
+  document.getElementById('sv-dom').textContent     = sv.selvitas_dom          || '—';
+
+  if (sv.gapen) {
+    document.getElementById('sv-gap').textContent = sv.gapen;
+    document.getElementById('sv-s-gap').style.display = 'block';
+  }
+
+  document.getElementById('sv-content').style.display = 'block';
+
+  // Fetch Selvitas Index
+  (async () => {
+    try {
+      const sir = await fetch('/api/selvitas/index', {
+        headers: { 'Authorization': 'Bearer ' + API.token() }
+      });
+      if (sir.ok) {
+        const sid = await sir.json();
+        const siNum = document.getElementById('sv-si-num');
+        siNum.textContent = sid.si ?? '—';
+        siNum.style.color = sid.si >= 80 ? 'var(--accent)' : sid.si >= 55 ? 'var(--fg)' : sid.si >= 30 ? 'var(--warn)' : 'var(--fg4)';
+        const dm = sid.datamognad ?? 0;
+        const gg = sid.genomsnittsgap ?? 0;
+        const mp = sid.modellprecision ?? 0;
+        document.getElementById('sv-si-dm').style.width = (dm * 100).toFixed(0) + '%';
+        document.getElementById('sv-si-dm-v').textContent = (dm * 100).toFixed(0) + '%';
+        document.getElementById('sv-si-gg').style.width = (gg * 100).toFixed(0) + '%';
+        document.getElementById('sv-si-gg-v').textContent = (gg * 100).toFixed(0) + '%';
+        document.getElementById('sv-si-mp').style.width = (mp * 100).toFixed(0) + '%';
+        document.getElementById('sv-si-mp-v').textContent = (mp * 100).toFixed(0) + '%';
+      }
+    } catch(e) {}
+  })();
+
+  // Fetch och generera konkret prediktion
+  (async () => {
+    try {
+      // Kolla om en aktiv prediktion redan finns
+      let pred = null;
+      const existing = await fetch('/api/selvitas/concrete-prediction', {
+        headers: { 'Authorization': 'Bearer ' + API.token() }
+      });
+      if (existing.ok) pred = await existing.json();
+
+      // Om ingen aktiv: generera från check-in-data
+      if (!pred && checkins.length >= 7) {
+        const genR = await fetch('/api/selvitas/concrete-prediction', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API.token() },
+          body: JSON.stringify({ checkins: checkins.slice(-21) })
+        });
+        if (genR.ok) pred = await genR.json();
+      }
+
+      if (pred && pred.display_text && !pred.error) {
+        document.getElementById('sv-pred-text').textContent = pred.display_text;
+        document.getElementById('sv-pred-conf').textContent = (pred.confidence || 0) + '%';
+        const badge = document.getElementById('sv-pred-badge');
+        if (pred.verified && pred.correct === true)  { badge.textContent = 'Träffade'; badge.className = 'sv-pred-status-badge correct'; }
+        else if (pred.verified && pred.correct === false) { badge.textContent = 'Missade';  badge.className = 'sv-pred-status-badge wrong'; }
+        else { badge.textContent = 'Väntar på verifiering'; badge.className = 'sv-pred-status-badge pending'; }
+        document.getElementById('sv-pred-card').classList.add('show');
+      }
+    } catch(e) {}
+  })();
+
+  // Animera sektionerna i sekvens
+  const sections = ['sv-s-bio', 'sv-s-monster', 'sv-s-gap', 'sv-s-pred'];
+  sections.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el || el.style.display === 'none') return;
+    setTimeout(() => {
+      new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) el.classList.add('vis');
+      }, { threshold: 0.1 }).observe(el);
+      el.classList.add('vis'); // trigger direkt också
+    }, i * 200);
+  });
+
+  // Dom — klimax med extra delay
+  setTimeout(() => {
+    const domEl = document.getElementById('sv-dom-wrap');
+    if (domEl) domEl.classList.add('vis');
+  }, sections.length * 200 + 300);
+
+})();
+</script>
+<script src="notif.js"></script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>
