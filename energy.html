@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<script src="cache.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Energi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="system.css">
+<style>
+:root {
+  --ink:#0F1210;--ink2:#131714;
+  --fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;
+  --accent:#8FAE8A;--warn:#C4875A;--danger:#A85C5C;--trust:#5B7FA6;
+  --serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;
+  --border:rgba(242,240,234,0.06);
+  --pad:clamp(5rem,8vw,9rem);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;line-height:1.7;overflow-x:hidden;}
+
+/* ── BAKGRUND ── */
+.page-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;}
+.page-bg-img{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.18) saturate(0.4);}
+.page-bg-veil{position:absolute;inset:0;background:linear-gradient(to bottom,var(--ink) 0%,rgba(15,18,16,0.72) 9%,rgba(15,18,16,0.06) 26%,rgba(15,18,16,0.06) 74%,rgba(15,18,16,0.72) 91%,var(--ink) 100%);}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(2rem,5vw,4rem);height:64px;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.85);backdrop-filter:blur(32px);}
+.logo{font-family:var(--serif);font-size:1.15rem;font-weight:400;letter-spacing:0.18em;color:var(--fg);text-decoration:none;}
+.nav-center{font-size:0.58rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg3);}
+.nav-meta{display:flex;align-items:center;gap:1.6rem;}
+.nav-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(143,174,138,0.6);animation:nav-pulse 2.5s ease infinite;flex-shrink:0;}
+@keyframes nav-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.nav-date{font-family:var(--serif);font-size:0.88rem;color:var(--fg2);}
+.nav-user{font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg3);text-decoration:none;}
+.nav-signal{font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--danger);display:none;align-items:center;gap:0.4rem;text-decoration:none;}
+.nav-signal.show{display:flex;}
+.nav-signal::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+@keyframes sig-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(168,92,92,0.6)}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(168,92,92,0)}}
+
+/* ── MAIN ── */
+.main{position:relative;z-index:1;flex:1;min-width:0;overflow-y:auto;height:100%;padding:0;}
+
+/* ── PAGE HEADER ── */
+.page-header{padding:1.8rem 2rem 1.4rem;border-bottom:1px solid var(--border);max-width:100%;}
+.page-header-title{font-family:var(--serif);font-size:1.8rem;font-weight:300;line-height:1.1;color:var(--fg);margin-bottom:0.3rem;}
+.page-header-sub{font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);}
+
+/* ── MANUELL ENERGI-LOG ── */
+.menergy-rows{display:flex;flex-direction:column;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.4);}
+.menergy-row{display:flex;align-items:center;flex-wrap:wrap;gap:0.7rem;padding:0.85rem 2rem;}
+.menergy-row + .menergy-row{border-top:1px solid var(--border);}
+.menergy-lbl{font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--fg3);min-width:200px;}
+.menergy-row input{background:transparent;border:1px solid var(--border);color:var(--fg);font-family:var(--sans);font-size:0.95rem;padding:0.45rem 0.7rem;font-weight:300;color-scheme:dark;min-width:0;border-radius:0;}
+.menergy-row input[type="date"]{min-width:140px;}
+.menergy-row input[type="number"]{width:120px;}
+.menergy-row input:focus{outline:none;border-color:var(--accent);}
+.menergy-row button{background:var(--accent);color:var(--ink);border:none;padding:0.55rem 1.4rem;font-family:var(--sans);font-size:0.7rem;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:400;transition:opacity 0.2s ease;}
+.menergy-row button:hover{opacity:0.85;}
+.menergy-row button:disabled{opacity:0.4;cursor:not-allowed;}
+.menergy-msg{font-size:0.78rem;color:var(--fg3);}
+.menergy-msg.ok{color:var(--accent);}
+.menergy-msg.err{color:var(--danger);}
+
+/* ── PANELS WRAPPER ── */
+.e-panels{max-width:1200px;margin:0 auto;padding:2rem clamp(2rem,6vw,5rem);}
+
+/* ── ENERGY PAGE COMPONENTS ── */
+.hero-metrics{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:1px;}
+.hero-metric{background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);padding:2rem 1.8rem;position:relative;overflow:hidden;}
+.hero-metric.primary{padding:2.2rem 2rem;}
+.metric-lbl{font-size:0.64rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--fg3);margin-bottom:1rem;}
+.metric-val{font-family:var(--serif);font-size:clamp(2.5rem,5vw,4.5rem);font-weight:300;line-height:1;color:var(--fg);margin-bottom:0.4rem;}
+.metric-val small{font-size:0.32em;color:var(--fg3);font-family:var(--sans);margin-left:0.2rem;}
+.metric-val.sm{font-size:clamp(2rem,3.5vw,3rem);}
+.metric-delta{font-size:0.65rem;margin-bottom:0.3rem;}
+.metric-src{font-size:0.62rem;letter-spacing:0.1em;color:var(--fg4);margin-top:0.5rem;text-transform:uppercase;}
+.psi-badge{display:inline-flex;align-items:center;gap:0.25rem;font-size:0.68rem;letter-spacing:0.08em;padding:0.12rem 0.45rem;border-radius:2px;margin-left:0.4rem;vertical-align:middle;}
+.psi-hi{background:rgba(143,174,138,0.12);color:var(--accent);}
+.psi-ok{background:rgba(196,135,90,0.12);color:var(--warn);}
+.psi-lo{background:rgba(168,92,92,0.12);color:var(--danger);}
+.d-up{color:var(--accent);}
+.d-dn{color:var(--danger);}
+.d-wn{color:var(--warn);}
+.metric-bar{position:absolute;bottom:0;left:0;right:0;height:2px;background:rgba(255,255,255,0.04);}
+.metric-fill{height:100%;}
+
+.energy-day{background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);border:1px solid var(--border);border-top:none;padding:2rem;margin-bottom:1px;}
+.panel-lbl{font-size:0.64rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg3);margin-bottom:1.5rem;display:flex;align-items:center;gap:0.6rem;}
+.panel-lbl::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:1px;}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:1px;}
+.full-col{border:1px solid var(--border);margin-bottom:1px;}
+.panel{background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);padding:2rem;}
+
+.insight{font-family:var(--serif);font-size:1rem;font-weight:300;line-height:1.85;color:var(--fg2);font-style:italic;padding-left:1.2rem;border-left:1px solid rgba(143,174,138,0.25);}
+.insight strong{color:var(--fg);font-style:normal;font-weight:400;}
+
+.week-energy{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:0.5rem;}
+.we-col{display:flex;flex-direction:column;align-items:center;gap:0.4rem;}
+.we-lbl{font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg4);}
+.we-bar-wrap{width:100%;height:80px;display:flex;align-items:flex-end;}
+.we-bar{width:100%;border-radius:1px 1px 0 0;}
+.we-val{font-family:var(--serif);font-size:0.8rem;font-weight:300;}
+
+.peak-zone{padding:0.8rem 1rem;border:1px solid var(--border);margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+.peak-zone.best{border-color:rgba(143,174,138,0.25);background:rgba(143,174,138,0.04);}
+.peak-zone.low{border-color:rgba(168,92,92,0.2);background:rgba(168,92,92,0.04);}
+.peak-time{font-family:var(--serif);font-size:1.1rem;font-weight:300;color:var(--fg);}
+.peak-label{font-size:0.74rem;letter-spacing:0.14em;text-transform:uppercase;}
+.peak-label.good{color:var(--accent);}
+.peak-label.bad{color:var(--danger);}
+.peak-desc{font-size:0.78rem;color:var(--fg3);line-height:1.5;flex:1;text-align:right;}
+
+.stat{display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid var(--border);}
+.stat:last-child{border-bottom:none;}
+.stat-name{font-size:0.7rem;color:var(--fg3);}
+.stat-val{font-family:var(--serif);font-size:1.05rem;font-weight:300;color:var(--fg);}
+.stat-val small{font-size:0.55em;color:var(--fg3);font-family:var(--sans);margin-left:0.1rem;}
+.stat-val.warn{color:var(--warn);}
+.stat-val.good{color:var(--accent);}
+.stat-val.bad{color:var(--danger);}
+
+.pattern{padding:1rem 0;border-bottom:1px solid var(--border);}
+.pattern:last-child{border-bottom:none;padding-bottom:0;}
+.pattern-type{font-size:0.62rem;letter-spacing:0.22em;text-transform:uppercase;margin-bottom:0.3rem;}
+.pt-c{color:var(--danger);}
+.pt-w{color:var(--warn);}
+.pt-g{color:var(--accent);}
+.pattern-txt{font-size:0.88rem;color:var(--fg2);line-height:1.65;}
+
+.connection{display:flex;align-items:flex-start;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--border);}
+.connection:last-child{border-bottom:none;}
+.conn-arrow{font-size:0.7rem;color:var(--fg4);flex-shrink:0;padding-top:0.2rem;}
+.conn-title{font-size:0.72rem;color:var(--fg2);margin-bottom:0.2rem;}
+.conn-sub{font-size:0.65rem;color:var(--fg3);line-height:1.5;}
+.conn-impact{font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;margin-top:0.3rem;}
+.ci-neg{color:var(--danger);}
+.ci-pos{color:var(--accent);}
+
+.capacity-curve{margin-top:0.5rem;position:relative;}
+.time-labels{display:flex;justify-content:space-between;margin-top:0.5rem;}
+.time-label{font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg4);}
+.time-label.peak{color:var(--accent);}
+.time-label.low{color:var(--danger);}
+
+/* ── GAP-SEKTION ── */
+.gap-row{padding:1.6rem clamp(2rem,6vw,5rem);max-width:1200px;margin:0 auto;border-top:1px solid var(--border);display:none;}
+.gap-lbl{font-size:0.52rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--warn);margin-bottom:1rem;display:flex;align-items:center;gap:0.6rem;}
+.gap-lbl::before{content:'';width:10px;height:1px;background:var(--warn);}
+.gap-cols{display:grid;grid-template-columns:1fr auto 1fr;gap:1.5rem;align-items:center;margin-bottom:0.8rem;}
+.gap-side{display:flex;flex-direction:column;gap:0.2rem;}
+.gap-source{font-size:0.54rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg4);}
+.gap-val{font-family:var(--serif);font-size:1.4rem;font-weight:300;color:var(--fg2);}
+.gap-badge{font-family:var(--serif);font-size:1rem;color:var(--warn);text-align:center;font-style:italic;}
+.gap-tolkning{font-family:var(--serif);font-style:italic;font-size:0.88rem;color:var(--fg3);line-height:1.7;}
+
+/* ── BIO + REK ── */
+.s-bio{padding:var(--pad) clamp(2rem,6vw,5rem);max-width:1000px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:5rem;}
+.s-bio-label{font-size:0.54rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.8rem;display:flex;align-items:center;gap:0.6rem;}
+.s-bio-label::before{content:'';width:10px;height:1px;background:var(--accent);opacity:0.4;}
+.bio-marker{display:flex;justify-content:space-between;align-items:baseline;padding:0.65rem 0;border-bottom:1px solid var(--border);}
+.bio-marker:last-child{border-bottom:none;}
+.bm-name{font-size:0.68rem;color:var(--fg3);letter-spacing:0.03em;line-height:1.4;}
+.bm-right{text-align:right;}
+.bm-val{font-family:var(--serif);font-size:1.05rem;font-weight:300;line-height:1;}
+.bm-status{font-size:0.54rem;letter-spacing:0.14em;text-transform:uppercase;margin-top:0.2rem;}
+.bm-ok{color:var(--accent);}.bm-warn{color:var(--warn);}.bm-bad{color:var(--danger);}
+.rek-step{padding:0.9rem 0;border-bottom:1px solid var(--border);opacity:0;transform:translateY(6px);transition:opacity 0.4s ease,transform 0.4s ease;}
+.rek-step:last-child{border-bottom:none;}
+.rek-step.vis{opacity:1;transform:translateY(0);}
+.rek-atgard{font-family:var(--serif);font-size:0.9rem;font-weight:300;color:var(--fg);line-height:1.5;margin-bottom:0.3rem;}
+.rek-varfor{font-size:0.7rem;color:var(--fg3);line-height:1.6;padding-left:0.75rem;border-left:1px solid var(--border);}
+
+/* ── FOOTER ── */
+.s-footer{border-top:1px solid rgba(143,174,138,0.06);padding:2.5rem clamp(2rem,6vw,5rem);display:flex;align-items:center;justify-content:space-between;}
+.s-footer-quote{font-family:var(--serif);font-style:italic;font-size:0.72rem;color:var(--fg4);line-height:1.8;}
+.s-footer-back{font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg3);text-decoration:none;transition:color 0.2s;}
+.s-footer-back:hover{color:var(--fg2);}
+
+/* ── VALIDERING ── */
+.s-validation{padding:var(--pad) clamp(2rem,6vw,5rem);max-width:800px;margin:0 auto;}
+.val-label{font-size:0.56rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.2rem;display:flex;align-items:center;gap:0.7rem;}
+.val-label::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+.val-intro{font-size:0.54rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.2rem;}
+.val-p{font-family:var(--serif);font-size:clamp(0.9rem,1.4vw,1.05rem);font-weight:300;font-style:italic;line-height:1.9;color:var(--fg2);max-width:560px;margin-bottom:2rem;text-shadow:0 1px 18px rgba(15,18,16,0.9);}
+.val-question{font-family:var(--serif);font-size:clamp(1.5rem,2.5vw,2.1rem);font-weight:300;font-style:italic;color:var(--fg);margin-bottom:1.8rem;line-height:1.15;}
+.val-btns{display:flex;gap:1rem;flex-wrap:wrap;}
+.val-btn{background:none;border:1px solid var(--border);color:var(--fg3);font-family:var(--sans);font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.65rem 1.5rem;cursor:pointer;transition:all 0.2s;}
+.val-btn:hover{border-color:rgba(242,240,234,0.15);color:var(--fg2);}
+.val-btn.ja{border-color:rgba(143,174,138,0.35);color:var(--accent);}
+.val-btn.nej{border-color:rgba(168,92,92,0.35);color:var(--danger);}
+.val-fritext{display:none;margin-top:1.4rem;}
+.val-textarea{display:block;width:100%;max-width:500px;background:rgba(15,18,16,0.7);backdrop-filter:blur(8px);border:1px solid var(--border);color:var(--fg2);font-family:var(--sans);font-size:0.82rem;padding:0.8rem 1rem;resize:vertical;margin-bottom:0.8rem;outline:none;}
+.val-textarea:focus{border-color:rgba(143,174,138,0.25);}
+.val-skicka{background:none;border:1px solid rgba(143,174,138,0.3);color:var(--accent);font-family:var(--sans);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;padding:0.55rem 1.3rem;cursor:pointer;transition:all 0.2s;}
+.val-skicka:hover{background:rgba(143,174,138,0.06);}
+.val-tack{display:none;font-family:var(--serif);font-style:italic;color:var(--fg3);font-size:0.9rem;margin-top:1rem;}
+
+/* ── DOTS ── */
+.dots{display:flex;gap:0.4rem;}
+.dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:dp 1.4s ease infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.load-row{display:flex;align-items:center;gap:0.8rem;}
+.load-txt{font-size:0.6rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+
+@media (max-width: 1100px) { .hero-metrics { grid-template-columns: 1fr 1fr; } .three-col { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 768px) { .two-col, .three-col { grid-template-columns: 1fr; } .s-bio { grid-template-columns: 1fr; gap: 3rem; } }
+.content-wrap{display:flex;align-items:flex-start;height:calc(100vh - 64px);overflow:hidden;}
+.sidebar{width:210px;height:100%;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:rgba(15,18,16,0.4);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;z-index:50;padding:2.5rem 0 1.8rem;}
+.sidebar::-webkit-scrollbar{display:none;}
+.ng{margin-bottom:0;}
+.ngl{font-size:0.44rem;letter-spacing:0.32em;text-transform:uppercase;color:var(--fg4);padding:0.7rem 1.8rem 0.2rem;}
+.nl{display:block;padding:0.22rem 1.8rem;font-size:0.76rem;letter-spacing:0.06em;color:var(--fg3);text-decoration:none;transition:color 0.2s,border-left-color 0.2s;border-left:1px solid transparent;cursor:pointer;}
+.nl:hover{color:var(--fg2);}
+.nl.active{color:var(--fg);border-left-color:var(--accent);background:rgba(143,174,138,0.04);}
+.nl.signal-link{color:var(--danger);display:flex;align-items:center;gap:0.5rem;}
+.nl.signal-link::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+.selvitas-wrap{margin-top:auto;padding-top:0.5rem;border-top:1px solid var(--border);}.selvitas-nav{display:block;padding:0.6rem 1.8rem 0.3rem;font-family:var(--serif);font-style:italic;font-size:0.78rem;letter-spacing:0.08em;color:var(--fg3);text-decoration:none;transition:color 0.2s;}.selvitas-nav:hover{color:var(--fg2);}
+
+@media(max-width:860px){
+  .sidebar{display:none!important;}
+  .content-wrap,.page-wrap,.layout-wrap{display:block!important;}
+  #main,.main-content,.page-content{width:100%!important;max-height:none!important;overflow-y:auto!important;}
+  .mg,.pred-grid,.today-plan-grid,.bio-grid,.src-grid,.prof-grid{grid-template-columns:1fr 1fr!important;}
+  .pred-grid,.prof-grid{grid-template-columns:1fr!important;}
+}
+</style>
+</head>
+<body>
+<script>checkAuth();</script>
+<div class="page-bg">
+  <div class="page-bg-img" style="background-image:url('images/DALL·E 2026-04-11 15.28.18 - Minimal forest scene at dawn as first light breaks through tall trees. Soft mist lingers between trunks, diffusing golden sunlight that gently filters.webp')"></div>
+  <div class="page-bg-veil"></div>
+</div>
+
+<nav>
+  <a href="dashboard.html" class="logo">Forsyne</a>
+  <span class="nav-center">Energi &amp; kapacitet</span>
+  <div class="nav-meta">
+    <div class="nav-dot"></div>
+    <span class="nav-date" id="topDate"></span>
+    <a class="nav-user" id="topUser" href="profile.html"></a>
+  </div>
+</nav>
+
+<div class="content-wrap">
+<aside class="sidebar">
+  <div class="ng">
+    <div class="ngl">Idag</div>
+    <a class="nl" href="dashboard.html">Dashboard</a>
+    <a class="nl" href="checkin.html">Check-in</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Mönster</div>
+    <a class="nl" href="sleep.html">Sömn</a>
+    <a class="nl" href="energy.html">Energi</a>
+    <a class="nl" href="stress.html">Stress</a>
+    <a class="nl" href="training.html">Träning</a>
+    <a class="nl" href="kostlogg.html">Kost</a>
+    <a class="nl" href="wearables.html">Wearables</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Djupet</div>
+    <a class="nl" href="biologi.html">Biologi</a>
+    <a class="nl" href="dna.html">DNA</a>
+    <a class="nl" href="journal.html">Journal</a>
+    <a class="nl" href="analys.html">Analys</a>
+    <a class="nl" href="coach.html">Coach</a>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-header-title">Energi</div>
+    <div class="page-header-sub" id="pageSub">Energi &amp; kapacitet · Senaste check-in</div>
+  </div>
+
+  <!-- MANUELL ENERGI-LOG (temporär — backfill för subjektiv energi + body battery) -->
+  <div class="menergy-rows">
+    <div class="menergy-row">
+      <span class="menergy-lbl">Subjektiv energi (1-10)</span>
+      <input type="date" id="menergy-sub-date">
+      <input type="number" id="menergy-sub-val" min="1" max="10" step="1" placeholder="t.ex. 6">
+      <button id="menergy-sub-btn" type="button">Spara</button>
+      <span class="menergy-msg" id="menergy-sub-msg"></span>
+    </div>
+    <div class="menergy-row">
+      <span class="menergy-lbl">Body Battery (0-100)</span>
+      <input type="date" id="menergy-bb-date">
+      <input type="number" id="menergy-bb-start" min="0" max="100" step="1" placeholder="morgon">
+      <input type="number" id="menergy-bb-end" min="0" max="100" step="1" placeholder="kväll (valfri)">
+      <button id="menergy-bb-btn" type="button">Spara</button>
+      <span class="menergy-msg" id="menergy-bb-msg"></span>
+    </div>
+    <div class="menergy-row">
+      <span class="menergy-lbl">Vilopuls (bpm)</span>
+      <input type="date" id="menergy-rhr-date">
+      <input type="number" id="menergy-rhr-val" min="30" max="150" step="1" placeholder="t.ex. 56">
+      <button id="menergy-rhr-btn" type="button">Spara</button>
+      <span class="menergy-msg" id="menergy-rhr-msg"></span>
+    </div>
+  </div>
+
+  <div class="e-panels">
+
+    <!-- HERO METRICS -->
+    <div class="hero-metrics">
+      <div class="hero-metric primary">
+        <div class="metric-lbl">Energinivå · Senaste check-in</div>
+        <div class="metric-val" id="energyVal">—<small>/10</small></div>
+        <div class="metric-delta" id="energyDelta"></div>
+        <div class="metric-src">Daglig check-in</div>
+        <div class="metric-bar"><div class="metric-fill" id="energyBar"></div></div>
+      </div>
+      <div class="hero-metric">
+        <div class="metric-lbl">Snitt energi · 7 dagar</div>
+        <div class="metric-val sm" id="energy7dVal">—<small>/10</small></div>
+        <div class="metric-delta" id="energy7dDelta"></div>
+        <div class="metric-src">Daglig check-in</div>
+        <div class="metric-bar"><div class="metric-fill" id="energy7dBar"></div></div>
+      </div>
+      <div class="hero-metric">
+        <div class="metric-lbl">Fokus · Senaste check-in</div>
+        <div class="metric-val sm" id="focusVal">—<small>/10</small></div>
+        <div class="metric-delta" id="focusDelta"></div>
+        <div class="metric-src">Daglig check-in</div>
+        <div class="metric-bar"><div class="metric-fill" id="focusBar"></div></div>
+      </div>
+      <div class="hero-metric">
+        <div class="metric-lbl">Motivation · Senaste check-in</div>
+        <div class="metric-val sm" id="motivationVal">—<small>/10</small></div>
+        <div class="metric-delta" id="motivationDelta"></div>
+        <div class="metric-src">Daglig check-in</div>
+        <div class="metric-bar"><div class="metric-fill" id="motivationBar"></div></div>
+      </div>
+    </div>
+
+    <!-- ENERGIKURVA UNDER DAGEN -->
+    <div class="energy-day">
+      <div class="panel-lbl">Body Battery · Idag timme för timme</div>
+      <svg width="100%" height="110" viewBox="0 0 700 110" preserveAspectRatio="none" style="margin-bottom:0.5rem;">
+        <defs>
+          <linearGradient id="energyGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.12"/>
+            <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="energyGradWarn" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--warn)" stop-opacity="0.1"/>
+            <stop offset="100%" stop-color="var(--warn)" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0"  width="700" height="36" fill="rgba(143,174,138,0.04)"/>
+        <rect x="0" y="36" width="700" height="36" fill="rgba(196,135,90,0.03)"/>
+        <rect x="0" y="72" width="700" height="38" fill="rgba(168,92,92,0.04)"/>
+        <text x="4" y="14" font-family="Jost" font-size="7" fill="rgba(143,174,138,0.35)" letter-spacing="1">HÖG 67–100</text>
+        <text x="4" y="50" font-family="Jost" font-size="7" fill="rgba(196,135,90,0.35)" letter-spacing="1">MEDEL 34–66</text>
+        <text x="4" y="86" font-family="Jost" font-size="7" fill="rgba(168,92,92,0.35)" letter-spacing="1">LÅG 0–33</text>
+        <rect x="0" y="0" width="120" height="110" fill="rgba(91,127,166,0.06)"/>
+        <text x="4" y="105" font-family="Jost" font-size="6" fill="rgba(91,127,166,0.5)">SÖMN</text>
+        <path d="M0,85 C20,80 50,65 80,50 C100,40 115,38 120,40 C140,44 160,52 180,58 C200,64 220,68 240,65 C260,62 280,55 300,58 C320,61 340,68 360,70 C380,72 400,74 420,72"
+          fill="none" stroke="var(--warn)" stroke-width="2" opacity="0.85"/>
+        <path d="M420,72 C450,74 480,80 520,88 C560,96 600,102 700,105"
+          fill="none" stroke="var(--danger)" stroke-width="1.5" stroke-dasharray="5,4" opacity="0.65"/>
+        <circle cx="420" cy="72" r="4" fill="var(--warn)" stroke="var(--ink2)" stroke-width="2"/>
+        <text x="425" y="68" font-family="Jost" font-size="7" fill="var(--warn)">Nu · 34</text>
+        <circle cx="120" cy="40" r="3" fill="var(--accent)" opacity="0.6"/>
+        <text x="125" y="38" font-family="Jost" font-size="7" fill="rgba(143,174,138,0.6)">42 vid uppvaknande</text>
+      </svg>
+      <div class="time-labels">
+        <span class="time-label">00:00</span>
+        <span class="time-label">03:00</span>
+        <span class="time-label">06:00</span>
+        <span class="time-label">09:00</span>
+        <span class="time-label">12:00</span>
+        <span class="time-label peak">Nu</span>
+        <span class="time-label">18:00</span>
+        <span class="time-label low">Prognos</span>
+      </div>
+      <div style="display:flex;gap:1.5rem;margin-top:1rem;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.74rem;color:var(--fg3);">
+          <div style="width:16px;height:2px;background:var(--warn);"></div>Faktisk energi
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.74rem;color:var(--fg3);">
+          <div style="width:16px;height:1px;background:repeating-linear-gradient(to right, var(--danger) 0, var(--danger) 4px, transparent 4px, transparent 7px);"></div>Prediktion
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.74rem;color:var(--fg3);">
+          <div style="width:16px;height:8px;background:rgba(91,127,166,0.12);"></div>Sömnperiod (laddning)
+        </div>
+      </div>
+    </div>
+
+    <!-- INSIKT + TOPPZONER -->
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-lbl">Systemets insikt</div>
+        <p class="insight" id="energyInsight">Laddar...</p>
+        <div style="margin-top:1.5rem;padding-top:1.2rem;border-top:1px solid var(--border);">
+          <div style="font-size:0.64rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--fg3);margin-bottom:0.8rem;">Vad din energinivå innebär praktiskt</div>
+          <div style="display:flex;flex-direction:column;gap:0.5rem;" id="energyCostList"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-lbl">Din energirytm · Toppar & dalar</div>
+        <div style="margin-bottom:1.2rem;">
+          <div style="font-size:0.66rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg3);margin-bottom:0.6rem;">Dina bästa timmar (baserat på 30 dagars data)</div>
+          <div class="peak-zone best">
+            <div><div class="peak-label good">Topp 1</div><div class="peak-time">08:00 — 10:30</div></div>
+            <div class="peak-desc">Högst fokus & energi.<br>Bäst för komplexa beslut.</div>
+          </div>
+          <div class="peak-zone best">
+            <div><div class="peak-label good">Topp 2</div><div class="peak-time">16:00 — 17:30</div></div>
+            <div class="peak-desc">Andra energitopp.<br>Bäst för kreativt arbete.</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:0.66rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg3);margin-bottom:0.6rem;">Dina energidalar</div>
+          <div class="peak-zone low">
+            <div><div class="peak-label bad">Dal 1</div><div class="peak-time">13:00 — 15:00</div></div>
+            <div class="peak-desc">Konsekvent energifall.<br>Undvik viktiga möten.</div>
+          </div>
+          <div class="peak-zone low">
+            <div><div class="peak-label bad">Dal 2</div><div class="peak-time">18:30 — 20:00</div></div>
+            <div class="peak-desc">Post-arbete krasch.<br>Skydda denna tid.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7-DAGARS TREND + STATISTIK -->
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-lbl">Energi · Senaste 7 dagarna</div>
+        <div class="week-energy" id="weekEnergy"></div>
+        <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);font-size:0.74rem;color:var(--fg3);font-style:italic;line-height:1.6;" id="weekTrendNote">
+          Staplarna visar energinivå per dag (1–10). Baserat på dagliga check-ins.
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-lbl">Energistatistik · Alla check-ins</div>
+        <div style="display:flex;flex-direction:column;gap:0;" id="energyStats"></div>
+      </div>
+    </div>
+
+    <!-- MÖNSTER + KOPPLINGAR -->
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-lbl">Energimönster · Identifierade av modellen</div>
+        <div id="energyPatterns"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-lbl">Vad som påverkar din energi · Kopplingar</div>
+        <div id="energyConnections"></div>
+      </div>
+    </div>
+
+    <!-- IDAG-REKOMMENDATIONER -->
+    <div class="full-col">
+      <div class="panel">
+        <div class="panel-lbl">Baserat på din energi · Tre prioriteringar</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-top:-0.5rem;" id="energyRecs"></div>
+      </div>
+    </div>
+
+  </div><!-- /e-panels -->
+
+  <!-- GAP -->
+  <div class="gap-row" id="gap-row">
+    <div class="gap-lbl">Avvikelse detekterad</div>
+    <div class="gap-cols">
+      <div class="gap-side">
+        <div class="gap-source">Du rapporterade</div>
+        <div class="gap-val" id="gap-subj">—</div>
+      </div>
+      <div class="gap-badge" id="gap-badge">—</div>
+      <div class="gap-side">
+        <div class="gap-source">Body Battery (Garmin)</div>
+        <div class="gap-val" id="gap-obj">—</div>
+      </div>
+    </div>
+    <div class="gap-tolkning" id="gap-tolkning"></div>
+  </div>
+
+  <!-- Bio + Rek -->
+  <section class="s-bio">
+    <div>
+      <div class="s-bio-label">Biologiska markörer</div>
+      <div id="bio-markers">
+        <div class="load-row"><span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></div>
+      </div>
+    </div>
+    <div>
+      <div class="s-bio-label">Systemets rekommendation</div>
+      <div id="rek-steps">
+        <div class="load-row"><span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span><span class="load-txt">Systemet formulerar</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VALIDERING -->
+  <section class="s-validation">
+    <div class="val-label">Validering</div>
+    <div class="load-row" id="a4-load">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Systemet formulerar ett påstående</span>
+    </div>
+    <div id="a4-body" style="display:none;">
+      <div class="val-intro">Systemet säger såhär:</div>
+      <div class="val-p" id="val-stmt"></div>
+      <div class="val-question">Känner du igen dig?</div>
+      <div class="val-btns" id="val-btns">
+        <button class="val-btn ja" onclick="svara('ja')">Ja, stämmer</button>
+        <button class="val-btn nej" onclick="svara('nej')">Nej, stämmer inte</button>
+      </div>
+      <div class="val-fritext" id="val-fritext">
+        <textarea class="val-textarea" id="val-text" rows="3" placeholder="Berätta mer — systemet lyssnar."></textarea>
+        <button class="val-skicka" onclick="skicka()">Skicka</button>
+      </div>
+      <div class="val-tack" id="val-tack">Tack. Systemet uppdaterar sin modell av dig.</div>
+    </div>
+  </section>
+
+  <footer class="s-footer">
+    <div class="s-footer-quote">Inte baserat på genomsnitt.<br>Baserat på dig.</div>
+    <a href="dashboard.html" class="s-footer-back">← Dashboard</a>
+  </footer>
+
+</main>
+</div>
+
+<script>
+// ── PEARSON ──
+const pearsonCorrE=(xs,ys)=>{const n=xs.length;if(n<3)return null;const mx=xs.reduce((a,b)=>a+b,0)/n,my=ys.reduce((a,b)=>a+b,0)/n;let num=0,dx2=0,dy2=0;for(let i=0;i<n;i++){const dx=xs[i]-mx,dy=ys[i]-my;num+=dx*dy;dx2+=dx*dx;dy2+=dy*dy;}const den=Math.sqrt(dx2*dy2);return den===0?null:num/den;};
+function predAcc(sorted,key,thr){let hits=0,n=0;for(let i=7;i<sorted.length;i++){const win=sorted.slice(i-7,i).filter(c=>c[key]!=null&&parseFloat(c[key])>0);if(win.length<4)continue;const pred=win.reduce((s,c)=>s+parseFloat(c[key]),0)/win.length;const actual=parseFloat(sorted[i][key]);if(actual>0){n++;if(Math.abs(pred-actual)<=thr)hits++;}}return n>=3?Math.round(hits/n*100):null;}
+
+// ── COMPUTE PD ──
+function computePd(c14){
+  const withE=c14.filter(c=>c.energy!=null);
+  if(withE.length<3)return null;
+  const avg=withE.reduce((s,c)=>s+parseFloat(c.energy),0)/withE.length;
+  const rev=[...withE].reverse();
+  let lowStreak=0;for(const c of rev){if(parseFloat(c.energy)<5)lowStreak++;else break;}
+  const highDays=withE.filter(c=>parseFloat(c.energy)>=7).length;
+  const highRatio=highDays/withE.length;
+  const e3=withE.slice(-3),e3p=withE.slice(-6,-3);
+  const trend=(e3.length&&e3p.length)?(e3.reduce((s,c)=>s+parseFloat(c.energy),0)/e3.length)-(e3p.reduce((s,c)=>s+parseFloat(c.energy),0)/e3p.length):null;
+  const slPairs=c14.filter(c=>c.sleep!=null&&c.energy!=null);
+  const slCorr=slPairs.length>=3?pearsonCorrE(slPairs.map(c=>parseFloat(c.sleep)),slPairs.map(c=>parseFloat(c.energy))):null;
+  const stPairs=c14.filter(c=>c.stress!=null&&c.energy!=null);
+  const stCorr=stPairs.length>=3?pearsonCorrE(stPairs.map(c=>parseFloat(c.stress)),stPairs.map(c=>parseFloat(c.energy))):null;
+  let insikt,styrka,risk,rekommendation,validation,steg;
+  if(lowStreak>=3)insikt=`Energin har legat under 5/10 i ${lowStreak} dagar i rad. Det är ett systemtillstånd — inte en dålig period.`;
+  else if(stCorr!==null&&stCorr<-0.6)insikt=`Stress och energi rör sig i exakt motsatt riktning i din data — korrelation ${(-stCorr).toFixed(2)}. Stressen är energiförlusten.`;
+  else if(slCorr!==null&&slCorr>0.6)insikt=`Sömnkvaliteten förutsäger energin dagen efter med korrelation ${slCorr.toFixed(2)}. Det är ditt starkaste prediktionssignal.`;
+  else if(avg<5)insikt=`Energisnittet på ${avg.toFixed(1)}/10 är under kapacitetströskeln. Systemet ser det som ett strukturellt mönster.`;
+  else insikt=`Energimönstret är relativt stabilt. Systemet söker nu vad som driver variansen dag för dag.`;
+  if(highRatio>=0.5)styrka=`${highDays} av ${withE.length} dagar med energi ≥7/10 — mer än hälften. Det finns kapacitet i systemet.`;
+  else if(slCorr!==null&&slCorr>0.5)styrka=`Sömn-energi-kopplingen är stark (${slCorr.toFixed(2)}). Sömnen är en pålitlig hävstång.`;
+  else styrka=`Energin varierar på ett förutsägbart sätt — det är ett mönster som går att arbeta med.`;
+  if(lowStreak>=3)risk=`${lowStreak} dagar under 5/10 i rad ökar risken för kumulativ utmattning — varje dag bygger på föregående.`;
+  else if(stCorr!==null&&stCorr<-0.5)risk=`Stresskorrelationen (${(-stCorr).toFixed(2)}) innebär att stressade perioder direkt sänker energikapaciteten.`;
+  else if(trend!==null&&trend<-1)risk=`Energin har sjunkit med ${Math.abs(trend).toFixed(1)} enheter i snitt de senaste dagarna. Trenden är nedåt.`;
+  else risk=`Inga akuta energisignaler. Systemet bevakar variansen för tidiga varningssignaler.`;
+  if(lowStreak>=3)rekommendation=`Prioritera sömn och minimal belastning de närmaste 2 dagarna — systemet behöver en återhämtningssignal.`;
+  else if(stCorr!==null&&stCorr<-0.5)rekommendation=`Sänk stressnivån aktivt — det är den direktaste vägen till bättre energi i din specifika data.`;
+  else if(slCorr!==null&&slCorr>0.5)rekommendation=`Investera i sömnkvaliteten — din data visar att det är den starkaste energihävstången du har.`;
+  else rekommendation=`Identifiera vad dina tre bästa energidagar hade gemensamt — börja där.`;
+  if(lowStreak>=3)validation=`Systemet ser ${lowStreak} dagar under 5/10 i rad. Det brukar inte kännas som att man är sjuk eller utbränd — mer som att man lever ett lite för segt liv. Att man klarar sig, men att allting kostar lite för mycket.`;
+  else if(stCorr!==null&&stCorr<-0.5)validation=`Systemet ser att stress och energi rör sig i motsatt riktning i din data. Du märker det kanske som att stressiga dagar är tröttare — men kanske inte att det faktiskt är stressen som förbrukar reserven, inte omvänt.`;
+  else if(slCorr!==null&&slCorr>0.6)validation=`Systemet ser att nätterna du sover bättre har du mer energi dagen efter. Det är svårt att koppla ihop i stunden — det känns mer som att vissa dagar bara är bättre. Men det är inte slumpen.`;
+  else if(avg<5)validation=`Systemet ser att energisnittet är ${avg.toFixed(1)}/10. Det brukar inte upplevas som kronisk trötthet — mer som att man alltid är en nivå under det man behöver vara. Att det krävs mer för att vara normal.`;
+  else validation=`Systemet ser ett energimönster — men det systemet nu försöker förstå är vad som driver variansen. Varför vissa dagar är bättre utan att du riktigt förstår vad som skiljer dem åt.`;
+  steg=[];
+  if(lowStreak>=2)steg.push({atgard:`Vila aktivt ikväll — lägg dig ${lowStreak>=3?60:30} min tidigare och skydda sömnfönstret.`,varfor:`${lowStreak} dagar under 5/10 i rad — systemet behöver en återhämtningssignal för att bryta mönstret.`});
+  else if(stCorr!==null&&stCorr<-0.5)steg.push({atgard:`Lägg in 10 minuter ostrukturerad tid mitt på dagen — utan beslut, utan input.`,varfor:`Stresskorrelationen är stark. Korta avbrott sänker kortisol och skyddar energireserven.`});
+  if(slCorr!==null&&slCorr>0.5)steg.push({atgard:`Prioritera sömnkvaliteten ikväll framför allt annat.`,varfor:`Sömn-energi-kopplingen är ${slCorr.toFixed(2)} i din data — sömn är din snabbaste energikälla.`});
+  if(steg.length===0)steg.push({atgard:`Logga energinivån i tre dagar till och notera vad som skilde de bästa dagarna åt.`,varfor:`Systemet behöver fler datapunkter för att se ett tydligt mönster.`});
+  return{insikt,styrka,risk,rekommendation,validation,steg};
+}
+
+// ── VALIDATION ──
+let _pageCheckins=[];
+let valAnswer=null;
+function svara(ans){
+  valAnswer=ans;
+  document.querySelector('.val-btn.ja').style.opacity=ans==='ja'?'1':'0.4';
+  document.querySelector('.val-btn.nej').style.opacity=ans==='nej'?'1':'0.4';
+  document.getElementById('val-fritext').style.display='block';
+  const stmt=document.getElementById('val-stmt').textContent;
+  const s=JSON.parse(localStorage.getItem('forsyne_val_energy')||'{}');
+  s.statement=stmt;s.answer=ans;s.timestamp=Date.now();
+  localStorage.setItem('forsyne_val_energy',JSON.stringify(s));
+}
+async function skicka(){
+  const text=document.getElementById('val-text').value.trim();
+  const stmt=document.getElementById('val-stmt').textContent;
+  const btn=document.querySelector('.val-skicka');
+  btn.textContent='...';btn.disabled=true;
+  let larda='Systemet uppdaterar sin modell av dig.';
+  try{
+    const r=await fetch('/api/agent/validate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.token()},body:JSON.stringify({kategori:'energy',paastående:stmt,svar:valAnswer==='ja'?'stämmer':'stämmer inte',kommentar:text||null,datapunkter:_pageCheckins.slice(-7)})});
+    if(r.ok){const d=await r.json();if(d.larda_notering)larda=d.larda_notering;if(d.battre_paastående){const s=JSON.parse(localStorage.getItem('forsyne_val_energy')||'{}');s.battre=d.battre_paastående;localStorage.setItem('forsyne_val_energy',JSON.stringify(s));}}
+  }catch(e){}
+  document.getElementById('val-fritext').style.display='none';
+  document.getElementById('val-btns').style.display='none';
+  const tackEl=document.getElementById('val-tack');tackEl.textContent=larda;tackEl.style.display='block';
+}
+
+// ── DATE ──
+const d = new Date();
+const days = ['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+const months = ['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+document.getElementById('topDate').textContent = `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+
+// ── RENDER ──
+function render(checkins) {
+  const ob = JSON.parse(localStorage.getItem('forsyne_onboarding') || '{}');
+  const u  = API.user();
+  const name = ob.q3_1 || (u && u.email ? u.email.split('@')[0] : 'Du');
+  document.getElementById('topUser').textContent = name.toUpperCase();
+
+  if (!checkins || checkins.length === 0) {
+    document.querySelector('.main').innerHTML = `
+      <div style="padding:4rem clamp(2rem,6vw,5rem);max-width:500px;">
+        <div style="width:28px;height:1px;background:rgba(143,174,138,0.4);margin-bottom:1.8rem;"></div>
+        <h2 style="font-family:var(--serif);font-size:clamp(1.6rem,3vw,2.2rem);font-weight:300;line-height:1.2;margin-bottom:1.2rem;">Ingen energidata ännu.<br><em>Systemet väntar på att lära känna din rytm.</em></h2>
+        <p style="font-size:0.8rem;color:var(--fg3);line-height:1.75;margin-bottom:1.8rem;">Energimönster byggs upp från dina dagliga check-ins. Systemet behöver minst tre dagar för att se din kurva — och en vecka för att börja predicera den.</p>
+        <a href="checkin.html" style="font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);text-decoration:none;border:1px solid rgba(143,174,138,0.3);padding:0.65rem 1.4rem;">Gör din första check-in</a>
+      </div>`;
+    return;
+  }
+
+  const sorted = [...checkins].sort((a,b) => a.date > b.date ? 1 : -1);
+  const latest = sorted[sorted.length - 1];
+  const last7  = sorted.slice(-7);
+  const all    = sorted;
+
+  // ── HERO METRICS ──
+  const e = latest.energy ?? null;
+  const f = latest.focus  ?? null;
+  const m = latest.motivation ?? null;
+
+  const avg7e = last7.filter(c=>c.energy!=null).map(c=>c.energy).reduce((a,b,_,arr)=>a+b/arr.length,0);
+
+  function setMetric(id, val, avgVal, unit='/10') {
+    if (val == null) { document.getElementById(id+'Val').innerHTML = `—<small>${unit}</small>`; return; }
+    const color = val >= 7 ? 'var(--accent)' : val >= 5 ? 'var(--warn)' : 'var(--danger)';
+    document.getElementById(id+'Val').innerHTML = `${val}<small>${unit}</small>`;
+    document.getElementById(id+'Val').style.color = color;
+    const diff = avgVal != null ? (val - avgVal).toFixed(1) : null;
+    const dEl = document.getElementById(id+'Delta');
+    if (diff != null) {
+      const dir = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';
+      const cls = diff > 0 ? 'd-up' : diff < 0 ? 'd-dn' : '';
+      dEl.innerHTML = `<span class="${cls}">${dir} ${Math.abs(diff)} vs snitt</span>`;
+    }
+    const barEl = document.getElementById(id+'Bar');
+    barEl.style.width = `${(val/10)*100}%`;
+    barEl.style.background = color;
+  }
+
+  setMetric('energy', e, avg7e);
+  setMetric('focus',  f, null);
+  setMetric('motivation', m, null);
+
+  document.getElementById('energy7dVal').innerHTML = avg7e ? `${avg7e.toFixed(1)}<small>/10</small>` : `—<small>/10</small>`;
+  document.getElementById('energy7dBar').style.width = avg7e ? `${(avg7e/10)*100}%` : '0%';
+  document.getElementById('energy7dBar').style.background = avg7e >= 7 ? 'var(--accent)' : avg7e >= 5 ? 'var(--warn)' : 'var(--danger)';
+  document.getElementById('energy7dDelta').innerHTML = `Snitt senaste ${last7.length} dagar`;
+
+  // ── PAGE SUB ──
+  const score = e != null ? e : 0;
+  let sub;
+  if (score >= 8) {
+    sub = `Energi ${score}/10 · Systemet är laddat`;
+  } else if (score >= 6) {
+    sub = `Energi ${score}/10 · Funktionellt, inte optimalt`;
+  } else if (score >= 4) {
+    sub = `Energi ${score}/10 · Under din kapacitet`;
+  } else {
+    sub = `Energi ${score}/10 · Tanken är nästan tom`;
+  }
+  const subEl = document.getElementById('pageSub');
+  if (subEl && e != null) subEl.textContent = sub;
+
+  // ── INSIGHT ──
+  const s = latest.stress ?? 5;
+  const sl = latest.sleep ?? 5;
+  let insight;
+  if (score <= 4 && s > 6) {
+    insight = `Energi på ${score}/10 kombinerat med stress ${s}/10 är inte en tillfällighet. <strong>Kortisolet tömmer reserven snabbare än sömnen kan fylla på den.</strong> Stressen är källan — energin är symptomet.`;
+  } else if (score <= 4 && sl < 5) {
+    insight = `Sömnkvalitet ${sl}/10 förklarar en stor del av energin på ${score}/10. <strong>Det är svårt att vara på topp dagen efter en dålig natt.</strong> Fokusera på sömnen ikväll — det är den snabbaste vägen tillbaka.`;
+  } else if (score >= 8) {
+    insight = `Energi på ${score}/10 är ett starkt tecken på att systemet är i balans just nu. <strong>Sömnkvalitet, stress och energi pekar i rätt riktning.</strong> Det är dessa dagar som bygger din buffert för framtida belastning.`;
+  } else {
+    insight = `Energi på ${score}/10 med stress ${s}/10 och sömn ${sl}/10. <strong>Systemet ser kombinationen</strong> — dessa tre signaler hänger tätt ihop i din data. Sömn är det starkaste prediktionssignalet för morgondagens energi.`;
+  }
+  document.getElementById('energyInsight').innerHTML = insight;
+
+  // ── COST LIST ──
+  const costs = [
+    { label:'Hårt träningspass', val: score <= 4 ? 'Rekommenderas inte' : score <= 6 ? 'Med försiktighet' : 'Okej', col: score <= 4 ? 'var(--danger)' : score <= 6 ? 'var(--warn)' : 'var(--accent)' },
+    { label:'Kognitiv kapacitet', val: score <= 4 ? '~50% av normalt' : score <= 6 ? '~75% av normalt' : 'Nära normalt', col: score <= 4 ? 'var(--danger)' : score <= 6 ? 'var(--warn)' : 'var(--accent)' },
+    { label:'Stresstolerens', val: score <= 4 ? 'Kraftigt nedsatt' : score <= 6 ? 'Nedsatt' : 'Normal', col: score <= 4 ? 'var(--danger)' : score <= 6 ? 'var(--warn)' : 'var(--accent)' },
+    { label:'Lätt rörelse (promenad)', val: 'Alltid rekommenderas', col: 'var(--accent)' },
+  ];
+  document.getElementById('energyCostList').innerHTML = costs.map((c,i) =>
+    `<div style="display:flex;justify-content:space-between;padding:0.6rem 0;${i<costs.length-1?'border-bottom:1px solid var(--border);':''}">
+      <span style="font-size:0.72rem;color:var(--fg3);">${c.label}</span>
+      <span style="font-size:0.72rem;color:${c.col};">${c.val}</span>
+    </div>`
+  ).join('');
+
+  // ── WEEK BARS ──
+  const eContainer = document.getElementById('weekEnergy');
+  eContainer.innerHTML = '';
+  const today = new Date().toISOString().split('T')[0];
+  last7.forEach((c, i) => {
+    const val = c.energy ?? 0;
+    const col = val >= 7 ? 'var(--accent)' : val >= 5 ? 'var(--warn)' : 'var(--danger)';
+    const h = Math.round((val / 10) * 80);
+    const isToday = c.date === today;
+    const dayName = isToday ? 'Idag' : days[new Date(c.date+'T12:00:00').getDay()].slice(0,3);
+    const div = document.createElement('div');
+    div.className = 'we-col';
+    div.innerHTML = `
+      <div class="we-lbl">${dayName}</div>
+      <div class="we-bar-wrap">
+        <div class="we-bar" style="height:${h}px;background:${col};opacity:${isToday?1:0.7};"></div>
+      </div>
+      <div class="we-val" style="color:${col};font-size:0.78rem;">${val}</div>
+    `;
+    eContainer.appendChild(div);
+  });
+
+  // ── STATS ──
+  const energyVals = all.filter(c=>c.energy!=null).map(c=>c.energy);
+  const avgAll = energyVals.length ? (energyVals.reduce((a,b)=>a+b,0)/energyVals.length).toFixed(1) : '—';
+  const maxE = energyVals.length ? Math.max(...energyVals) : null;
+  const minE = energyVals.length ? Math.min(...energyVals) : null;
+
+  const byDay = Array(7).fill(null).map(()=>[]);
+  all.forEach(c=>{ if(c.energy!=null) byDay[new Date(c.date+'T12:00:00').getDay()].push(c.energy); });
+  const dayAvg = byDay.map(arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null);
+  let bestDay='—', worstDay='—';
+  let bestAvg=-Infinity, worstAvg=Infinity;
+  dayAvg.forEach((avg, di) => {
+    if(avg==null) return;
+    if(avg > bestAvg)  { bestAvg=avg;  bestDay=days[di]; }
+    if(avg < worstAvg) { worstAvg=avg; worstDay=days[di]; }
+  });
+
+  const highEnergyDays = energyVals.filter(v=>v>=7).length;
+
+  const eAcc=predAcc(sorted,'energy',1.5);
+  document.getElementById('energyStats').innerHTML = `
+    <div class="stat"><span class="stat-name">Snitt energi (alla check-ins)</span><span class="stat-val">${avgAll}</span></div>
+    <div class="stat"><span class="stat-name">Snitt energi (7 dagar)</span><span class="stat-val ${avg7e>=7?'good':avg7e>=5?'warn':'bad'}">${avg7e.toFixed(1)}</span></div>
+    <div class="stat"><span class="stat-name">Högsta uppmätta</span><span class="stat-val good">${maxE ?? '—'}/10</span></div>
+    <div class="stat"><span class="stat-name">Lägsta uppmätta</span><span class="stat-val bad">${minE ?? '—'}/10</span></div>
+    <div class="stat"><span class="stat-name">Dagar med energi ≥7/10</span><span class="stat-val">${highEnergyDays} av ${energyVals.length}</span></div>
+    <div class="stat"><span class="stat-name">Bästa energidag</span><span class="stat-val good">${bestDay}</span></div>
+    <div class="stat"><span class="stat-name">Sämsta energidag</span><span class="stat-val bad">${worstDay}</span></div>
+    <div class="stat"><span class="stat-name">Prediktionsträff ±1.5</span><span class="stat-val ${eAcc===null?'':eAcc>=70?'good':eAcc>=50?'warn':'bad'}">${eAcc!==null?eAcc+'%':'—'}</span></div>
+  `;
+
+  // ── BIO-MARKÖRER ──
+  const pearsonCorr=(xs,ys)=>{const n=xs.length;if(n<3)return null;const mx=xs.reduce((a,b)=>a+b,0)/n,my=ys.reduce((a,b)=>a+b,0)/n;let num=0,dx2=0,dy2=0;for(let i=0;i<n;i++){const dx=xs[i]-mx,dy=ys[i]-my;num+=dx*dy;dx2+=dx*dx;dy2+=dy*dy;}const den=Math.sqrt(dx2*dy2);return den===0?null:num/den;};
+  const last7e=sorted.slice(-7).filter(c=>c.energy!=null).map(c=>c.energy);
+  const prev7e=sorted.slice(-14,-7).filter(c=>c.energy!=null).map(c=>c.energy);
+  const avgL7=last7e.length?last7e.reduce((a,b)=>a+b,0)/last7e.length:null;
+  const avgP7=prev7e.length?prev7e.reduce((a,b)=>a+b,0)/prev7e.length:null;
+  const trendE=avgL7!==null&&avgP7!==null?avgL7-avgP7:null;
+  const lowEDays=sorted.slice(-14).filter(c=>c.energy!=null&&c.energy<5).length;
+  const focusPairs=sorted.slice(-14).filter(c=>c.energy!=null&&c.focus!=null);
+  const corrFE=focusPairs.length>=3?pearsonCorr(focusPairs.map(c=>c.focus),focusPairs.map(c=>c.energy)):null;
+  const bmEl=document.getElementById('bio-markers');
+  if(bmEl){
+    const mkr=[
+      {name:'Energisnitt · 7d',val:avgL7!==null?avgL7.toFixed(1)+'/10':'—',cls:avgL7===null?'bm-ok':avgL7>=7?'bm-ok':avgL7>=5?'bm-warn':'bm-bad',lbl:avgL7===null?'Ingen data':avgL7>=7?'Bra kapacitet':avgL7>=5?'Under potential':'Kritiskt lågt'},
+      {name:'Dagar under 5/10 · 14d',val:lowEDays+'d',cls:lowEDays<=2?'bm-ok':lowEDays<=5?'bm-warn':'bm-bad',lbl:lowEDays<=2?'Inom normalt':lowEDays<=5?'Observera mönster':'Kronisk utmattning'},
+      {name:'Fokus–energi-koppling',val:corrFE!==null?corrFE.toFixed(2):'—',cls:corrFE===null?'bm-ok':corrFE>0.5?'bm-ok':corrFE>0.2?'bm-warn':'bm-bad',lbl:corrFE===null?'Otillräcklig data':corrFE>0.5?'Stark koppling':corrFE>0.2?'Måttlig koppling':'Svag koppling'},
+      {name:'Energitrend · 7d vs 7d',val:trendE!==null?(trendE>=0?'+':'')+trendE.toFixed(1):'—',cls:trendE===null?'bm-ok':trendE>=0.5?'bm-ok':trendE>=-0.5?'bm-warn':'bm-bad',lbl:trendE===null?'Otillräcklig data':trendE>=0.5?'Positiv trend':trendE>=-0.5?'Stabil':'Sjunkande kapacitet'}
+    ];
+    bmEl.innerHTML=mkr.map(m=>`<div class="bio-marker"><span class="bm-name">${m.name}</span><div class="bm-right"><div class="bm-val">${m.val}</div><div class="bm-status ${m.cls}">${m.lbl}</div></div></div>`).join('');
+  }
+
+  // ── PATTERNS ──
+  const patterns = [];
+  let lowStreak = 0;
+  for (const c of [...sorted].reverse()) { if ((c.energy??10) <= 4) lowStreak++; else break; }
+  if (lowStreak >= 2) patterns.push({ cls:'pt-c', type:'Kritiskt mönster',
+    txt:`Energi under 5/10 i ${lowStreak} dagar i rad. Det är ett mönster — inte en dålig dag. Systemet bevakar trenden.` });
+
+  const highStressLowE = all.filter(c=>c.stress>6&&c.energy<5);
+  if (highStressLowE.length >= 2) patterns.push({ cls:'pt-w', type:'Återkommande',
+    txt:`Hög stress och låg energi dyker upp tillsammans i ${highStressLowE.length} av ${all.length} check-ins. Kortisolet tömmer reserven snabbare än du hinner fylla på.` });
+
+  const goodSleepGoodE = all.filter(c=>c.sleep>=7&&c.energy>=7);
+  if (goodSleepGoodE.length >= 2) patterns.push({ cls:'pt-g', type:'Positivt mönster',
+    txt:`${goodSleepGoodE.length} av dina bästa energidagar korrelerar med sömnkvalitet ≥7/10. Sömnen är det starkaste prediktionssignalet i din data.` });
+
+  if (last7.length >= 4) {
+    const half = Math.floor(last7.length/2);
+    const firstHalf = last7.slice(0,half).filter(c=>c.energy!=null).map(c=>c.energy);
+    const secondHalf = last7.slice(half).filter(c=>c.energy!=null).map(c=>c.energy);
+    const avgF = firstHalf.length ? firstHalf.reduce((a,b)=>a+b,0)/firstHalf.length : null;
+    const avgS = secondHalf.length ? secondHalf.reduce((a,b)=>a+b,0)/secondHalf.length : null;
+    if (avgF!=null && avgS!=null && avgF - avgS > 1.5) patterns.push({ cls:'pt-w', type:'Återkommande',
+      txt:`Energin har sjunkit i snitt från ${avgF.toFixed(1)} till ${avgS.toFixed(1)}/10 under de senaste dagarna. Det är en trend — inte ett undantag. Systemet bevakar den.` });
+  }
+
+  if (patterns.length === 0) patterns.push({ cls:'', type:'Samlar data',
+    txt:'Systemet behöver fler check-ins för att identifiera energimönster. Kom tillbaka efter 5+ dagar.' });
+
+  document.getElementById('energyPatterns').innerHTML = patterns.map(p=>
+    `<div class="pattern"><div class="pattern-type ${p.cls}">${p.type}</div><p class="pattern-txt">${p.txt}</p></div>`
+  ).join('');
+
+  // ── CONNECTIONS ──
+  const sleepSym = sl >= 7 ? 'Bra sömn stärker energin.' : sl < 5 ? `Sömnkvalitet ${sl}/10 är under din kapacitet. Det kostar energi nästa dag.` : `Sömnkvalitet ${sl}/10 — marginell påverkan.`;
+  const stressSym = s > 6 ? `Stress ${s}/10 accelererar energiförbrukningen. Kortisolet håller kroppen i beredskapsläge.` : `Stress ${s}/10 — inom hanterbart intervall.`;
+  const sleepImp = sl >= 7 ? `<div class="conn-impact" style="color:var(--accent);">Bra sömn → starkare energibas</div>` : `<div class="conn-impact ci-neg">Sömnunderskott → lägre energikapacitet</div>`;
+  const stressImp = s > 6 ? `<div class="conn-impact ci-neg">Hög stress → energin förbrukas snabbare</div>` : `<div class="conn-impact" style="color:var(--accent);">Låg stress → bättre energibevarande</div>`;
+
+  document.getElementById('energyConnections').innerHTML = `
+    <div class="connection"><div class="conn-arrow">→</div><div>
+      <div class="conn-title">Sömn → Energi</div>
+      <div class="conn-sub">${sleepSym}</div>${sleepImp}
+    </div></div>
+    <div class="connection"><div class="conn-arrow">→</div><div>
+      <div class="conn-title">Stress → Energi</div>
+      <div class="conn-sub">${stressSym}</div>${stressImp}
+    </div></div>
+    <div class="connection"><div class="conn-arrow">→</div><div>
+      <div class="conn-title">Fokus → Energi</div>
+      <div class="conn-sub">Fokus ${f??'—'}/10 reflekterar den kognitiva energin. Lågt fokus vid hög energi tyder på distraktion — inte kapacitetsbrist.</div>
+      <div class="conn-impact ${f!=null&&f<5?'ci-neg':''}">${f!=null&&f<5?'Kognitiv kapacitet nedsatt':'Kognitiv energi i linje med fysisk energi'}</div>
+    </div></div>
+    <div class="connection"><div class="conn-arrow">→</div><div>
+      <div class="conn-title">Motivation → Energi</div>
+      <div class="conn-sub">Motivation ${m??'—'}/10. Låg motivation dränerar energi genom kognitiv friktion — varje uppgift kostar mer.</div>
+      <div class="conn-impact ${m!=null&&m<5?'ci-neg':''}">${m!=null&&m<5?'Motivationsunderskott ökar energikostnaden':'Motivationen stödjer energinivån'}</div>
+    </div></div>
+  `;
+
+  // ── RECOMMENDATIONS ──
+  const r1col = score <= 4 ? 'var(--danger)' : score <= 6 ? 'var(--warn)' : 'var(--accent)';
+  const r1lbl = score <= 4 ? 'Skydda det du har' : score <= 6 ? 'Prioritera smart' : 'Bygg vidare';
+  const r1txt = score <= 4
+    ? '<strong style="color:var(--fg);font-weight:400;">Inga hårda krav under förmiddagen.</strong> Energinivån räcker inte till full kapacitet. Prioritera lätt arbete och undvik beslut som kan vänta.'
+    : score <= 6
+    ? '<strong style="color:var(--fg);font-weight:400;">Välj dina strider.</strong> Du har energi för ett normalt dag — men inte för allt. Prioritera det som kräver din fulla närvaro tidigt.'
+    : '<strong style="color:var(--fg);font-weight:400;">Det här är ett bra läge att ta itu med det svåra.</strong> Energin är på topp — använd det för arbete som kräver fokus och kreativitet.';
+
+  const r2col = sl < 6 ? 'var(--warn)' : 'var(--accent)';
+  const r2lbl = sl < 6 ? 'Prioritera sömnen ikväll' : 'Fortsätt sömnmönstret';
+  const r2txt = sl < 6
+    ? '<strong style="color:var(--fg);font-weight:400;">Sömnen är din snabbaste energikälla.</strong> Varje extra timme ikväll är direkt investering i morgondagens kapacitet. Det är det enskilt mest effektiva du kan göra.'
+    : '<strong style="color:var(--fg);font-weight:400;">Sömnmönstret fungerar.</strong> Håll fast vid samma tid. Konsistens i sömnen är det starkaste prediktionssignalet för stabil energi.';
+
+  const r3col = s > 6 ? 'var(--danger)' : 'var(--fg3)';
+  const r3lbl = s > 6 ? 'Sänk stressnivån' : 'Stressbalans ok';
+  const r3txt = s > 6
+    ? '<strong style="color:var(--fg);font-weight:400;">Stress och energi kämpar mot varandra.</strong> Kortisol vid förhöjd stress förbrukar energireserverna. En promenad eller andningspaus bryter loopen.'
+    : '<strong style="color:var(--fg);font-weight:400;">Stressnivån är hanterbar.</strong> Det skyddar energireserverna. Håll fast vid det som fungerar — strukturen som minskar stressen är din energibuffert.';
+
+  document.getElementById('energyRecs').innerHTML = `
+    <div style="background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);padding:1.6rem;">
+      <div style="font-size:0.64rem;letter-spacing:0.2em;text-transform:uppercase;color:${r1col};margin-bottom:0.6rem;">${r1lbl}</div>
+      <div style="font-size:0.8rem;color:var(--fg2);line-height:1.7;">${r1txt}</div>
+    </div>
+    <div style="background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);padding:1.6rem;">
+      <div style="font-size:0.64rem;letter-spacing:0.2em;text-transform:uppercase;color:${r2col};margin-bottom:0.6rem;">${r2lbl}</div>
+      <div style="font-size:0.8rem;color:var(--fg2);line-height:1.7;">${r2txt}</div>
+    </div>
+    <div style="background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);padding:1.6rem;">
+      <div style="font-size:0.64rem;letter-spacing:0.2em;text-transform:uppercase;color:${r3col};margin-bottom:0.6rem;">${r3lbl}</div>
+      <div style="font-size:0.8rem;color:var(--fg2);line-height:1.7;">${r3txt}</div>
+    </div>
+  `;
+}
+
+// ── INIT ──
+(async () => {
+  let checkins;
+  try {
+    checkins = await API.getCheckins() || [];
+  } catch(e) {
+    const m = document.querySelector('.main');
+    if (m) m.insertAdjacentHTML('afterbegin', '<div style="padding:3rem clamp(2rem,6vw,5rem);max-width:480px;"><div style="font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:rgba(168,92,92,0.8);margin-bottom:1rem;">Systemfel</div><p style="font-size:0.8rem;color:var(--fg3);line-height:1.75;">Systemet kunde inte hämta din data. Kontrollera anslutningen och ladda om sidan.</p></div>');
+    return;
+  }
+  _pageCheckins = checkins;
+  render(checkins);
+
+  // Signal
+  try{const signalEl=document.getElementById('nav-signal');const recent=(checkins||[]).slice(-3);if(recent.filter(c=>c.stress>=7&&c.sleep<=5).length>=2&&signalEl)signalEl.classList.add('show');}catch(e){}
+
+  // Agent 5 — PSI
+  if (checkins.length >= 2) {
+    try {
+      let norm = PCache.get('psi_energy');
+      if (!norm) {
+        const psiResp = await fetch('/api/agent/datasources/normalize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API.token() },
+          body: JSON.stringify({ checkins })
+        });
+        if (psiResp.ok) { norm = await psiResp.json(); PCache.set('psi_energy', norm); }
+      }
+      if (norm) {
+        if (norm.psi?.energi?.psi != null) {
+          const p = norm.psi.energi;
+          const src = document.getElementById('energyVal')?.closest('.metric')?.querySelector('.metric-src');
+          if (src) {
+            const cls = p.psi >= 95 ? 'psi-hi' : p.psi >= 80 ? 'psi-ok' : 'psi-lo';
+            const arrow = p.psi >= 105 ? '↑' : p.psi <= 95 ? '↓' : '→';
+            src.innerHTML = `Daglig check-in <span class="psi-badge ${cls}">${arrow} PSI ${p.psi}</span>`;
+          }
+        }
+      }
+    } catch(e) {}
+  }
+
+  // Batch fetch — insikt + rekommendation
+  if (checkins.length > 0) {
+    const profile = JSON.parse(localStorage.getItem('forsyne_onboarding') || '{}');
+    const last14 = [...checkins].sort((a,b)=>a.date>b.date?1:-1).slice(-14);
+    const _pdc = computePd(last14) || {};
+    let pd = {
+      insikt: _pdc.insikt || null,
+      rekommendation: _pdc.rekommendation || null,
+      steg: _pdc.steg || [
+        {atgard:'Skydda din första timme på morgonen från notiser och mail.',varfor:'Systemet ser att din energi toppar tidigt — kognitiv friktion sänker den snabbt.'},
+        {atgard:'Planera den mest krävande uppgiften till ditt energitopp-fönster.',varfor:'Att matcha krav mot kapacitet är det effektivaste sättet att minska belastning.'}
+      ]
+    };
+    try {
+      let _ai = PCache.get('page_energy');
+      if (!_ai) {
+        const r = await fetch('/api/agent/page/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API.token() },
+          body: JSON.stringify({ page: 'energy', checkins: last14, profile })
+        });
+        if (r.ok) { _ai = await r.json(); PCache.set('page_energy', _ai); }
+      }
+      if (_ai) {
+        Object.keys(_ai).forEach(k => { if(_ai[k]!=null&&(!Array.isArray(_ai[k])||_ai[k].length>0)) pd[k]=_ai[k]; });
+        if(_ai.avvikelse?.detekterad){const gr=document.getElementById('gap-row');if(gr){document.getElementById('gap-subj').textContent=_ai.avvikelse.subjektivt;document.getElementById('gap-obj').textContent=_ai.avvikelse.objektivt;document.getElementById('gap-badge').textContent=_ai.avvikelse.gap;document.getElementById('gap-tolkning').textContent=_ai.avvikelse.tolkning;gr.style.display='block';}}
+      }
+    } catch(e) {}
+
+    if (pd.insikt) {
+      const el = document.getElementById('energyInsight');
+      el.style.opacity = '0'; el.style.transition = 'opacity 0.5s';
+      setTimeout(() => { el.innerHTML = pd.insikt + (pd.rekommendation ? ` <strong>${pd.rekommendation}</strong>` : ''); el.style.opacity = '1'; }, 300);
+    }
+
+    const rekEl = document.getElementById('rek-steps');
+    if (rekEl) {
+      rekEl.innerHTML = '';
+      pd.steg.forEach((s, i) => {
+        const div = document.createElement('div');
+        div.className = 'rek-step';
+        div.innerHTML = `<div class="rek-atgard">· ${s.atgard}</div><div class="rek-varfor">${s.varfor}</div>`;
+        rekEl.appendChild(div);
+        setTimeout(() => div.classList.add('vis'), i * 180);
+      });
+    }
+
+    // Validation
+    const valStmt = document.getElementById('val-stmt');
+    const a4load = document.getElementById('a4-load');
+    const a4body = document.getElementById('a4-body');
+    if (valStmt && a4load && a4body) {
+      const vtext = _pdc.validation || 'Det finns en känsla som är svår att sätta ord på: att man lever en nivå under sin kapacitet, utan att riktigt förstå varför.';
+      const _prev=JSON.parse(localStorage.getItem('forsyne_val_energy')||'null');
+      if(_prev&&_prev.answer&&(Date.now()-(_prev.timestamp||0))<30*24*60*60*1000){
+        valStmt.textContent=(_prev.answer==='nej'&&_prev.battre)?_prev.battre:vtext;
+        const _note=document.createElement('div');
+        _note.style.cssText='font-size:0.54rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--fg4);margin-bottom:1rem;';
+        _note.textContent=_prev.answer==='ja'?'Du kände igen dig här senast.':'Du kände inte igen dig senast — systemet har sökt ett annat mönster.';
+        document.querySelector('#a4-body .val-intro').after(_note);
+      } else { valStmt.textContent=vtext; }
+      a4load.style.display = 'none';
+      a4body.style.display = 'block';
+    }
+  }
+})();
+</script>
+
+<script>
+// ── MANUELLA ENERGI-INPUTS ──
+(function() {
+  const today = new Date().toISOString().slice(0, 10);
+  const token = () => localStorage.getItem('prv_token');
+
+  function setMsg(id, text, kind) {
+    const el = document.getElementById(id);
+    el.textContent = text || '';
+    el.className = 'menergy-msg' + (kind ? ' ' + kind : '');
+  }
+
+  // Subjektiv energi
+  document.getElementById('menergy-sub-date').value = today;
+  document.getElementById('menergy-sub-btn').addEventListener('click', async () => {
+    const date = document.getElementById('menergy-sub-date').value;
+    const score = parseFloat(document.getElementById('menergy-sub-val').value);
+    if (!date) return setMsg('menergy-sub-msg', 'Välj datum', 'err');
+    if (!score || score < 1 || score > 10) return setMsg('menergy-sub-msg', '1–10', 'err');
+    const btn = document.getElementById('menergy-sub-btn');
+    btn.disabled = true; setMsg('menergy-sub-msg', 'Sparar…');
+    try {
+      const r = await fetch('/api/energy/subjective', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
+        body: JSON.stringify({ date, score }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Fel ' + r.status);
+      setMsg('menergy-sub-msg', '✓ Sparad', 'ok');
+      document.getElementById('menergy-sub-val').value = '';
+    } catch (e) {
+      setMsg('menergy-sub-msg', 'Fel: ' + e.message, 'err');
+    } finally { btn.disabled = false; }
+  });
+
+  // Body Battery
+  document.getElementById('menergy-bb-date').value = today;
+  document.getElementById('menergy-bb-btn').addEventListener('click', async () => {
+    const date = document.getElementById('menergy-bb-date').value;
+    const start = parseFloat(document.getElementById('menergy-bb-start').value);
+    const endRaw = document.getElementById('menergy-bb-end').value;
+    const end = endRaw === '' ? null : parseFloat(endRaw);
+    if (!date) return setMsg('menergy-bb-msg', 'Välj datum', 'err');
+    if (!Number.isFinite(start) || start < 0 || start > 100) return setMsg('menergy-bb-msg', 'Morgon 0–100', 'err');
+    if (end != null && (!Number.isFinite(end) || end < 0 || end > 100)) return setMsg('menergy-bb-msg', 'Kväll 0–100', 'err');
+    const btn = document.getElementById('menergy-bb-btn');
+    btn.disabled = true; setMsg('menergy-bb-msg', 'Sparar…');
+    try {
+      const r = await fetch('/api/body-battery/manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
+        body: JSON.stringify({ date, start_of_day: start, end_of_day: end }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Fel ' + r.status);
+      setMsg('menergy-bb-msg', '✓ Sparad', 'ok');
+      document.getElementById('menergy-bb-start').value = '';
+      document.getElementById('menergy-bb-end').value = '';
+    } catch (e) {
+      setMsg('menergy-bb-msg', 'Fel: ' + e.message, 'err');
+    } finally { btn.disabled = false; }
+  });
+
+  // Vilopuls (resting HR)
+  document.getElementById('menergy-rhr-date').value = today;
+  document.getElementById('menergy-rhr-btn').addEventListener('click', async () => {
+    const date = document.getElementById('menergy-rhr-date').value;
+    const bpm = parseFloat(document.getElementById('menergy-rhr-val').value);
+    if (!date) return setMsg('menergy-rhr-msg', 'Välj datum', 'err');
+    if (!Number.isFinite(bpm) || bpm < 30 || bpm > 150) return setMsg('menergy-rhr-msg', '30–150', 'err');
+    const btn = document.getElementById('menergy-rhr-btn');
+    btn.disabled = true; setMsg('menergy-rhr-msg', 'Sparar…');
+    try {
+      const r = await fetch('/api/resting-hr/manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
+        body: JSON.stringify({ date, bpm }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Fel ' + r.status);
+      setMsg('menergy-rhr-msg', '✓ Sparad', 'ok');
+      document.getElementById('menergy-rhr-val').value = '';
+    } catch (e) {
+      setMsg('menergy-rhr-msg', 'Fel: ' + e.message, 'err');
+    } finally { btn.disabled = false; }
+  });
+})();
+</script>
+
+<script src="mobile-nav.js"></script>
+</body>
+</html>

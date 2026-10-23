@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0F1210">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Forsyne">
+<title>Forsyne — Samtal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#0F1210; --ink2:#131714;
+  --fg:#F2F0EA; --fg2:#CCC9BF; --fg3:#8A8E89; --fg4:#4a4e49;
+  --accent:#8FAE8A; --warn:#C4875A; --danger:#A85C5C; --trust:#5B7FA6;
+  --border:rgba(242,240,234,0.06);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Jost',system-ui,sans-serif;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html, body {
+  background: linear-gradient(to bottom, var(--ink) 0%, var(--ink2) 100%);
+  color: var(--fg); font-family: var(--sans); font-weight: 300; line-height: 1.7;
+  min-height: 100vh; min-height: 100dvh;
+  -webkit-font-smoothing: antialiased; -webkit-overflow-scrolling: touch; overflow-x: hidden;
+}
+.frame { max-width: 430px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; position: relative; display: flex; flex-direction: column; }
+@media (min-width: 500px) {
+  body { background: #050605; padding: 2rem 0; }
+  .frame { background: linear-gradient(to bottom, var(--ink) 0%, var(--ink2) 100%); border-radius: 36px; overflow: hidden; box-shadow: 0 0 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05); margin-top: 1rem; padding-bottom: 1rem; }
+}
+
+/* NAV */
+nav {
+  height: 56px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1.5rem; border-bottom: 1px solid var(--border);
+  background: rgba(15,18,16,0.85); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
+  position: sticky; top: 0; z-index: 100;
+}
+.logo { font-family: var(--serif); font-size: 1.05rem; font-weight: 400; letter-spacing: 0.18em; color: var(--fg); }
+.nav-title { font-family: var(--serif); font-size: 0.95rem; font-style: italic; color: var(--fg2); }
+.nav-icons { display: flex; gap: 0.9rem; align-items: center; }
+.nav-icon { font-size: 1.05rem; color: var(--fg3); cursor: pointer; text-decoration: none; }
+.nav-icon:hover { color: var(--fg2); }
+
+/* MESSAGES */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.2rem 1.5rem 1rem;
+  display: flex; flex-direction: column; gap: 1.2rem;
+}
+.msg { display: flex; flex-direction: column; }
+.msg-user { align-items: flex-end; }
+.msg-user .msg-bubble {
+  background: rgba(242,240,234,0.04);
+  border: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  max-width: 82%;
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  color: var(--fg2);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.msg-assistant { align-items: flex-start; }
+.msg-assistant .msg-bubble {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--fg);
+  line-height: 1.6;
+  max-width: 100%;
+}
+.msg-assistant .msg-bubble p { margin: 0 0 0.85rem 0; }
+.msg-assistant .msg-bubble p:last-child { margin-bottom: 0; }
+
+/* THINKING */
+.thinking { display: flex; align-items: center; gap: 0.6rem; padding: 0.3rem 0; }
+.thinking-dots { display: inline-flex; gap: 5px; }
+.thinking-dots span {
+  width: 5px; height: 5px; background: var(--fg3); border-radius: 50%;
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+.thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+.thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotPulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+/* EMPTY */
+.empty-state {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  color: var(--fg2);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.1rem;
+  line-height: 1.7;
+}
+
+/* INPUT */
+.input-error {
+  padding: 0 1.5rem 0.5rem;
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  color: var(--danger);
+  letter-spacing: 0.04em;
+}
+.input-row {
+  display: flex; align-items: flex-end; gap: 0.9rem;
+  padding: 0.9rem 1.5rem;
+  border-top: 1px solid var(--border);
+  background: rgba(15,18,16,0.92);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+}
+.input {
+  flex: 1;
+  background: transparent; border: none; outline: none;
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 0.92rem; font-weight: 300; line-height: 1.5;
+  resize: none;
+  max-height: 120px; min-height: 22px;
+  padding: 0.4rem 0;
+}
+.input::placeholder { color: var(--fg3); }
+.send {
+  background: none; border: none; cursor: pointer;
+  font-family: var(--sans);
+  font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent);
+  padding: 0.4rem 0;
+  transition: color 0.2s ease;
+}
+.send:hover { color: var(--fg); }
+.send:disabled { color: var(--fg4); cursor: not-allowed; }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--border);
+  background: rgba(15,18,16,0.85);
+  backdrop-filter: blur(20px);
+}
+.bn-item {
+  display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+  padding: 0.85rem 0;
+  font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--fg3); cursor: pointer; text-decoration: none;
+  transition: color 0.2s ease;
+  padding-bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px));
+}
+.bn-item.active { color: var(--fg); }
+.bn-item:hover { color: var(--fg2); }
+.bn-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: 0; }
+.bn-item.active .bn-dot { opacity: 1; }
+
+/* LOADING */
+.loading {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 2rem;
+}
+.loading-dots { display: inline-flex; gap: 6px; margin-bottom: 1rem; }
+.loading-dots span {
+  width: 6px; height: 6px; background: var(--fg3); border-radius: 50%;
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+.loading-text {
+  font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--fg3);
+}
+</style>
+</head>
+<body>
+
+<div class="frame">
+
+  <nav>
+    <div class="logo">forsyne</div>
+    <div class="nav-title">Samtal</div>
+    <div class="nav-icons">
+      <a href="today.html" class="nav-icon" title="Stäng">×</a>
+    </div>
+  </nav>
+
+  <!-- LOADING -->
+  <div class="loading" id="loading">
+    <div class="loading-dots"><span></span><span></span><span></span></div>
+    <div class="loading-text">Laddar samtal</div>
+  </div>
+
+  <!-- MESSAGES -->
+  <div class="messages" id="messages" style="display:none;"></div>
+
+  <!-- INPUT -->
+  <div class="input-error" id="inputError" style="display:none;"></div>
+  <form class="input-row" id="inputForm">
+    <textarea class="input" id="input" placeholder="Fråga något om din data" rows="1" maxlength="2000" autocomplete="off"></textarea>
+    <button type="submit" class="send" id="send">Skicka</button>
+  </form>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <a class="bn-item" href="today.html"><div class="bn-dot"></div><span>Idag</span></a>
+    <a class="bn-item" href="trends.html"><div class="bn-dot"></div><span>Trender</span></a>
+    <a class="bn-item" href="checkin.html"><div class="bn-dot"></div><span>Check-in</span></a>
+    <a class="bn-item active" href="chat.html"><div class="bn-dot"></div><span>Samtal</span></a>
+  </div>
+
+</div>
+
+<script>
+// ─── AUTH ───
+function token(){ return localStorage.getItem('prv_token') || ''; }
+function authHeaders(){
+  const t = token();
+  return t
+    ? { 'Authorization': 'Bearer ' + t, 'Content-Type': 'application/json' }
+    : { 'Content-Type': 'application/json' };
+}
+if (!token()) { window.location.href = '/login.html?from=' + encodeURIComponent(location.pathname); }
+
+// ─── ELEMENTS ───
+const messagesEl = document.getElementById('messages');
+const loadingEl  = document.getElementById('loading');
+const inputEl    = document.getElementById('input');
+const sendEl     = document.getElementById('send');
+const formEl     = document.getElementById('inputForm');
+const errorEl    = document.getElementById('inputError');
+
+// ─── HELPERS ───
+function escapeHTML(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function renderMessage(msg) {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + (msg.role === 'user' ? 'msg-user' : 'msg-assistant');
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  if (msg.role === 'assistant') {
+    const paras = String(msg.content).split(/\n\n+/).filter(Boolean);
+    bubble.innerHTML = paras.map(p => `<p>${escapeHTML(p)}</p>`).join('');
+  } else {
+    bubble.textContent = msg.content;
+  }
+  wrap.appendChild(bubble);
+  messagesEl.appendChild(wrap);
+}
+
+function renderThinking() {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg msg-assistant';
+  wrap.id = 'thinkingMsg';
+  wrap.innerHTML = '<div class="thinking"><div class="thinking-dots"><span></span><span></span><span></span></div></div>';
+  messagesEl.appendChild(wrap);
+  scrollToBottom();
+}
+
+function removeThinking() {
+  const el = document.getElementById('thinkingMsg');
+  if (el) el.remove();
+}
+
+function showEmpty() {
+  messagesEl.innerHTML = '<div class="empty-state">Ställ din första fråga. Jag har din data.</div>';
+}
+
+function scrollToBottom() {
+  requestAnimationFrame(() => { messagesEl.scrollTop = messagesEl.scrollHeight; });
+}
+
+function showError(text) {
+  errorEl.textContent = text;
+  errorEl.style.display = 'block';
+}
+function clearError() {
+  errorEl.style.display = 'none';
+  errorEl.textContent = '';
+}
+
+async function fetchJSON(url, opts = {}) {
+  const r = await fetch(url, { headers: authHeaders(), ...opts });
+  if (r.status === 401) {
+    localStorage.removeItem('prv_token');
+    window.location.href = '/login.html';
+    throw new Error('unauthenticated');
+  }
+  return r.json();
+}
+
+// ─── LOAD HISTORY ───
+async function loadHistory() {
+  try {
+    const j = await fetchJSON('/api/chat/history');
+    loadingEl.style.display = 'none';
+    messagesEl.style.display = 'flex';
+    if (!j.messages || j.messages.length === 0) {
+      showEmpty();
+    } else {
+      for (const m of j.messages) renderMessage(m);
+      scrollToBottom();
+    }
+  } catch (e) {
+    loadingEl.style.display = 'none';
+    messagesEl.style.display = 'flex';
+    showEmpty();
+  }
+}
+
+// ─── INPUT BEHAVIOR ───
+inputEl.addEventListener('input', () => {
+  inputEl.style.height = 'auto';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+});
+
+inputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    formEl.requestSubmit();
+  }
+});
+
+// ─── SEND ───
+formEl.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearError();
+  const content = inputEl.value.trim();
+  if (!content) return;
+
+  if (messagesEl.querySelector('.empty-state')) messagesEl.innerHTML = '';
+
+  renderMessage({ role: 'user', content });
+  scrollToBottom();
+
+  inputEl.disabled = true;
+  sendEl.disabled = true;
+  renderThinking();
+
+  try {
+    const r = await fetch('/api/chat/message', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ content })
+    });
+    const j = await r.json();
+    removeThinking();
+    if (!r.ok || !j.ok) {
+      showError(j.error || 'Något gick fel. Försök igen.');
+      return;
+    }
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+    renderMessage({ role: 'assistant', content: j.message });
+    scrollToBottom();
+  } catch (err) {
+    removeThinking();
+    showError('Kunde inte nå servern. Försök igen.');
+  } finally {
+    inputEl.disabled = false;
+    sendEl.disabled = false;
+    inputEl.focus();
+  }
+});
+
+loadHistory();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,2371 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#04060a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Selvitas">
+<title>Selvitas</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Syne+Mono&family=Instrument+Serif:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+
+<script src="/auth.js"></script>
+
+<style>
+:root{
+  /* Primary */
+  --iris:#67aac8;
+  --iris-a:rgba(103,170,200,.14);
+  --iris-b:rgba(103,170,200,.07);
+  --deep:#8fa8c4;
+
+  /* Surface */
+  --bg:#04060a;
+  --glass:rgba(5,7,10,.5);
+  --glass2:rgba(4,6,10,.68);
+  --glass3:rgba(4,6,10,.94);
+
+  /* Borders */
+  --b0:rgba(168,194,204,.04);
+  --b1:rgba(168,194,204,.09);
+  --b2:rgba(168,194,204,.18);
+
+  /* Text */
+  --t0:#dde8ec;
+  --t1:rgba(221,232,236,.6);
+  --t2:rgba(221,232,236,.34);
+  --t3:rgba(221,232,236,.14);
+
+  /* Semantic accents */
+  --cw:#c49060;
+  --cd:#c06060;
+  --cg:#5cb88a;
+  --amber:#be7a5b;
+
+  /* Typography */
+  --sans:'Syne',system-ui,sans-serif;
+  --mono:'Syne Mono',monospace;
+  --serif:'Instrument Serif',Georgia,serif;
+
+  /* Layout */
+  --nav-h:78px;
+  --sb-h:44px;
+  --app-max:430px;
+}
+
+*,*::before,*::after{
+  box-sizing:border-box;
+  margin:0;padding:0;
+  -webkit-tap-highlight-color:transparent;
+}
+html,body{
+  height:100%;
+  overflow:hidden;
+  background:var(--bg);
+}
+body{
+  color:var(--t0);
+  font-family:var(--sans);
+  font-size:13px;
+  line-height:1.5;
+  display:flex;flex-direction:column;
+  max-width:var(--app-max);
+  margin:0 auto;
+  position:relative;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* ── BACKGROUND: eye + gradient veil ── */
+.bg{
+  position:fixed;inset:0;z-index:0;
+  max-width:var(--app-max);
+  left:50%;transform:translateX(-50%);
+  overflow:hidden;
+  pointer-events:none;
+}
+.bg-img{
+  position:absolute;inset:0;
+  background-image:url('/images/En_intensiv_blick_i_m%C3%B6rka_skuggor.png');
+  background-size:cover;
+  background-position:center 28%;
+  background-repeat:no-repeat;
+  filter:brightness(0.55) saturate(0.9) contrast(1.05);
+}
+.bg-veil{
+  position:absolute;inset:0;
+  background:linear-gradient(
+    to bottom,
+    rgba(2,4,8,.96) 0%,
+    rgba(2,4,8,.66) 16%,
+    rgba(2,4,8,.22) 38%,
+    rgba(2,4,8,.26) 56%,
+    rgba(2,4,8,.82) 74%,
+    rgba(2,4,8,.99) 100%
+  );
+}
+
+/* ── STATUS BAR ── */
+.sb{
+  position:relative;z-index:5;
+  height:var(--sb-h);
+  padding:14px 22px 0;
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:var(--mono);
+  font-size:12px;font-weight:700;
+  color:var(--t0);
+  letter-spacing:.02em;
+}
+.sb-r{display:flex;align-items:center;gap:6px;}
+.sb-bar{
+  display:flex;align-items:flex-end;gap:2px;height:10px;
+}
+.sb-bar span{width:2px;background:var(--t0);border-radius:0;}
+.sb-bar span:nth-child(1){height:3px;}
+.sb-bar span:nth-child(2){height:5px;}
+.sb-bar span:nth-child(3){height:7px;}
+.sb-bar span:nth-child(4){height:10px;}
+.sb-wifi{
+  width:12px;height:12px;
+  border-right:1.5px solid var(--t0);
+  border-top:1.5px solid var(--t0);
+  transform:rotate(45deg);
+  margin-right:2px;
+}
+.sb-bat{
+  width:20px;height:10px;
+  border:1px solid var(--t0);
+  position:relative;
+}
+.sb-bat::after{
+  content:'';
+  position:absolute;right:-3px;top:2px;
+  width:2px;height:4px;
+  background:var(--t0);
+}
+.sb-bat::before{
+  content:'';
+  position:absolute;inset:1px;
+  width:calc(100% - 4px);
+  background:var(--t0);
+}
+
+/* ── SCREENS ── */
+.screens{
+  position:relative;z-index:10;
+  flex:1;
+  overflow:hidden;
+}
+.screen{
+  position:absolute;inset:0;
+  padding-bottom:var(--nav-h);
+  overflow-y:auto;
+  overflow-x:hidden;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.32s ease;
+}
+.screen.active{
+  opacity:1;
+  pointer-events:auto;
+}
+.screen::-webkit-scrollbar{display:none;}
+.screen{scrollbar-width:none;-ms-overflow-style:none;}
+
+/* ── TOP BAR ── */
+.tb{
+  padding:12px 22px 0;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.wm{
+  font-family:var(--mono);
+  font-size:9px;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:var(--t2);
+}
+.live{
+  display:flex;align-items:center;gap:7px;
+  font-family:var(--mono);
+  font-size:9px;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--t2);
+}
+.live-pip{
+  width:6px;height:6px;
+  border-radius:50%;
+  background:var(--iris);
+  animation:pip 2.4s ease infinite;
+}
+@keyframes pip{
+  0%,100%{opacity:.5;box-shadow:0 0 3px var(--iris);}
+  50%{opacity:1;box-shadow:0 0 10px var(--iris);}
+}
+
+/* ── HOME — INVITE / PROGRESS / TODAY ── */
+.hm-invite{
+  padding:12px 0 40px;
+  max-width:380px;
+}
+.hm-statement{
+  font-family:var(--serif);
+  font-style:italic;
+  font-size:36px;
+  font-weight:400;
+  line-height:1.15;
+  color:var(--t0);
+  text-shadow:0 2px 40px rgba(0,0,0,.6),0 4px 60px rgba(0,0,0,.4);
+  margin-bottom:14px;
+  letter-spacing:.002em;
+}
+.hm-sub{
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:.06em;
+  color:var(--t2);
+  line-height:1.65;
+  max-width:340px;
+  padding-left:14px;
+  border-left:1px solid rgba(103,170,200,.18);
+  margin-bottom:28px;
+}
+.hm-upload{
+  display:flex;align-items:center;justify-content:center;
+  gap:10px;
+  width:100%;
+  padding:18px 22px;
+  background:var(--iris-a);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  border:1px solid rgba(103,170,200,.26);
+  border-radius:16px;
+  color:var(--t0);
+  cursor:pointer;
+  transition:all .22s ease;
+  font-family:var(--sans);
+}
+.hm-upload:active{
+  background:rgba(103,170,200,.22);
+  border-color:rgba(103,170,200,.4);
+  transform:scale(.985);
+}
+.hm-upload-icon{
+  display:inline-flex;align-items:center;
+  color:var(--iris);
+}
+.hm-upload-txt{
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:.02em;
+  color:var(--t0);
+}
+
+.hm-progress{
+  padding:40px 6px;
+  max-width:380px;
+}
+.hm-progress-eyebrow{
+  font-family:var(--mono);
+  font-size:9px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--iris);opacity:.85;
+  margin-bottom:18px;
+  display:flex;align-items:center;gap:8px;
+}
+.hm-progress-eyebrow::before{
+  content:'';width:14px;height:1px;background:var(--iris);opacity:.5;
+}
+.hm-progress-stat{
+  font-family:var(--serif);
+  font-style:italic;
+  font-size:26px;line-height:1.2;
+  color:var(--t0);
+  margin-bottom:20px;
+  min-height:32px;
+}
+.hm-progress-bar{
+  height:2px;
+  background:var(--b0);
+  overflow:hidden;
+  border-radius:1px;
+}
+.hm-progress-fill{
+  height:100%;
+  width:0%;
+  background:var(--iris);
+  transition:width .5s cubic-bezier(.2,.8,.2,1);
+  box-shadow:0 0 10px rgba(103,170,200,.5);
+}
+
+.hm-today{
+  padding-top:8px;
+  padding-bottom:20px;
+}
+.hm-today-head{
+  margin-bottom:24px;
+}
+.hm-today-eyebrow{
+  font-family:var(--mono);
+  font-size:9px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--t2);
+  margin-bottom:10px;
+  display:flex;align-items:center;gap:8px;
+}
+.hm-today-eyebrow::before{
+  content:'';width:14px;height:1px;background:var(--iris);opacity:.5;
+}
+.hm-today-date{
+  font-family:var(--serif);
+  font-style:italic;
+  font-size:30px;line-height:1.15;
+  color:var(--t0);
+  text-shadow:0 2px 40px rgba(0,0,0,.5);
+}
+.hm-today-content{
+  /* renderDayDetail-style sections rendered here via buildDaySummaryHTML */
+}
+.hm-today-actions{
+  margin-top:10px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.hm-ask{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;
+  padding:17px 22px;
+  background:var(--iris-a);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  border:1px solid rgba(103,170,200,.26);
+  border-radius:16px;
+  color:var(--t0);
+  cursor:pointer;
+  transition:all .22s ease;
+  font-family:var(--sans);
+}
+.hm-ask:active{
+  background:rgba(103,170,200,.22);
+  border-color:rgba(103,170,200,.4);
+  transform:scale(.985);
+}
+.hm-ask-txt{
+  font-size:14px;font-weight:600;letter-spacing:.02em;
+}
+.hm-ask-arrow{
+  font-family:var(--mono);
+  font-size:15px;color:var(--iris);
+}
+.hm-add-more{
+  width:100%;
+  padding:13px 22px;
+  background:transparent;
+  border:1px solid var(--b1);
+  border-radius:14px;
+  color:var(--t1);
+  font-family:var(--mono);
+  font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.hm-add-more:active{
+  background:var(--iris-a);
+  border-color:rgba(103,170,200,.22);
+  color:var(--t0);
+}
+
+.hm-boot{
+  padding-top:20px;
+}
+
+/* ── HOME LEVEL 1 ── */
+.hm-wrap{
+  min-height:calc(100dvh - var(--sb-h) - var(--nav-h));
+  display:flex;flex-direction:column;
+  padding:0 22px;
+}
+.hm-top{flex:0 0 auto;}
+.hm-mid{
+  flex:1;
+  display:flex;flex-direction:column;
+  justify-content:center;
+  padding:36px 0 40px;
+}
+.hm-eyebrow{
+  font-family:var(--mono);
+  font-size:9px;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--t2);
+  margin-bottom:18px;
+  display:flex;align-items:center;gap:8px;
+}
+.hm-eyebrow::before{
+  content:'';
+  width:14px;height:1px;
+  background:var(--iris);
+  opacity:.5;
+}
+/* Cycling insights container (Level 1 = 1 item, Level 2+ = 4 items rotating) */
+.insight-cycle{
+  position:relative;
+  min-height:140px;
+  margin-bottom:14px;
+}
+.insight-item{
+  position:absolute;top:0;left:0;right:0;
+  opacity:0;
+  transform:translateY(10px);
+  transition:opacity .5s ease,transform .5s ease;
+  pointer-events:none;
+  max-width:380px;
+}
+.insight-item.visible{
+  opacity:1;
+  transform:translateY(0);
+  pointer-events:auto;
+}
+.ins-context{
+  display:flex;align-items:center;gap:9px;
+  margin-bottom:13px;
+  font-family:var(--mono);
+  font-size:9px;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--t2);
+}
+.ins-dot{
+  width:7px;height:7px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+.ins-headline{
+  font-family:var(--serif);
+  font-style:italic;
+  font-size:32px;
+  font-weight:400;
+  line-height:1.2;
+  color:var(--t0);
+  text-shadow:0 2px 40px rgba(0,0,0,.6),0 4px 60px rgba(0,0,0,.4);
+  letter-spacing:.002em;
+}
+
+/* Dots indicator — only visible when cycling (> 1 insight) */
+.insight-dots{
+  display:flex;align-items:center;gap:6px;
+  margin-bottom:22px;
+  min-height:5px;
+}
+.insight-dots:empty{display:none;}
+.i-dot{
+  width:5px;height:5px;
+  border-radius:50%;
+  background:var(--t3);
+  transition:all .35s ease;
+  cursor:pointer;
+  flex-shrink:0;
+}
+.i-dot.active{
+  width:18px;height:5px;
+  border-radius:3px;
+  background:var(--iris);
+}
+
+.hm-why{
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:.06em;
+  color:var(--t2);
+  line-height:1.65;
+  max-width:360px;
+  padding-left:14px;
+  border-left:1px solid rgba(103,170,200,.18);
+  margin-top:2px;
+}
+
+/* ── RINGS (Level 2+) ── */
+.hm-rings{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  padding:6px 0 22px;
+}
+.ring{
+  flex:1;
+  display:flex;flex-direction:column;align-items:center;
+  position:relative;
+}
+.ring svg{
+  width:76px;height:76px;
+  transform:rotate(-90deg);
+}
+.ring-bg{
+  fill:none;
+  stroke:var(--b1);
+  stroke-width:3;
+}
+.ring-fg{
+  fill:none;
+  stroke:var(--iris);
+  stroke-width:3;
+  stroke-dasharray:163.36; /* 2π·26 */
+  stroke-dashoffset:163.36;
+  stroke-linecap:round;
+  transition:stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1);
+}
+.ring[data-ring="recovery"] .ring-fg{stroke:var(--cg);}
+.ring[data-ring="strain"] .ring-fg{stroke:var(--amber);}
+.ring-val{
+  position:absolute;
+  top:30px;left:50%;
+  transform:translateX(-50%);
+  font-family:var(--mono);
+  font-size:13px;font-weight:700;
+  color:var(--t0);
+  letter-spacing:.01em;
+  white-space:nowrap;
+}
+.ring-lbl{
+  margin-top:9px;
+  font-family:var(--mono);
+  font-size:8px;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--t2);
+}
+
+/* ── RAW NUMBERS (Level 2+, nearly invisible) ── */
+.hm-raw{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr 1fr;
+  gap:1px;
+  background:var(--b0);
+  border-top:1px solid var(--b0);
+  border-bottom:1px solid var(--b0);
+  margin-top:22px;
+}
+.hm-raw-cell{
+  background:rgba(4,6,10,.45);
+  padding:11px 6px;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  opacity:.55;
+}
+.hm-raw-lbl{
+  font-family:var(--mono);
+  font-size:7.5px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--t2);
+}
+.hm-raw-val{
+  font-family:var(--mono);
+  font-size:11px;font-weight:600;
+  color:var(--t1);
+}
+.hm-bot{
+  flex:0 0 auto;
+  padding-bottom:26px;
+}
+.hm-cta{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;
+  padding:17px 22px;
+  background:var(--glass);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--b1);
+  border-radius:16px;
+  color:var(--t0);
+  cursor:pointer;
+  transition:all .22s ease;
+  font-family:var(--sans);
+}
+.hm-cta:active{
+  background:var(--iris-a);
+  border-color:var(--b2);
+  transform:scale(.985);
+}
+.hm-cta-txt{
+  font-size:14px;
+  font-weight:500;
+  letter-spacing:.01em;
+}
+.hm-cta-arrow{
+  font-family:var(--mono);
+  font-size:15px;
+  color:var(--iris);
+  transition:transform .22s ease;
+}
+.hm-cta:active .hm-cta-arrow{transform:translateX(3px);}
+
+/* ── LOADING STATE ── */
+.ld{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+  color:var(--t2);text-transform:uppercase;
+}
+.ld-dots{display:inline-flex;gap:4px;}
+.ld-dot{
+  width:4px;height:4px;border-radius:50%;
+  background:var(--iris);
+  animation:pd 1.4s ease infinite;
+}
+.ld-dot:nth-child(2){animation-delay:.18s;}
+.ld-dot:nth-child(3){animation-delay:.36s;}
+@keyframes pd{
+  0%,80%,100%{opacity:.25;transform:scale(.8);}
+  40%{opacity:1;transform:scale(1);}
+}
+
+/* ── PLACEHOLDER SCREENS ── */
+.placeholder{
+  padding:60px 24px;
+  display:flex;flex-direction:column;align-items:flex-start;
+  min-height:calc(100dvh - var(--sb-h) - var(--nav-h));
+  justify-content:center;
+}
+.ph-title{
+  font-family:var(--serif);font-style:italic;
+  font-size:28px;line-height:1.25;
+  color:var(--t0);
+  margin-bottom:16px;
+  max-width:340px;
+}
+.ph-sub{
+  font-family:var(--mono);font-size:10px;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:var(--t2);
+  padding-left:14px;
+  border-left:1px solid var(--b1);
+}
+
+/* ── BOTTOM NAV ── */
+.bn{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:var(--app-max);
+  height:var(--nav-h);
+  z-index:30;
+  background:var(--glass3);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border-top:1px solid var(--b0);
+  display:flex;align-items:center;justify-content:space-around;
+  padding:0 14px 20px;
+}
+.nb{
+  flex:1;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:16px 4px 0;
+  background:none;border:none;cursor:pointer;
+  color:var(--t2);
+  position:relative;
+  transition:color .22s ease;
+  font-family:var(--mono);
+  min-width:0;
+}
+.nb.on{color:var(--t0);}
+.nb.on::after{
+  content:'';
+  position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  width:18px;height:2px;
+  background:var(--iris);
+  border-radius:1px;
+}
+.nb.hidden{display:none;}
+.nb-glyph{
+  font-family:var(--serif);
+  font-style:italic;
+  font-size:15px;
+  line-height:1;
+  color:inherit;
+  margin-bottom:1px;
+}
+.nb-label{
+  font-family:var(--mono);
+  font-size:8px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+.fab{
+  flex:0 0 auto;
+  width:58px;height:58px;
+  border-radius:50%;
+  border:2px solid rgba(103,170,200,.26);
+  background-image:url('/images/En_intensiv_blick_i_m%C3%B6rka_skuggor.png');
+  background-size:cover;
+  background-position:center;
+  background-color:var(--bg);
+  cursor:pointer;
+  box-shadow:0 4px 28px rgba(0,0,0,.7);
+  margin:0 10px;
+  position:relative;top:-8px;
+  transition:all .22s ease;
+}
+.fab::after{
+  content:'';
+  position:absolute;inset:0;
+  border-radius:50%;
+  background:radial-gradient(circle at center,transparent 36%,rgba(4,6,10,.55) 100%);
+  pointer-events:none;
+}
+.fab:active,.fab.on{
+  border-color:var(--iris);
+  box-shadow:0 4px 28px rgba(103,170,200,.4);
+}
+
+/* ── HISTORIK ── */
+.hist-wrap{
+  padding:20px 20px 40px;
+  min-height:100%;
+}
+.hist-head{
+  margin-bottom:24px;
+}
+.hist-eyebrow{
+  font-family:var(--mono);
+  font-size:9px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--t2);
+  margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.hist-eyebrow::before{
+  content:'';width:14px;height:1px;background:var(--iris);opacity:.5;
+}
+.hist-title{
+  font-family:var(--serif);font-style:italic;
+  font-size:26px;line-height:1.2;
+  color:var(--t0);
+  max-width:340px;
+  text-shadow:0 2px 40px rgba(0,0,0,.5);
+}
+
+.hist-list{
+  display:flex;flex-direction:column;
+  gap:12px;
+}
+.hist-card{
+  background:var(--glass);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border:1px solid var(--b1);
+  border-radius:16px;
+  padding:16px 18px;
+  cursor:pointer;
+  transition:all .22s ease;
+}
+.hist-card:active{
+  background:var(--iris-a);
+  border-color:rgba(103,170,200,.22);
+  transform:scale(.985);
+}
+.hist-card-top{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:10px;
+  margin-bottom:11px;
+}
+.hist-card-date{
+  font-family:var(--serif);font-style:italic;
+  font-size:20px;line-height:1.15;
+  color:var(--t0);
+  flex:1;min-width:0;
+}
+.hist-card-meta{
+  font-family:var(--mono);font-size:8px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--t2);
+  text-align:right;
+  padding-top:5px;
+  flex-shrink:0;
+}
+.hist-card-types{
+  display:flex;gap:5px;flex-wrap:wrap;
+  margin-bottom:11px;
+}
+.hist-card-type{
+  font-family:var(--mono);
+  font-size:8px;letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--t1);
+  padding:3px 8px;
+  background:rgba(103,170,200,.08);
+  border:1px solid rgba(103,170,200,.15);
+  border-radius:10px;
+}
+.hist-card-totals{
+  display:flex;gap:14px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:11px;
+  color:var(--t1);
+}
+.hist-card-totals > span{
+  display:inline-flex;align-items:baseline;gap:4px;
+}
+.hist-card-totals strong{
+  color:var(--t0);font-weight:600;font-family:var(--mono);
+}
+
+.hist-empty{
+  padding:30px 4px;
+  text-align:left;
+}
+.hist-empty-title{
+  font-family:var(--serif);font-style:italic;
+  font-size:24px;line-height:1.25;color:var(--t0);
+  margin-bottom:14px;
+  max-width:320px;
+}
+.hist-empty-sub{
+  font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+  color:var(--t2);line-height:1.7;
+  max-width:320px;
+  padding-left:14px;
+  border-left:1px solid rgba(103,170,200,.18);
+}
+
+.hist-detail{
+  padding-top:4px;
+}
+.hist-back{
+  font-family:var(--mono);
+  font-size:9px;letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--t2);
+  background:none;border:none;cursor:pointer;
+  padding:4px 0 22px;
+  display:block;
+}
+.hist-back:active{color:var(--iris);}
+.hist-detail-date{
+  font-family:var(--serif);font-style:italic;
+  font-size:28px;line-height:1.15;color:var(--t0);
+  margin-bottom:8px;
+  text-shadow:0 2px 40px rgba(0,0,0,.5);
+}
+.hist-detail-meta{
+  font-family:var(--mono);
+  font-size:9px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--t2);
+  margin-bottom:26px;
+}
+.hist-section{
+  margin-bottom:28px;
+}
+.hist-section-label{
+  font-family:var(--mono);
+  font-size:8px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--iris);opacity:.85;
+  margin-bottom:11px;
+  display:flex;align-items:center;gap:7px;
+}
+.hist-section-label::before{
+  content:'';width:12px;height:1px;background:var(--iris);opacity:.55;
+}
+.hist-metric-row{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding:10px 0;
+  border-bottom:1px solid var(--b0);
+}
+.hist-metric-row:last-child{border-bottom:none;}
+.hist-metric-lbl{
+  font-family:var(--mono);
+  font-size:10px;letter-spacing:.08em;
+  color:var(--t2);
+}
+.hist-metric-val{
+  font-family:var(--mono);
+  font-size:13px;font-weight:700;
+  color:var(--t0);
+}
+.hist-training-card{
+  background:var(--glass);
+  border:1px solid var(--b1);
+  border-radius:12px;
+  padding:13px 15px;
+  margin-bottom:8px;
+}
+.hist-training-head{
+  font-family:var(--serif);font-style:italic;
+  font-size:15px;color:var(--t0);
+  margin-bottom:6px;
+}
+.hist-training-meta{
+  font-family:var(--mono);
+  font-size:9px;letter-spacing:.08em;
+  color:var(--t2);
+  display:flex;gap:12px;flex-wrap:wrap;
+}
+.hist-event-item{
+  padding:11px 13px;
+  background:rgba(5,7,10,.3);
+  border:1px solid var(--b0);
+  border-radius:10px;
+  margin-bottom:6px;
+}
+.hist-event-type{
+  font-family:var(--mono);
+  font-size:8px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--iris);
+  margin-bottom:5px;
+}
+.hist-event-summary{
+  font-family:var(--serif);font-style:italic;
+  font-size:13px;line-height:1.5;color:var(--t1);
+}
+
+/* ── CHAT ── */
+.ch-wrap{
+  display:flex;flex-direction:column;
+  min-height:100%;
+}
+.ch-head{
+  padding:14px 22px 12px;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid var(--b0);
+  flex-shrink:0;
+}
+.ch-av{
+  width:36px;height:36px;
+  border-radius:50%;
+  overflow:hidden;
+  border:1px solid rgba(103,170,200,.25);
+  background-image:url('/images/En_intensiv_blick_i_m%C3%B6rka_skuggor.png');
+  background-size:cover;
+  background-position:center;
+  background-color:var(--bg);
+  flex-shrink:0;
+}
+.ch-title{flex:1;min-width:0;}
+.ch-name{
+  font-family:var(--sans);font-size:13px;font-weight:600;
+  color:var(--t0);letter-spacing:.01em;
+}
+.ch-sub{
+  font-size:10px;color:var(--t2);
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);letter-spacing:.08em;
+  margin-top:2px;
+}
+.ch-dot{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--iris);
+  animation:pd 2.2s ease infinite;
+  opacity:1;
+}
+
+.ch-msgs{
+  flex:1;
+  padding:22px 16px 82px;
+  display:flex;flex-direction:column;gap:18px;
+}
+
+.mw{
+  display:flex;gap:10px;
+  animation:rise 0.4s ease both;
+  max-width:100%;
+}
+.mw.u{justify-content:flex-end;}
+.mav{
+  width:30px;height:30px;
+  border-radius:50%;
+  flex-shrink:0;
+  overflow:hidden;
+  background-image:url('/images/En_intensiv_blick_i_m%C3%B6rka_skuggor.png');
+  background-size:cover;
+  background-position:center;
+  background-color:var(--bg);
+  border:1px solid rgba(103,170,200,.2);
+}
+.mw.u .mav{display:none;}
+.mc{
+  display:flex;flex-direction:column;
+  max-width:84%;
+  min-width:0;
+}
+.mw.u .mc{align-items:flex-end;}
+.msg-sender{
+  font-family:var(--mono);
+  font-size:9px;letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--iris);
+  margin-bottom:5px;
+  padding-left:2px;
+}
+.mw.u .msg-sender{color:var(--t2);padding-left:0;padding-right:2px;}
+.bub{
+  padding:13px 16px;
+  font-family:var(--serif);
+  font-style:italic;
+  font-size:15.5px;
+  font-weight:400;
+  line-height:1.55;
+  color:var(--t0);
+  background:var(--glass2);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--b0);
+  border-radius:4px 18px 18px 18px;
+  word-wrap:break-word;
+  overflow-wrap:break-word;
+}
+.mw.u .bub{
+  background:var(--iris-a);
+  border:1px solid rgba(103,170,200,.22);
+  border-radius:18px 4px 18px 18px;
+  font-family:var(--sans);
+  font-style:normal;
+  font-size:14px;
+  line-height:1.6;
+}
+.bub strong{color:var(--t0);font-weight:600;font-style:normal;}
+.bub em{color:var(--iris);font-style:normal;font-weight:500;}
+.bub.typing{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:16px 18px;
+}
+.bub.typing .ld-dot{width:5px;height:5px;}
+
+.ch-starters{
+  padding:0 16px 18px;
+  display:flex;flex-wrap:wrap;gap:7px;
+}
+.st{
+  font-family:var(--mono);
+  font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;
+  padding:8px 14px;
+  background:rgba(5,7,10,.4);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border:1px solid var(--b1);
+  border-radius:18px;
+  color:var(--t1);
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.st:active{
+  background:var(--iris-a);
+  color:var(--t0);
+  border-color:rgba(103,170,200,.22);
+}
+
+.ci-wrap{
+  position:fixed;
+  bottom:var(--nav-h);
+  left:50%;transform:translateX(-50%);
+  width:100%;max-width:var(--app-max);
+  padding:10px 14px 14px;
+  background:var(--glass3);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border-top:1px solid var(--b0);
+  z-index:20;
+  display:none;
+}
+.ci-wrap.show{display:block;}
+.ci-box{
+  display:flex;align-items:flex-end;gap:8px;
+  background:rgba(5,7,10,.6);
+  border:1px solid var(--b1);
+  border-radius:22px;
+  padding:9px 9px 9px 9px;
+  transition:border-color .2s ease;
+}
+.ci-cam{
+  width:34px;height:34px;
+  border-radius:50%;
+  background:transparent;
+  border:1px solid var(--b1);
+  color:var(--t1);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+  padding:0;
+  transition:all .2s ease;
+}
+.ci-cam:active{
+  background:var(--iris-a);
+  border-color:rgba(103,170,200,.32);
+  color:var(--iris);
+  transform:scale(.94);
+}
+.ci-cam svg{display:block;}
+
+/* Image message bubble */
+.bub.bub-img{
+  padding:4px;
+  background:var(--iris-a);
+  border:1px solid rgba(103,170,200,.22);
+  border-radius:18px 4px 18px 18px;
+  overflow:hidden;
+  line-height:0;
+}
+.bub.bub-img img{
+  display:block;
+  max-width:260px;
+  max-height:280px;
+  width:auto;height:auto;
+  border-radius:14px 2px 14px 14px;
+  object-fit:cover;
+}
+.ci-box:focus-within{border-color:rgba(103,170,200,.32);}
+.ci-in{
+  flex:1;
+  background:none;border:none;outline:none;
+  color:var(--t0);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.45;
+  resize:none;
+  max-height:90px;
+  overflow-y:auto;
+  padding:4px 0;
+}
+.ci-in::placeholder{color:var(--t2);}
+.ci-send{
+  width:34px;height:34px;
+  border-radius:50%;
+  background:var(--iris);
+  border:none;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+  transition:all .18s ease;
+  color:#04060a;
+  font-family:var(--sans);font-weight:700;
+  font-size:15px;
+}
+.ci-send:disabled{
+  background:var(--t3);
+  color:var(--t2);
+  cursor:default;
+}
+.ci-send:active:not(:disabled){transform:scale(0.94);}
+
+/* ── SAFE AREA (iOS notch + home indicator) ── */
+@supports (padding: max(0px)) {
+  .sb{padding-top:max(14px,env(safe-area-inset-top));}
+  .bn{padding-bottom:max(20px,env(safe-area-inset-bottom));}
+}
+
+/* Prevent iOS zoom on input focus */
+input,textarea,select{font-size:16px;}
+
+/* Entry animation */
+@keyframes rise{
+  from{opacity:0;transform:translateY(12px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.screen.active .hm-mid > *{animation:rise 0.6s ease both;}
+.screen.active .hm-mid > *:nth-child(1){animation-delay:.12s;}
+.screen.active .hm-mid > *:nth-child(2){animation-delay:.22s;}
+.screen.active .hm-mid > *:nth-child(3){animation-delay:.38s;}
+.screen.active .hm-bot{animation:rise 0.6s ease both;animation-delay:.5s;}
+</style>
+</head>
+<body>
+
+<!-- BACKGROUND -->
+<div class="bg">
+  <div class="bg-img"></div>
+  <div class="bg-veil"></div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="sb">
+  <div id="sb-time">09:42</div>
+  <div class="sb-r">
+    <div class="sb-bar"><span></span><span></span><span></span><span></span></div>
+    <div class="sb-wifi"></div>
+    <div class="sb-bat"></div>
+  </div>
+</div>
+
+<!-- SCREENS -->
+<div class="screens">
+
+  <!-- ═══════ HOME — Level 1 (upload + today's report) ═══════ -->
+  <div class="screen active" id="sh" data-screen="home">
+    <div class="hm-wrap">
+      <div class="hm-top">
+        <div class="tb">
+          <div class="wm">Selvitas</div>
+          <div class="live">
+            <div class="live-pip"></div>
+            <span id="hm-level">Live</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVITE — shown when no photos uploaded today -->
+      <div class="hm-invite" id="hm-invite" style="display:none;">
+        <div class="hm-statement">Visa mig din dag.</div>
+        <div class="hm-sub">Några bilder räcker — Garmin, Lifesum, en måltid, ett pass. Systemet läser dem.</div>
+        <button class="hm-upload" id="hm-upload" type="button">
+          <span class="hm-upload-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 7h4l2-2h6l2 2h4v12H3V7z"/>
+              <circle cx="12" cy="13" r="3.6"/>
+            </svg>
+          </span>
+          <span class="hm-upload-txt">Ladda upp bilder</span>
+        </button>
+        <input type="file" id="hm-file" accept="image/*" multiple style="display:none">
+      </div>
+
+      <!-- PROGRESS — shown during batch upload -->
+      <div class="hm-progress" id="hm-progress" style="display:none;">
+        <div class="hm-progress-eyebrow">Selvitas läser dagen</div>
+        <div class="hm-progress-stat" id="hm-progress-stat">—</div>
+        <div class="hm-progress-bar"><div class="hm-progress-fill" id="hm-progress-fill"></div></div>
+      </div>
+
+      <!-- TODAY — shown when photos have been uploaded -->
+      <div class="hm-today" id="hm-today" style="display:none;">
+        <div class="hm-today-head">
+          <div class="hm-today-eyebrow">Idag</div>
+          <div class="hm-today-date" id="hm-today-date">—</div>
+        </div>
+        <div class="hm-today-content" id="hm-today-content"></div>
+        <div class="hm-today-actions">
+          <button class="hm-ask" id="hm-ask" type="button">
+            <span class="hm-ask-txt">Fråga Selvitas om idag</span>
+            <span class="hm-ask-arrow">→</span>
+          </button>
+          <button class="hm-add-more" id="hm-add-more" type="button">
+            <span>+ fler bilder</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Initial loading -->
+      <div class="hm-boot" id="hm-boot">
+        <div class="ld" style="padding:24px 4px;">
+          <span class="ld-dots"><span class="ld-dot"></span><span class="ld-dot"></span><span class="ld-dot"></span></span>
+          <span>Laddar dagen</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ HISTORIK ═══════ -->
+  <div class="screen" id="sd" data-screen="historik">
+    <div class="hist-wrap">
+      <div class="hist-head">
+        <div class="hist-eyebrow">Din historik</div>
+        <div class="hist-title" id="hist-title">Dagarna du visat Selvitas</div>
+      </div>
+
+      <div class="hist-list" id="hist-list">
+        <div class="ld" style="padding:20px 0;">
+          <span class="ld-dots"><span class="ld-dot"></span><span class="ld-dot"></span><span class="ld-dot"></span></span>
+          <span>Laddar historik</span>
+        </div>
+      </div>
+
+      <div class="hist-detail" id="hist-detail" style="display:none;">
+        <button class="hist-back" id="hist-back" type="button">← Alla dagar</button>
+        <div id="hist-detail-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ CHAT (via FAB) ═══════ -->
+  <div class="screen" id="sc" data-screen="chat">
+    <div class="ch-wrap">
+      <div class="ch-head">
+        <div class="ch-av"></div>
+        <div class="ch-title">
+          <div class="ch-name">Selvitas</div>
+          <div class="ch-sub">
+            <div class="ch-dot"></div>
+            <span id="ch-status">Lyssnar</span>
+          </div>
+        </div>
+      </div>
+      <div class="ch-msgs" id="ch-msgs"></div>
+      <div class="ch-starters" id="ch-starters"></div>
+    </div>
+  </div>
+
+  <!-- ═══════ KOST (Level 2+) ═══════ -->
+  <div class="screen" id="sk" data-screen="kost">
+    <div class="placeholder">
+      <div class="ph-title">Kost låses upp när en wearable kopplas.</div>
+      <div class="ph-sub">Level 2</div>
+    </div>
+  </div>
+
+  <!-- ═══════ SELVITAS PROFILE ═══════ -->
+  <div class="screen" id="sp" data-screen="selvitas">
+    <div class="placeholder">
+      <div class="ph-title">Biologisk identitet.</div>
+      <div class="ph-sub">Byggs ovanpå Level 1</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════ CHAT INPUT (only visible on chat screen) ═══════ -->
+<div class="ci-wrap" id="ci-wrap">
+  <div class="ci-box">
+    <button class="ci-cam" id="ci-cam" type="button" aria-label="Ta foto eller välj bild">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 7h4l2-2h6l2 2h4v12H3V7z"/>
+        <circle cx="12" cy="13" r="3.6"/>
+      </svg>
+    </button>
+    <input type="file" id="ci-file" accept="image/*" capture="environment" style="display:none">
+    <textarea id="ci-in" class="ci-in" rows="1" placeholder="Skriv eller ta en bild…" autocomplete="off"></textarea>
+    <button class="ci-send" id="ci-send" type="button" aria-label="Skicka">↑</button>
+  </div>
+</div>
+
+<!-- ═══════ BOTTOM NAV ═══════ -->
+<nav class="bn" id="bn">
+  <button class="nb on" data-go="sh" type="button">
+    <span class="nb-glyph">◯</span>
+    <span class="nb-label">Hem</span>
+  </button>
+  <button class="nb" data-go="sd" type="button">
+    <span class="nb-glyph">◐</span>
+    <span class="nb-label">Historik</span>
+  </button>
+  <button class="fab" data-go="sc" type="button" aria-label="Fråga Selvitas"></button>
+  <button class="nb hidden" data-go="sk" data-min-level="2" type="button">
+    <span class="nb-glyph">·</span>
+    <span class="nb-label">Kost</span>
+  </button>
+  <button class="nb" data-go="sp" type="button">
+    <span class="nb-glyph">◊</span>
+    <span class="nb-label">Selvitas</span>
+  </button>
+</nav>
+
+<script>
+(function(){
+'use strict';
+
+// ─── STATUS BAR TIME ───
+function updateTime(){
+  const d = new Date();
+  const h = d.getHours().toString().padStart(2,'0');
+  const m = d.getMinutes().toString().padStart(2,'0');
+  const el = document.getElementById('sb-time');
+  if(el) el.textContent = h + ':' + m;
+}
+updateTime();
+setInterval(updateTime, 30000);
+
+// ─── SCREEN ROUTING ───
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.toggle('active', s.id === id);
+  });
+  document.querySelectorAll('.nb, .fab').forEach(b => {
+    const target = b.dataset.go;
+    b.classList.toggle('on', target === id);
+  });
+  const ciWrap = document.getElementById('ci-wrap');
+  if(ciWrap) ciWrap.classList.toggle('show', id === 'sc');
+  if(id === 'sc') openChatFirstTime();
+  if(id === 'sd') loadHistoryDays();
+}
+window.__selvitasGoTo = goTo;
+document.querySelectorAll('[data-go]').forEach(b => {
+  b.addEventListener('click', () => {
+    if(b.classList.contains('hidden')) return;
+    goTo(b.dataset.go);
+  });
+});
+
+// ─── CHAT STATE ───
+const chat = {
+  initialized: false,
+  sending: false,
+  starters: [
+    'Hur är min dag?',
+    'Vad ska jag äta?',
+    'Kan jag träna idag?',
+    'Varför är jag trött?'
+  ]
+};
+
+function escapeHtml(s){
+  return (s || '').toString().replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function renderText(text){
+  const esc = escapeHtml(text || '');
+  return esc
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
+}
+
+function addMessage(role, text){
+  const msgs = document.getElementById('ch-msgs');
+  if(!msgs) return null;
+  const wrap = document.createElement('div');
+  wrap.className = 'mw' + (role === 'u' ? ' u' : '');
+  const avHtml = role === 'u' ? '' : '<div class="mav"></div>';
+  wrap.innerHTML = avHtml +
+    '<div class="mc">' +
+      '<div class="msg-sender">' + (role === 'u' ? 'Du' : 'Selvitas') + '</div>' +
+      '<div class="bub">' + renderText(text) + '</div>' +
+    '</div>';
+  msgs.appendChild(wrap);
+  setTimeout(() => {
+    const sc = document.getElementById('sc');
+    if(sc) sc.scrollTop = sc.scrollHeight;
+  }, 60);
+  return wrap;
+}
+
+function showTyping(){
+  const msgs = document.getElementById('ch-msgs');
+  if(!msgs) return null;
+  const wrap = document.createElement('div');
+  wrap.className = 'mw typing-row';
+  wrap.innerHTML =
+    '<div class="mav"></div>' +
+    '<div class="mc">' +
+      '<div class="msg-sender">Selvitas</div>' +
+      '<div class="bub typing">' +
+        '<span class="ld-dot"></span>' +
+        '<span class="ld-dot"></span>' +
+        '<span class="ld-dot"></span>' +
+      '</div>' +
+    '</div>';
+  msgs.appendChild(wrap);
+  const sc = document.getElementById('sc');
+  if(sc) sc.scrollTop = sc.scrollHeight;
+  return wrap;
+}
+
+function renderStarters(){
+  const el = document.getElementById('ch-starters');
+  if(!el) return;
+  el.innerHTML = '';
+  chat.starters.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'st';
+    btn.type = 'button';
+    btn.textContent = s;
+    btn.addEventListener('click', () => sendMessage(s));
+    el.appendChild(btn);
+  });
+  el.style.display = '';
+}
+function hideStarters(){
+  const el = document.getElementById('ch-starters');
+  if(el) el.style.display = 'none';
+}
+
+async function callAgent(userMessage, context){
+  try {
+    const profile = (() => {
+      try { return JSON.parse(localStorage.getItem('forsyne_onboarding') || '{}'); }
+      catch(e) { return {}; }
+    })();
+    const cr = await fetch('/api/checkins', { headers: authHeaders() });
+    const chData = cr.ok ? await cr.json() : [];
+    const list = Array.isArray(chData) ? chData : (chData.checkins || chData.data || []);
+
+    const ir = await fetch('/api/agent/insights/generate', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({
+        checkins: list.slice(-14),
+        profile,
+        context: context || 'chat',
+        user_message: userMessage || null
+      })
+    });
+    if(!ir.ok) throw new Error('agent ' + ir.status);
+    const res = await ir.json();
+    return res.paastående || res.insight || res.reply || res.text || res.insikt || res.paastaende || '';
+  } catch(err){
+    console.warn('[chat] agent failed', err);
+    return null;
+  }
+}
+
+// ─── PERSISTENT CHAT (reads/writes conversations table via /api/agent/chat) ───
+async function loadChatHistory(){
+  try {
+    const r = await fetch('/api/conversations/selvitas_main', { headers: authHeaders() });
+    if(!r.ok) return [];
+    const data = await r.json();
+    return Array.isArray(data) ? data : [];
+  } catch(err){
+    console.warn('[chat] load history failed', err);
+    return [];
+  }
+}
+
+async function callChatAgent(userMessage, kind, imageSummary){
+  try {
+    const r = await fetch('/api/agent/chat', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({
+        user_message: userMessage || null,
+        kind: kind || 'message',
+        image_summary: imageSummary || null
+      })
+    });
+    if(!r.ok) throw new Error('chat ' + r.status);
+    const d = await r.json();
+    return d.reply || '';
+  } catch(err){
+    console.warn('[chat] /api/agent/chat failed', err);
+    return null;
+  }
+}
+
+async function openChatFirstTime(){
+  if(chat.initialized) return;
+  chat.initialized = true;
+
+  // Try persisted history first — this is the whole point of Selvitas
+  const history = await loadChatHistory();
+  if(history.length > 0){
+    hideStarters();
+    history.forEach(m => {
+      if(!m || !m.role) return;
+      const text = typeof m.content === 'string' ? m.content : String(m.content || '');
+      if(!text) return;
+      if(m.role === 'user') addMessage('u', text);
+      else if(m.role === 'assistant') addMessage('ai', text);
+    });
+    return;
+  }
+
+  // First-time: show starters + call chat agent for a grounded opener
+  renderStarters();
+  const typing = showTyping();
+  const greeting = await callChatAgent(null, 'chat_greeting');
+  if(typing) typing.remove();
+  addMessage('ai', greeting || 'Jag lyssnar. Berätta en mening om hur dagen känns — så börjar jag se mönstret.');
+}
+
+async function sendMessage(text){
+  if(chat.sending) return;
+  const input = document.getElementById('ci-in');
+  const raw = typeof text === 'string' ? text : (input ? input.value : '');
+  const trimmed = (raw || '').trim();
+  if(!trimmed) return;
+  chat.sending = true;
+  hideStarters();
+  if(input){ input.value = ''; autoResize(); }
+  const send = document.getElementById('ci-send');
+  if(send) send.disabled = true;
+  addMessage('u', trimmed);
+  const typing = showTyping();
+  const reply = await callChatAgent(trimmed, 'message');
+  if(typing) typing.remove();
+  addMessage('ai', reply || 'Jag hör dig. Jag behöver lite mer för att se mönstret — fortsätt.');
+  chat.sending = false;
+  if(send) send.disabled = false;
+}
+
+function autoResize(){
+  const ta = document.getElementById('ci-in');
+  if(!ta) return;
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 90) + 'px';
+}
+
+// ─── TODAY (home screen batch upload + report) ───
+const today = {
+  loading: false,
+  loaded:  false,
+  summary: null
+};
+
+function todayDateString(){
+  return new Date().toLocaleDateString('sv-SE'); // "YYYY-MM-DD"
+}
+
+function hideAllHomeStates(){
+  const ids = ['hm-boot', 'hm-invite', 'hm-progress', 'hm-today'];
+  ids.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
+}
+function showHomeInvite(){
+  hideAllHomeStates();
+  const el = document.getElementById('hm-invite');
+  if(el) el.style.display = 'block';
+}
+function showHomeTodayReport(data){
+  hideAllHomeStates();
+  const el = document.getElementById('hm-today');
+  if(el) el.style.display = 'block';
+  const dateEl = document.getElementById('hm-today-date');
+  if(dateEl) dateEl.textContent = formatSwedishDate(data.date);
+  const content = document.getElementById('hm-today-content');
+  if(content) content.innerHTML = buildDaySummaryHTML(data);
+}
+function showHomeProgress(current, total, label){
+  hideAllHomeStates();
+  const el = document.getElementById('hm-progress');
+  if(el) el.style.display = 'block';
+  const fill = document.getElementById('hm-progress-fill');
+  const stat = document.getElementById('hm-progress-stat');
+  const pct = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
+  if(fill) fill.style.width = pct + '%';
+  if(stat) stat.textContent = label || ('Analyserar bild ' + current + ' av ' + total);
+}
+
+async function loadTodaySummary(){
+  if(today.loading) return;
+  today.loading = true;
+  try {
+    const date = todayDateString();
+    const r = await fetch('/api/history/day/' + encodeURIComponent(date), { headers: authHeaders() });
+    if(!r.ok) throw new Error('today ' + r.status);
+    const data = await r.json();
+    today.summary = data;
+    today.loaded = true;
+    if((data.event_count || 0) > 0){
+      showHomeTodayReport(data);
+    } else {
+      showHomeInvite();
+    }
+  } catch(err){
+    console.warn('[today] load failed', err);
+    showHomeInvite();
+  } finally {
+    today.loading = false;
+  }
+}
+
+async function uploadBatchImages(fileList){
+  const files = Array.from(fileList || []).filter(f => f && f.type && f.type.startsWith('image/'));
+  if(files.length === 0) return;
+
+  const total = files.length;
+  const date = todayDateString();
+  showHomeProgress(0, total, 'Läser bilder …');
+
+  for(let i = 0; i < files.length; i++){
+    showHomeProgress(i, total, 'Analyserar bild ' + (i + 1) + ' av ' + total);
+    try {
+      const dataUri = await fileToBase64DataUri(files[i]);
+      const r = await fetch('/api/vision/analyze', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ image: dataUri, date_hint: date })
+      });
+      if(!r.ok){
+        console.warn('[upload] vision failed for image', i, r.status);
+      } else {
+        await r.json(); // result is persisted server-side to vision_events
+      }
+    } catch(err){
+      console.warn('[upload] image ' + i + ' failed', err);
+    }
+  }
+  showHomeProgress(total, total, 'Sammanställer dagen …');
+
+  // Invalidate caches — new events added
+  hist.loaded = false;
+
+  // Reload today's aggregated data
+  today.loaded = false;
+  today.loading = false;
+  await loadTodaySummary();
+}
+
+function openTodayChat(){
+  // Server-side system prompt already injects today's vision events on every call.
+  // Just switch to chat. If not initialized yet, the greeting will reference today.
+  goTo('sc');
+}
+
+// ─── HISTORIK ───
+const hist = {
+  loaded: false,
+  loading: false,
+  currentDate: null
+};
+
+function formatSwedishDate(iso){
+  try {
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' });
+  } catch(e){
+    return iso;
+  }
+}
+
+async function loadHistoryDays(force){
+  if(hist.loading) return;
+  if(hist.loaded && !force) return;
+  hist.loading = true;
+  try {
+    const r = await fetch('/api/history/days', { headers: authHeaders() });
+    if(!r.ok) throw new Error('history ' + r.status);
+    const days = await r.json();
+    renderHistoryList(Array.isArray(days) ? days : []);
+    hist.loaded = true;
+  } catch(err){
+    console.warn('[history] load failed', err);
+    renderHistoryList([]);
+  } finally {
+    hist.loading = false;
+  }
+}
+
+function renderHistoryList(days){
+  const list = document.getElementById('hist-list');
+  if(!list) return;
+
+  if(days.length === 0){
+    list.innerHTML =
+      '<div class="hist-empty">' +
+        '<div class="hist-empty-title">Inga bilder ännu.</div>' +
+        '<div class="hist-empty-sub">Skicka en bild via chatten — en Garmin-skärm, en Lifesum-summa, ett foto av maten. Selvitas sparar det som en dag här.</div>' +
+      '</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  days.forEach(day => {
+    const card = document.createElement('div');
+    card.className = 'hist-card';
+    card.dataset.date = day.date;
+
+    const dateText = formatSwedishDate(day.date);
+    const types = (day.types || [])
+      .map(t => '<span class="hist-card-type">' + escapeHtml(t) + '</span>').join('');
+
+    const t = day.totals || {};
+    const totals = [];
+    if(typeof t.steps === 'number' && t.steps > 0)
+      totals.push('<span><strong>' + t.steps.toLocaleString('sv-SE') + '</strong> steg</span>');
+    if(typeof t.kcal === 'number' && t.kcal > 0)
+      totals.push('<span><strong>' + Math.round(t.kcal) + '</strong> kcal</span>');
+    if(typeof t.training_min === 'number' && t.training_min > 0)
+      totals.push('<span><strong>' + t.training_min + '</strong> min pass</span>');
+    if(typeof t.sleep_hours === 'number' && t.sleep_hours > 0)
+      totals.push('<span><strong>' + t.sleep_hours + 'h</strong> sömn</span>');
+
+    card.innerHTML =
+      '<div class="hist-card-top">' +
+        '<div class="hist-card-date">' + escapeHtml(dateText) + '</div>' +
+        '<div class="hist-card-meta">' + day.count + ' bild' + (day.count === 1 ? '' : 'er') + '</div>' +
+      '</div>' +
+      (types ? '<div class="hist-card-types">' + types + '</div>' : '') +
+      (totals.length ? '<div class="hist-card-totals">' + totals.join('') + '</div>' : '');
+
+    card.addEventListener('click', () => openHistoryDay(day.date));
+    list.appendChild(card);
+  });
+}
+
+async function openHistoryDay(date){
+  const list    = document.getElementById('hist-list');
+  const detail  = document.getElementById('hist-detail');
+  const content = document.getElementById('hist-detail-content');
+  if(!detail || !content || !list) return;
+  hist.currentDate = date;
+  list.style.display = 'none';
+  detail.style.display = 'block';
+  content.innerHTML =
+    '<div class="ld" style="padding:20px 0;">' +
+      '<span class="ld-dots"><span class="ld-dot"></span><span class="ld-dot"></span><span class="ld-dot"></span></span>' +
+      '<span>Laddar dagen</span>' +
+    '</div>';
+  try {
+    const r = await fetch('/api/history/day/' + encodeURIComponent(date), { headers: authHeaders() });
+    if(!r.ok) throw new Error('day ' + r.status);
+    const data = await r.json();
+    renderDayDetail(data);
+  } catch(err){
+    console.warn('[history] day failed', err);
+    content.innerHTML = '<div class="hist-empty-sub">Kunde inte läsa dagen just nu.</div>';
+  }
+  // Scroll detail to top
+  const sc = document.getElementById('sd');
+  if(sc) sc.scrollTop = 0;
+}
+
+function closeHistoryDay(){
+  const list = document.getElementById('hist-list');
+  const detail = document.getElementById('hist-detail');
+  if(list) list.style.display = '';
+  if(detail) detail.style.display = 'none';
+  hist.currentDate = null;
+  const sc = document.getElementById('sd');
+  if(sc) sc.scrollTop = 0;
+}
+
+// Shared renderer used by both Historik detail view and Home today report
+function buildDaySummaryHTML(data){
+  const s = data.summary || {};
+  let html = '';
+
+  // Kropp
+  const body = [];
+  if(typeof s.steps === 'number' && s.steps > 0)             body.push(['Steg',        s.steps.toLocaleString('sv-SE')]);
+  if(typeof s.sleep_hours === 'number' && s.sleep_hours > 0) body.push(['Sömn',        s.sleep_hours + 'h']);
+  if(typeof s.hrv_ms === 'number' && s.hrv_ms > 0)           body.push(['HRV',         s.hrv_ms + ' ms']);
+  if(typeof s.body_battery === 'number')                     body.push(['Body Battery', s.body_battery]);
+  if(typeof s.stress_level === 'number')                     body.push(['Stress',      s.stress_level]);
+  if(typeof s.resting_hr === 'number' && s.resting_hr > 0)   body.push(['Vilopuls',    s.resting_hr + ' bpm']);
+  if(body.length){
+    html += '<div class="hist-section"><div class="hist-section-label">Kropp</div>';
+    body.forEach(([k, v]) => {
+      html += '<div class="hist-metric-row"><div class="hist-metric-lbl">' + escapeHtml(k) + '</div><div class="hist-metric-val">' + escapeHtml(String(v)) + '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  // Kost
+  if((typeof s.kcal === 'number' && s.kcal > 0) || s.meals_count > 0){
+    html += '<div class="hist-section"><div class="hist-section-label">Kost</div>';
+    html += '<div class="hist-metric-row"><div class="hist-metric-lbl">Kalorier</div><div class="hist-metric-val">' + Math.round(s.kcal) + ' kcal</div></div>';
+    if(s.protein_g > 0) html += '<div class="hist-metric-row"><div class="hist-metric-lbl">Protein</div><div class="hist-metric-val">' + Math.round(s.protein_g) + ' g</div></div>';
+    if(s.carbs_g > 0)   html += '<div class="hist-metric-row"><div class="hist-metric-lbl">Kolhydrater</div><div class="hist-metric-val">' + Math.round(s.carbs_g) + ' g</div></div>';
+    if(s.fat_g > 0)     html += '<div class="hist-metric-row"><div class="hist-metric-lbl">Fett</div><div class="hist-metric-val">' + Math.round(s.fat_g) + ' g</div></div>';
+    if(s.meals_count)   html += '<div class="hist-metric-row"><div class="hist-metric-lbl">Måltider</div><div class="hist-metric-val">' + s.meals_count + '</div></div>';
+    html += '</div>';
+  }
+
+  // Träning
+  if(Array.isArray(s.training) && s.training.length){
+    html += '<div class="hist-section"><div class="hist-section-label">Träning</div>';
+    s.training.forEach(t => {
+      const meta = [];
+      if(t.duration_min) meta.push(t.duration_min + ' min');
+      if(t.distance_km)  meta.push(t.distance_km + ' km');
+      if(t.avg_hr)       meta.push(t.avg_hr + ' bpm');
+      if(t.kcal_burned)  meta.push(t.kcal_burned + ' kcal');
+      html +=
+        '<div class="hist-training-card">' +
+          '<div class="hist-training-head">' + escapeHtml(t.type || 'Pass') + '</div>' +
+          (meta.length ? '<div class="hist-training-meta">' + meta.map(m => '<span>' + escapeHtml(m) + '</span>').join('') + '</div>' : '') +
+        '</div>';
+    });
+    html += '</div>';
+  }
+
+  // Alla bilder (raw events)
+  if(Array.isArray(data.events) && data.events.length){
+    html += '<div class="hist-section"><div class="hist-section-label">Alla bilder</div>';
+    data.events.forEach(e => {
+      html +=
+        '<div class="hist-event-item">' +
+          '<div class="hist-event-type">' + escapeHtml(e.type || 'bild') + '</div>' +
+          '<div class="hist-event-summary">' + escapeHtml(e.summary_sv || '—') + '</div>' +
+        '</div>';
+    });
+    html += '</div>';
+  }
+
+  if(!body.length && !(s.kcal > 0) && !(s.training || []).length && !(data.events || []).length){
+    html += '<div class="hist-empty-sub">Inga extraherade värden för den här dagen.</div>';
+  }
+
+  return html;
+}
+
+function renderDayDetail(data){
+  const content = document.getElementById('hist-detail-content');
+  if(!content) return;
+  const dateText = formatSwedishDate(data.date);
+
+  let html = '';
+  html += '<div class="hist-detail-date">' + escapeHtml(dateText) + '</div>';
+  html += '<div class="hist-detail-meta">' + data.event_count + ' bild' + (data.event_count === 1 ? '' : 'er') + ' · ' + escapeHtml(data.date) + '</div>';
+  html += buildDaySummaryHTML(data);
+
+  content.innerHTML = html;
+}
+
+// ─── IMAGE MESSAGE (user-sent photos) ───
+function addImageMessage(dataUri){
+  const msgs = document.getElementById('ch-msgs');
+  if(!msgs) return null;
+  const wrap = document.createElement('div');
+  wrap.className = 'mw u';
+  wrap.innerHTML =
+    '<div class="mc">' +
+      '<div class="msg-sender">Du</div>' +
+      '<div class="bub bub-img"><img alt=""></div>' +
+    '</div>';
+  const img = wrap.querySelector('img');
+  if(img){
+    img.src = dataUri;
+    img.addEventListener('load', () => {
+      const sc = document.getElementById('sc');
+      if(sc) sc.scrollTop = sc.scrollHeight;
+    });
+  }
+  msgs.appendChild(wrap);
+  setTimeout(() => {
+    const sc = document.getElementById('sc');
+    if(sc) sc.scrollTop = sc.scrollHeight;
+  }, 60);
+  return wrap;
+}
+
+// Resize + JPEG-encode client-side so we don't ship 15MB originals to the server
+async function fileToBase64DataUri(file, maxDim, quality){
+  maxDim = maxDim || 1600;
+  quality = typeof quality === 'number' ? quality : 0.82;
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('read failed'));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.naturalWidth, h = img.naturalHeight;
+        const scale = Math.min(1, maxDim / Math.max(w, h));
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => reject(new Error('decode failed'));
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function sendImage(file){
+  if(chat.sending) return;
+  if(!file || !file.type || !file.type.startsWith('image/')){
+    addMessage('ai', 'Jag kan bara läsa bilder just nu.');
+    return;
+  }
+  chat.sending = true;
+  hideStarters();
+  const send = document.getElementById('ci-send');
+  if(send) send.disabled = true;
+
+  let dataUri;
+  try {
+    dataUri = await fileToBase64DataUri(file);
+  } catch(err){
+    console.warn('[chat] image encode failed', err);
+    addMessage('ai', 'Jag kunde inte läsa bildfilen. Försök en annan.');
+    chat.sending = false;
+    if(send) send.disabled = false;
+    return;
+  }
+
+  addImageMessage(dataUri);
+  const typing = showTyping();
+
+  try {
+    // 1. Vision extraction — send local date so 23:30 uploads land on the right day
+    const localDate = new Date().toLocaleDateString('sv-SE'); // returns "YYYY-MM-DD"
+    const r = await fetch('/api/vision/analyze', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({ image: dataUri, date_hint: localDate })
+    });
+    // New upload → Historik list is stale, force refresh next time screen opens
+    hist.loaded = false;
+    if(!r.ok) throw new Error('vision ' + r.status);
+    const vision = await r.json();
+
+    // 2. Filter out null/empty extracted values
+    const extractedClean = {};
+    if(vision.extracted){
+      Object.entries(vision.extracted).forEach(([k, v]) => {
+        if(v !== null && v !== undefined && !(Array.isArray(v) && v.length === 0)){
+          extractedClean[k] = v;
+        }
+      });
+    }
+    const hasData = Object.keys(extractedClean).length > 0;
+    const typeLabel = vision.type && vision.type !== 'other' ? vision.type : 'bild';
+    const userMarker = '[Skickade en ' + typeLabel + '-bild]';
+    const imageSummary = hasData
+      ? ((vision.summary_sv || '') + (vision.summary_sv ? '\n' : '') + 'Extraherad data: ' + JSON.stringify(extractedClean)).trim()
+      : (vision.summary_sv || 'Vision-agenten kunde inte läsa bilden tydligt.');
+
+    // 3. Forward to persistent chat agent — it references history + saves exchange
+    const reply = await callChatAgent(userMarker, 'message', imageSummary);
+    if(typing) typing.remove();
+    addMessage('ai', reply || vision.summary_sv || 'Jag ser bilden men kan inte svara just nu.');
+  } catch(err){
+    console.warn('[chat] vision failed', err);
+    if(typing) typing.remove();
+    addMessage('ai', 'Jag kunde inte analysera bilden just nu. Försök igen om en stund.');
+  } finally {
+    chat.sending = false;
+    if(send) send.disabled = false;
+  }
+}
+
+// ─── TOKEN HELPER ───
+function token(){ return localStorage.getItem('prv_token') || ''; }
+function authHeaders(){
+  const t = token();
+  return t ? { 'Authorization': 'Bearer ' + t } : {};
+}
+
+// ─── LEVEL DETECTION ───
+// 1 = chat only (no wearable), 2 = wearable connected, 3 = Dexcom OR DNA uploaded
+async function detectLevel(){
+  try {
+    const r = await fetch('/api/integrations', { headers: authHeaders() });
+    if(!r.ok) return 1;
+    const d = await r.json();
+    const src = d.sources || d.integrations || d || {};
+    const s = JSON.stringify(src).toLowerCase();
+    const hasDexcom   = s.includes('dexcom') && s.includes('true');
+    const hasDna      = (s.includes('"dna"') || s.includes('dna_upload')) && !s.includes('"dna":false');
+    const hasWearable = ['garmin','oura','apple','strava','whoop','fitbit'].some(k =>
+      s.includes('"'+k+'":true') || s.includes('"'+k+'_connected":true')
+    );
+    if(hasDexcom || hasDna) return 3;
+    if(hasWearable) return 2;
+    return 1;
+  } catch(e){
+    return 1;
+  }
+}
+
+function applyLevel(level){
+  document.body.dataset.level = level;
+  const lvlEl = document.getElementById('hm-level');
+  if(lvlEl) lvlEl.textContent = level === 1 ? 'Level 1' : (level === 2 ? 'Level 2' : 'Live');
+  document.querySelectorAll('.nb[data-min-level]').forEach(b => {
+    const min = parseInt(b.dataset.minLevel, 10) || 1;
+    b.classList.toggle('hidden', level < min);
+  });
+}
+
+// ─── CYCLING INSIGHTS ───
+const insightState = { items: [], idx: 0, timer: null };
+
+// Insight category colors per design-system: red=sleep, iris=glucose, purple=DNA, green=nutrition
+const INSIGHT_COLORS = {
+  sleep:     '#c06060',
+  stress:    '#c49060',
+  energy:    '#8fa8c4',
+  glucose:   '#67aac8',
+  dna:       '#a78bfa',
+  nutrition: '#5cb88a',
+  general:   '#67aac8'
+};
+
+function renderInsightCycle(items){
+  const cycle = document.getElementById('insightCycle');
+  const dots  = document.getElementById('insightDots');
+  if(!cycle) return;
+
+  if(insightState.timer){
+    clearInterval(insightState.timer);
+    insightState.timer = null;
+  }
+  insightState.items = items;
+  insightState.idx = 0;
+
+  cycle.innerHTML = '';
+  if(dots) dots.innerHTML = '';
+
+  items.forEach((item, i) => {
+    const el = document.createElement('div');
+    el.className = 'insight-item' + (i === 0 ? ' visible' : '');
+    const color = INSIGHT_COLORS[item.kind] || INSIGHT_COLORS.general;
+    let ctxHtml = '';
+    if(item.context){
+      ctxHtml = '<div class="ins-context">' +
+        '<div class="ins-dot" style="background:' + color + ';box-shadow:0 0 8px ' + color + '"></div>' +
+        '<span>' + escapeHtml(item.context) + '</span>' +
+      '</div>';
+    }
+    el.innerHTML = ctxHtml +
+      '<div class="ins-headline">' + escapeHtml(item.headline) + '</div>';
+    cycle.appendChild(el);
+
+    if(items.length > 1 && dots){
+      const d = document.createElement('div');
+      d.className = 'i-dot' + (i === 0 ? ' active' : '');
+      d.addEventListener('click', () => showInsight(i));
+      dots.appendChild(d);
+    }
+  });
+
+  if(items.length > 1){
+    insightState.timer = setInterval(() => {
+      showInsight((insightState.idx + 1) % items.length);
+    }, 4000);
+  }
+}
+
+function showInsight(idx){
+  insightState.idx = idx;
+  document.querySelectorAll('#insightCycle .insight-item').forEach((el, i) => {
+    el.classList.toggle('visible', i === idx);
+  });
+  document.querySelectorAll('#insightDots .i-dot').forEach((el, i) => {
+    el.classList.toggle('active', i === idx);
+  });
+}
+
+// ─── DERIVE LEVEL 2 INSIGHTS FROM CHECK-INS ───
+function deriveInsights(checkins){
+  const latest = checkins[checkins.length - 1] || {};
+  const insights = [];
+  const sleep   = latest.sleep ?? latest.sleep_hours ?? latest.sleep_h;
+  const stress  = latest.stress;
+  const energy  = latest.energy;
+  const focus   = latest.focus;
+
+  if(typeof sleep === 'number'){
+    if(sleep < 6){
+      insights.push({ kind:'sleep', context:'Sömn · ' + sleep.toFixed(1) + 'h', headline:'Vila vinner idag.' });
+    } else if(sleep >= 8){
+      insights.push({ kind:'sleep', context:'Sömn · ' + sleep.toFixed(1) + 'h', headline:'Kroppen är redo.' });
+    } else {
+      insights.push({ kind:'sleep', context:'Sömn · ' + sleep.toFixed(1) + 'h', headline:'Sömnen är neutral — resten styr dagen.' });
+    }
+  }
+  if(typeof stress === 'number'){
+    if(stress >= 7){
+      insights.push({ kind:'stress', context:'Stress · ' + stress + '/10', headline:'Stressen dominerar. Minimera nya belastningar.' });
+    } else if(stress <= 3){
+      insights.push({ kind:'stress', context:'Stress · ' + stress + '/10', headline:'Lugnet är sällsynt — använd det.' });
+    }
+  }
+  if(typeof energy === 'number'){
+    if(energy <= 4){
+      insights.push({ kind:'energy', context:'Energi · ' + energy + '/10', headline:'Energin är under snitt. Välj en sak.' });
+    } else if(energy >= 8){
+      insights.push({ kind:'energy', context:'Energi · ' + energy + '/10', headline:'Energin räcker till mer än du tror.' });
+    }
+  }
+  if(typeof focus === 'number' && insights.length < 4){
+    if(focus <= 4){
+      insights.push({ kind:'general', context:'Fokus · ' + focus + '/10', headline:'Fokus är fragmenterat. Skär ner.' });
+    }
+  }
+  return insights.slice(0, 4);
+}
+
+// ─── RINGS (Level 2+) ───
+function setRing(name, pct, label){
+  const ring = document.querySelector('.ring[data-ring="' + name + '"] .ring-fg');
+  const val  = document.getElementById('ring-val-' + name);
+  if(ring){
+    const circumference = 163.36;
+    const clamped = Math.max(0, Math.min(1, pct));
+    ring.style.strokeDashoffset = (circumference * (1 - clamped)).toFixed(2);
+  }
+  if(val) val.textContent = label;
+}
+
+function updateRings(checkins){
+  const latest = checkins[checkins.length - 1] || {};
+  const sleep  = latest.sleep ?? latest.sleep_hours ?? latest.sleep_h;
+  const energy = latest.energy;
+  const stress = latest.stress;
+
+  const sleepPct    = typeof sleep  === 'number' ? Math.min(sleep / 8, 1) : 0;
+  const recoveryPct = typeof energy === 'number' ? energy / 10 : 0;
+  const strainPct   = typeof stress === 'number' ? stress / 10 : 0;
+
+  setRing('recovery', recoveryPct, typeof energy === 'number' ? (energy * 10) + '%' : '—');
+  setRing('sleep',    sleepPct,    typeof sleep  === 'number' ? sleep.toFixed(1) + 'h' : '—');
+  setRing('strain',   strainPct,   typeof stress === 'number' ? stress + '/10' : '—');
+}
+
+// ─── RAW NUMBERS (Level 2+) ───
+function updateRawNumbers(checkins){
+  const latest = checkins[checkins.length - 1] || {};
+  const set = (id, v) => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = v;
+  };
+  const sleep = latest.sleep ?? latest.sleep_hours ?? latest.sleep_h;
+  set('rv-sleep',  typeof sleep          === 'number' ? sleep.toFixed(1) + 'h' : '—');
+  set('rv-hrv',    latest.hrv ? latest.hrv + 'ms' : '—');
+  set('rv-stress', typeof latest.stress  === 'number' ? latest.stress + '/10'  : '—');
+  set('rv-energy', typeof latest.energy  === 'number' ? latest.energy + '/10'  : '—');
+}
+
+// ─── INSIGHT LOADING ───
+async function loadInsight(){
+  const whyEl = document.getElementById('hm-why');
+  const ebEl  = document.getElementById('hm-eyebrow');
+
+  try {
+    const cr = await fetch('/api/checkins', { headers: authHeaders() });
+    const data = cr.ok ? await cr.json() : [];
+    const list = Array.isArray(data) ? data : (data.checkins || data.data || []);
+
+    // No data yet → welcome
+    if(list.length === 0){
+      ebEl.textContent = 'Välkommen';
+      renderInsightCycle([{ kind:'general', context:'', headline:'Systemet lär sig hur du fungerar.' }]);
+      whyEl.style.display = 'block';
+      whyEl.textContent = 'Börja med en chatt. En mening räcker. Systemet lyssnar från och med nu.';
+      return;
+    }
+
+    const level = parseInt(document.body.dataset.level, 10) || 1;
+
+    // Level 2+: populate rings + raw numbers from checkins
+    if(level >= 2){
+      updateRings(list);
+      updateRawNumbers(list);
+    }
+
+    // Primary insight via Agent 3
+    const profile = (() => {
+      try { return JSON.parse(localStorage.getItem('forsyne_onboarding') || '{}'); }
+      catch(e) { return {}; }
+    })();
+
+    let primary = '';
+    let why = '';
+    try {
+      const ir = await fetch('/api/agent/insights/generate', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({
+          checkins: list.slice(-14),
+          profile,
+          context: 'home_level' + level
+        })
+      });
+      if(ir.ok){
+        const res = await ir.json();
+        primary = res.paastående || res.insight || res.text || res.insikt || res.paastaende || '';
+        why     = res.why || res.förklaring || res.orsak || res.pattern || res.forklaring || '';
+      }
+    } catch(e){
+      console.warn('[selvitas] primary insight failed', e);
+    }
+
+    // Level 1: single insight
+    if(level < 2){
+      ebEl.textContent = 'Dagens observation';
+      renderInsightCycle([{
+        kind:'general',
+        context:'',
+        headline: primary || 'Systemet samlar dagens data.'
+      }]);
+      if(why){ whyEl.style.display = 'block'; whyEl.textContent = why; }
+      return;
+    }
+
+    // Level 2+: cycling insights (primary + derived)
+    const derived = deriveInsights(list);
+    const items = [];
+    if(primary){
+      items.push({ kind:'general', context:'Dagens observation', headline: primary });
+    }
+    derived.forEach(d => items.push(d));
+    if(items.length === 0){
+      items.push({ kind:'general', context:'', headline:'Systemet samlar dagens data.' });
+    }
+    ebEl.textContent = 'Din modell';
+    renderInsightCycle(items.slice(0, 4));
+    if(why){ whyEl.style.display = 'block'; whyEl.textContent = why; }
+  } catch(err){
+    console.warn('[selvitas] insight load failed', err);
+    ebEl.textContent = 'Välkommen tillbaka';
+    renderInsightCycle([{
+      kind:'general',
+      context:'',
+      headline:'Systemet samlar dagens data.'
+    }]);
+  }
+}
+
+// ─── BOOT ───
+(async () => {
+  // Auth check — if not logged in, redirect with ?next=/app/ so login returns here.
+  // We do this BEFORE checkAuth() because checkAuth hardcodes /login.html without a next param,
+  // and CLAUDE.md forbids editing auth.js. So we pre-empt for the not-logged-in case.
+  const loggedIn = (typeof isLoggedIn === 'function') ? isLoggedIn() : !!token();
+  if (!loggedIn) {
+    location.href = '/login.html?next=' + encodeURIComponent('/app/');
+    return;
+  }
+  // Logged in → delegate to checkAuth for profile check (onboarding redirect if missing)
+  if (typeof checkAuth === 'function') {
+    const ok = await checkAuth();
+    if (!ok) return;
+  }
+
+  // Level detection + UI apply
+  const level = await detectLevel();
+  applyLevel(level);
+
+  // Load today's report (or show invite state if no photos yet)
+  loadTodaySummary();
+
+  // Upload button → open file picker
+  const hmUpload = document.getElementById('hm-upload');
+  const hmFile   = document.getElementById('hm-file');
+  const hmAddMore = document.getElementById('hm-add-more');
+  if(hmUpload && hmFile){
+    hmUpload.addEventListener('click', () => hmFile.click());
+    hmFile.addEventListener('change', async (e) => {
+      const files = e.target.files;
+      if(files && files.length > 0) await uploadBatchImages(files);
+      hmFile.value = '';
+    });
+  }
+  if(hmAddMore && hmFile){
+    hmAddMore.addEventListener('click', () => hmFile.click());
+  }
+
+  // Ask Selvitas about today
+  const hmAsk = document.getElementById('hm-ask');
+  if(hmAsk) hmAsk.addEventListener('click', () => openTodayChat());
+
+  // Chat input wiring
+  const ciIn = document.getElementById('ci-in');
+  const ciSend = document.getElementById('ci-send');
+  if(ciIn){
+    ciIn.addEventListener('input', autoResize);
+    ciIn.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' && !e.shiftKey){
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  }
+  if(ciSend) ciSend.addEventListener('click', () => sendMessage());
+
+  // Historik — back button in detail view
+  const histBack = document.getElementById('hist-back');
+  if(histBack) histBack.addEventListener('click', closeHistoryDay);
+
+  // Camera / photo picker wiring
+  const ciCam  = document.getElementById('ci-cam');
+  const ciFile = document.getElementById('ci-file');
+  if(ciCam && ciFile){
+    ciCam.addEventListener('click', () => {
+      // Open chat first if we're on another screen
+      if(!document.getElementById('sc').classList.contains('active')) goTo('sc');
+      ciFile.click();
+    });
+    ciFile.addEventListener('change', async (e) => {
+      const f = e.target.files && e.target.files[0];
+      if(f) await sendImage(f);
+      ciFile.value = ''; // reset so same file can be picked again
+    });
+  }
+})();
+
+})();
+</script>
+</body>
+</html>

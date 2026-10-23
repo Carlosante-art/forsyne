@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Datakällor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --ink:    #0F1210;
+  --ink2:   #131714;
+  --ink3:   #171c18;
+  --fg:     #F2F0EA;
+  --fg2:    #CCC9BF;
+  --fg3:    #8A8E89;
+  --fg4:    #4a4e49;
+  --accent: #8FAE8A;
+  --trust:  #5B7FA6;
+  --warn:   #C4875A;
+  --danger: #A85C5C;
+  --serif:  'Cormorant Garamond', Georgia, serif;
+  --sans:   'Jost', system-ui, sans-serif;
+  --border: rgba(242,240,234,0.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--ink); color: var(--fg); font-family: var(--sans); font-weight: 300; line-height: 1.7; min-height: 100vh; }
+.layout { display: grid; grid-template-columns: 200px 1fr; grid-template-rows: 60px 1fr; height: 100vh; overflow: hidden; }
+
+.topbar { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 60px; border-bottom: 1px solid var(--border); background: rgba(15,18,16,0.95); backdrop-filter: blur(24px); position: sticky; top: 0; z-index: 100; }
+.topbar-logo { font-family: var(--serif); font-size: 1.1rem; font-weight: 400; letter-spacing: 0.16em; color: var(--fg); text-decoration: none; }
+.topbar-right { display: flex; align-items: center; gap: 2rem; }
+.topbar-date { font-size: 0.74rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg3); }
+.topbar-user { font-size: 0.78rem; letter-spacing: 0.12em; color: var(--fg3); text-transform: uppercase; cursor: pointer; transition: color 0.2s; }
+.topbar-user:hover { color: var(--fg2); }
+
+.sidebar { border-right: 1px solid var(--border); padding: 2.5rem 0; overflow-y: auto; scrollbar-width: none; }
+.sidebar::-webkit-scrollbar { display: none; }
+.nav-group { margin-bottom: 2rem; }
+.nav-group-label { font-size: 0.62rem; letter-spacing: 0.32em; text-transform: uppercase; color: var(--fg4); padding: 0 1.8rem; margin-bottom: 0.5rem; }
+.nav-link { display: block; padding: 0.5rem 1.8rem; font-size: 0.88rem; letter-spacing: 0.06em; color: var(--fg3); text-decoration: none; transition: all 0.2s; border-left: 1px solid transparent; position: relative; }
+.nav-link:hover { color: var(--fg2); }
+.nav-link.active { color: var(--fg); border-left-color: var(--accent); }
+.nav-badge { position: absolute; right: 1.8rem; top: 50%; transform: translateY(-50%); width: 5px; height: 5px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+.sidebar-foot { margin-top: auto; padding: 1.5rem 1.8rem 0; border-top: 1px solid var(--border); font-size: 0.74rem; color: var(--fg3); line-height: 1.8; }
+.sidebar-foot strong { display: block; color: var(--accent); font-weight: 300; }
+
+.main { padding: 3rem 3.5rem; overflow-y: auto; height: 100%; }
+
+/* PAGE HEADER */
+.page-header { margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+.page-eyebrow { font-size: 0.68rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.75rem; }
+.page-eyebrow::before { content: ''; width: 14px; height: 1px; background: var(--accent); opacity: 0.5; }
+.page-heading { font-family: var(--serif); font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 300; line-height: 1.1; color: var(--fg); }
+.page-heading em { font-style: italic; color: var(--fg2); }
+.page-sub { font-size: 0.82rem; color: var(--fg3); line-height: 1.7; max-width: 520px; margin-top: 0.8rem; }
+
+/* STATUS OVERVIEW */
+.status-overview {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); margin-bottom: 2rem;
+}
+.status-item { background: var(--ink2); padding: 1.4rem 1.6rem; }
+.status-lbl { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--fg3); margin-bottom: 0.6rem; }
+.status-val { font-family: var(--serif); font-size: 2rem; font-weight: 300; line-height: 1; margin-bottom: 0.3rem; }
+.status-sub { font-size: 0.74rem; color: var(--fg3); }
+
+/* CATEGORY TABS */
+.cat-tabs { display: flex; gap: 0.3rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.cat-tab { padding: 0.4rem 1.1rem; border: 1px solid var(--border); font-size: 0.74rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg3); background: none; cursor: pointer; transition: all 0.2s; font-family: var(--sans); }
+.cat-tab:hover { border-color: rgba(143,174,138,0.3); color: var(--fg2); }
+.cat-tab.active { border-color: var(--accent); color: var(--fg); background: rgba(143,174,138,0.06); }
+
+/* SOURCE CARDS GRID */
+.sources-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); margin-bottom: 1px;
+}
+.source-card {
+  background: var(--ink2); padding: 1.8rem;
+  display: flex; flex-direction: column; gap: 1rem;
+  position: relative; overflow: hidden;
+  transition: background 0.2s;
+}
+.source-card:hover { background: var(--ink3); }
+.source-card.connected { border-top: 2px solid var(--trust); }
+.source-card.coming { opacity: 0.5; }
+
+/* STATUS BADGE */
+.source-status {
+  position: absolute; top: 1.2rem; right: 1.2rem;
+  font-size: 0.5rem; letter-spacing: 0.16em; text-transform: uppercase;
+  padding: 0.2rem 0.6rem; border: 1px solid;
+}
+.ss-connected { color: var(--trust); border-color: rgba(91,127,166,0.35); background: rgba(91,127,166,0.08); }
+.ss-available { color: var(--fg3); border-color: var(--border); }
+.ss-coming { color: var(--fg4); border-color: rgba(255,255,255,0.04); }
+.ss-priority { color: var(--warn); border-color: rgba(196,135,90,0.3); background: rgba(196,135,90,0.06); }
+
+/* SOURCE ICON */
+.source-icon {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--serif); font-size: 1.2rem; font-weight: 300;
+  border: 1px solid var(--border); color: var(--fg2);
+  flex-shrink: 0;
+}
+.source-icon.gi { border-color: rgba(0,153,102,0.3); color: #009966; }
+.source-icon.ou { border-color: rgba(220,186,135,0.3); color: #DCBA87; }
+.source-icon.wh { border-color: rgba(196,135,90,0.3); color: var(--warn); }
+.source-icon.ap { border-color: rgba(242,240,234,0.2); color: var(--fg2); }
+.source-icon.sa { border-color: rgba(20,100,200,0.3); color: #1464C8; }
+.source-icon.go { border-color: rgba(66,133,244,0.3); color: #4285F4; }
+.source-icon.fi { border-color: rgba(0,178,177,0.3); color: #00B2B1; }
+.source-icon.po { border-color: rgba(210,60,60,0.3); color: #D23C3C; }
+.source-icon.wi { border-color: rgba(143,174,138,0.3); color: var(--accent); }
+.source-icon.dx { border-color: rgba(0,162,232,0.3); color: #00A2E8; }
+.source-icon.fl { border-color: rgba(0,162,100,0.3); color: #00A264; }
+.source-icon.st { border-color: rgba(252,76,2,0.3); color: #FC4C02; }
+.source-icon.mf { border-color: rgba(255,186,0,0.3); color: #FFBA00; }
+
+.source-header { display: flex; align-items: center; gap: 0.8rem; }
+.source-name { font-family: var(--serif); font-size: 1.1rem; font-weight: 300; color: var(--fg); line-height: 1.2; }
+.source-type { font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg4); margin-top: 0.15rem; }
+
+.source-data { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.data-tag { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg3); padding: 0.18rem 0.55rem; border: 1px solid var(--border); }
+.data-tag.key { border-color: rgba(143,174,138,0.2); color: var(--accent); }
+
+.source-desc { font-size: 0.7rem; color: var(--fg3); line-height: 1.6; }
+
+.source-action { margin-top: auto; padding-top: 0.8rem; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.source-btn {
+  font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase;
+  padding: 0.5rem 1.2rem; border: 1px solid; cursor: pointer;
+  font-family: var(--sans); transition: all 0.2s; text-decoration: none;
+  display: inline-block;
+}
+.sb-connect { color: var(--fg); border-color: rgba(143,174,138,0.4); background: rgba(143,174,138,0.08); }
+.sb-connect:hover { background: rgba(143,174,138,0.15); border-color: var(--accent); }
+.sb-connected { color: var(--accent); border-color: rgba(143,174,138,0.3); cursor: default; }
+.sb-disconnect { font-size: 0.64rem; color: var(--fg4); text-decoration: none; cursor: pointer; transition: color 0.2s; background: none; border: none; font-family: var(--sans); letter-spacing: 0.1em; text-transform: uppercase; }
+.sb-disconnect:hover { color: var(--danger); }
+.sb-coming { color: var(--fg4); border-color: var(--border); cursor: not-allowed; }
+.source-sync { font-size: 0.68rem; color: var(--fg4); }
+
+/* NO DEVICE CARD */
+.no-device-card {
+  background: var(--ink2); border: 1px solid var(--border);
+  border-top: none; padding: 2rem 2.5rem;
+  display: flex; align-items: flex-start; gap: 2rem;
+  margin-bottom: 1px;
+}
+.nd-icon { font-family: var(--serif); font-size: 2.5rem; font-weight: 300; color: var(--fg4); flex-shrink: 0; line-height: 1; }
+.nd-body {}
+.nd-title { font-family: var(--serif); font-size: 1.2rem; font-weight: 300; color: var(--fg); margin-bottom: 0.4rem; }
+.nd-desc { font-size: 0.88rem; color: var(--fg2); line-height: 1.7; max-width: 560px; margin-bottom: 1rem; }
+.nd-desc strong { color: var(--fg); font-weight: 400; }
+.nd-btn { display: inline-block; font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg); border: 1px solid rgba(143,174,138,0.3); padding: 0.5rem 1.4rem; text-decoration: none; transition: all 0.2s; background: rgba(143,174,138,0.06); }
+.nd-btn:hover { background: rgba(143,174,138,0.12); border-color: var(--accent); }
+
+/* PRIVACY NOTE */
+.privacy-note {
+  background: var(--ink2); border: 1px solid var(--border);
+  border-top: none; border-left: 2px solid rgba(91,127,166,0.4);
+  padding: 1.4rem 2rem;
+  display: flex; align-items: flex-start; gap: 1rem;
+  margin-bottom: 1px;
+}
+.pn-icon { font-size: 0.8rem; color: var(--trust); flex-shrink: 0; padding-top: 0.1rem; opacity: 0.8; }
+.pn-text { font-size: 0.78rem; color: var(--fg3); line-height: 1.7; }
+.pn-text strong { color: var(--fg2); font-weight: 400; }
+
+/* PANEL */
+.panel { background: var(--ink2); padding: 2rem; border: 1px solid var(--border); border-top: none; margin-bottom: 1px; }
+.panel-lbl { font-size: 0.64rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--fg3); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.6rem; }
+.panel-lbl::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* HOW IT WORKS */
+.how-step { display: flex; align-items: flex-start; gap: 1.2rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
+.how-step:last-child { border-bottom: none; }
+.how-num { font-family: var(--serif); font-size: 1.8rem; font-weight: 300; color: var(--trust); min-width: 32px; line-height: 1.1; opacity: 0.7; }
+.how-body {}
+.how-title { font-size: 0.88rem; color: var(--fg2); margin-bottom: 0.2rem; }
+.how-desc { font-size: 0.66rem; color: var(--fg3); line-height: 1.6; }
+
+@media (max-width: 1100px) { .sources-grid { grid-template-columns: 1fr 1fr; } .status-overview { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 768px) { .layout { grid-template-columns: 1fr; } .sidebar { display: none; } .main { padding: 1.5rem; } .sources-grid, .status-overview { grid-template-columns: 1fr; } }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.main > * { animation: fadeUp 0.45s ease both; }
+.main > *:nth-child(2) { animation-delay: 0.06s; }
+.main > *:nth-child(3) { animation-delay: 0.1s; }
+.main > *:nth-child(4) { animation-delay: 0.14s; }
+.main > *:nth-child(5) { animation-delay: 0.18s; }
+
+
+/* ── FORSYNE DESIGN UPGRADE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+/* Topbar glow line */
+.topbar, nav {
+  border-bottom: 1px solid rgba(143,174,138,0.1) !important;
+  box-shadow: 0 1px 0 rgba(143,174,138,0.04);
+}
+/* Metric cards hover glow */
+.metric-card, .panel, .card, .data-card, .insight-card {
+  transition: box-shadow 0.3s ease;
+}
+.metric-card:hover, .panel:hover, .card:hover, .data-card:hover, .insight-card:hover {
+  box-shadow: 0 0 0 1px rgba(143,174,138,0.1), 0 4px 20px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <header class="topbar">
+    <a href="dashboard.html" class="topbar-logo">Forsyne</a>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topDate"></span>
+      <span class="topbar-user" id="topUser"></span>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <div class="nav-group">
+      <div class="nav-group-label">Idag</div>
+      <a class="nav-link" href="dashboard.html">Dashboard</a>
+      <a class="nav-link" href="checkin.html">Check-in</a>
+      <a class="nav-link" href="signal.html">Signalen</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Mönster</div>
+      <a class="nav-link" href="sleep.html">Sömn</a>
+      <a class="nav-link" href="energy.html">Energi</a>
+      <a class="nav-link" href="stress.html">Stress</a>
+      <a class="nav-link" href="training.html">Träning</a>
+      <a class="nav-link" href="nutrition.html">Kost</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Förstå dig själv</div>
+      <a class="nav-link" href="profilering.html">Profilering</a>
+      <a class="nav-link" href="analys.html">Total analys</a>
+      <a class="nav-link" href="systemkarta.html">Systemkarta</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Din biologi</div>
+      <a class="nav-link active" href="wearables.html">Wearables</a>
+      <a class="nav-link" href="biologi.html">Blodprover &amp; hormoner</a>
+      <a class="nav-link" href="journal.html">Läkarjournal</a>
+    </div>
+    <div class="sidebar-foot">
+      Datakällor · <span id="connectedCount">0</span> anslutna
+      <strong id="sidebarStatus">Ingen källa kopplad</strong>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- HEADER -->
+    <div class="page-header">
+      <div class="page-eyebrow">Datakällor · Koppla vad du har</div>
+      <h1 class="page-heading">Berätta vad du har.<br><em>Vi sköter resten.</em></h1>
+      <p class="page-sub">Forsyne fungerar med vad du redan äger — från Garmin och Oura till Apple Health på din telefon. Ingen extra hårdvara krävs för att komma igång.</p>
+    </div>
+
+    <!-- STATUS OVERVIEW -->
+    <div class="status-overview">
+      <div class="status-item">
+        <div class="status-lbl">Anslutna källor</div>
+        <div class="status-val" id="statConnected" style="color:var(--accent);">0</div>
+        <div class="status-sub">Aktiva just nu</div>
+      </div>
+      <div class="status-item">
+        <div class="status-lbl">Datakvalitet</div>
+        <div class="status-val" id="statQuality" style="color:var(--fg3);">–</div>
+        <div class="status-sub">Baserat på anslutna källor</div>
+      </div>
+      <div class="status-item">
+        <div class="status-lbl">Biologisk data</div>
+        <div class="status-val" id="statBio" style="color:var(--fg3);">–</div>
+        <div class="status-sub">HRV, sömn, energi</div>
+      </div>
+      <div class="status-item">
+        <div class="status-lbl">Senaste sync</div>
+        <div class="status-val" id="statSync" style="color:var(--fg3); font-size: 1rem;">–</div>
+        <div class="status-sub">Automatisk synk</div>
+      </div>
+    </div>
+
+    <!-- CATEGORY TABS -->
+    <div class="cat-tabs">
+      <button class="cat-tab active" onclick="filterSources('all', this)">Alla</button>
+      <button class="cat-tab" onclick="filterSources('phone', this)">Telefon & OS</button>
+      <button class="cat-tab" onclick="filterSources('wearable', this)">Wearables</button>
+      <button class="cat-tab" onclick="filterSources('cgm', this)">Glukos (CGM)</button>
+      <button class="cat-tab" onclick="filterSources('fitness', this)">Träning & Kost</button>
+      <button class="cat-tab" onclick="filterSources('bio', this)">Biometrik & Labb</button>
+    </div>
+
+    <!-- SOURCES GRID -->
+    <div class="sources-grid" id="sourcesGrid">
+
+      <!-- ── AKTIVA INTEGRATIONER (överst alltid) ── -->
+      <div class="source-card" data-cat="fitness" id="card-strava">
+        <div class="source-status ss-available">Tillgänglig</div>
+        <div class="source-header">
+          <div class="source-icon st">S</div>
+          <div><div class="source-name">Strava</div><div class="source-type">Träningsapp</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag key">Aktiviteter</span>
+          <span class="data-tag">Löpning</span>
+          <span class="data-tag">Cykling</span>
+          <span class="data-tag">Puls</span>
+          <span class="data-tag">Distans</span>
+        </div>
+        <div class="source-desc">Träningshistorik och aktivitetsdata. Kopplar träningsbelastning mot återhämtning och energi i Forsyne modell.</div>
+        <div class="source-action" id="action-strava">
+          <a onclick="connectOAuth('strava')" class="source-btn sb-connect">Koppla Strava</a>
+        </div>
+      </div>
+
+      <div class="source-card" data-cat="wearable" id="card-garmin">
+        <div class="source-status ss-priority">Rekommenderad</div>
+        <div class="source-header">
+          <div class="source-icon gi">G</div>
+          <div><div class="source-name">Garmin</div><div class="source-type">GPS-klocka · Fitness tracker</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag key">HRV</span>
+          <span class="data-tag key">Body Battery</span>
+          <span class="data-tag key">Djupsömn</span>
+          <span class="data-tag key">Stress</span>
+          <span class="data-tag">VO2max</span>
+          <span class="data-tag">Vilopuls</span>
+        </div>
+        <div class="source-desc">Starkast biologisk data av alla wearables. Body Battery och stressanalys är Forsyne primära signaler. Exportera din data från Garmin Connect och ladda upp här.</div>
+        <div class="source-action" id="action-garmin">
+          <div id="garmin-connect-btn">
+            <button class="source-btn sb-connect" onclick="document.getElementById('garmin-upload').click()">Importera Garmin-data</button>
+            <input type="file" id="garmin-upload" accept=".json" multiple style="display:none" onchange="uploadGarmin(this)">
+          </div>
+        </div>
+      </div>
+
+      <div class="source-card" data-cat="cgm" id="card-dexcom">
+        <div class="source-status ss-priority">Hög prioritet</div>
+        <div class="source-header">
+          <div class="source-icon dx">D</div>
+          <div><div class="source-name">Dexcom G6 / G7</div><div class="source-type">Kontinuerlig glukosmätning</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag key">Glukos realtid</span>
+          <span class="data-tag key">Glukostrend</span>
+          <span class="data-tag key">Dipp-detektering</span>
+          <span class="data-tag">Variabilitet</span>
+        </div>
+        <div class="source-desc">Den starkaste enskilda energisignalen som finns. Glukosdata kopplar direkt mot Body Battery, fokus och stämning. Differentierar Forsyne från allt annat.</div>
+        <div class="source-action" id="action-dexcom">
+          <a onclick="connectOAuth('dexcom')" class="source-btn sb-connect">Koppla Dexcom</a>
+        </div>
+      </div>
+
+      <!-- ── TELEFON & OS ── -->
+      <div class="source-card" data-cat="phone">
+        <div class="source-status ss-available">Tillgänglig</div>
+        <div class="source-header">
+          <div class="source-icon ap">⌚</div>
+          <div><div class="source-name">Apple Health</div><div class="source-type">iPhone · Apple Watch</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag key">HRV</span>
+          <span class="data-tag key">Sömn</span>
+          <span class="data-tag key">Puls</span>
+          <span class="data-tag">Steg</span>
+          <span class="data-tag">Aktivitet</span>
+          <span class="data-tag">Mindfulness</span>
+        </div>
+        <div class="source-desc">Central datahub för alla iPhone-användare. Om du har Apple Watch får vi HRV och djupare sömndata. Fungerar utan extra hårdvara.</div>
+        <div class="source-action">
+          <a href="#" class="source-btn sb-connect" onclick="connectSource('apple', this)">Koppla Apple Health</a>
+        </div>
+      </div>
+
+      <div class="source-card" data-cat="phone">
+        <div class="source-status ss-available">Tillgänglig</div>
+        <div class="source-header">
+          <div class="source-icon sa">S</div>
+          <div><div class="source-name">Samsung Health</div><div class="source-type">Android · Samsung</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag key">Sömn</span>
+          <span class="data-tag key">Puls</span>
+          <span class="data-tag">Stress</span>
+          <span class="data-tag">Steg</span>
+          <span class="data-tag">Aktivitet</span>
+        </div>
+        <div class="source-desc">Inbyggd på alla Samsung-telefoner. Bra sömndata och stressmätning utan extra kostnad. Synkar automatiskt med Google Health Connect.</div>
+        <div class="source-action">
+          <a href="#" class="source-btn sb-connect" onclick="connectSource('samsung', this)">Koppla Samsung Health</a>
+        </div>
+      </div>
+
+      <div class="source-card" data-cat="phone">
+        <div class="source-status ss-available">Tillgänglig</div>
+        <div class="source-header">
+          <div class="source-icon go">G</div>
+          <div><div class="source-name">Google Health Connect</div><div class="source-type">Android</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag key">Sömn</span>
+          <span class="data-tag key">Puls</span>
+          <span class="data-tag">Steg</span>
+          <span class="data-tag">Aktivitet</span>
+          <span class="data-tag">Temperatur</span>
+        </div>
+        <div class="source-desc">Androids centrala hälsodatahub. Samlar data från alla installerade hälsoappar på telefonen. Standardlösning för alla Android-användare.</div>
+        <div class="source-action">
+          <a href="#" class="source-btn sb-connect" onclick="connectSource('google', this)">Koppla Google Health</a>
+        </div>
+      </div>
+
+      <!-- ── PREMIUM WEARABLES ── -->
+
+      <div class="source-card" data-cat="wearable">
+        <div class="source-status ss-priority">Rekommenderad</div>
+        <div class="source-header">
+          <div class="source-icon ou">O</div>
+          <div><div class="source-name">Oura Ring</div><div class="source-type">Smartring</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag key">HRV natt</span>
+          <span class="data-tag key">Sömnfaser</span>
+          <span class="data-tag key">Återhämtning</span>
+          <span class="data-tag">Temperatur</span>
+          <span class="data-tag">Andning</span>
+        </div>
+        <div class="source-desc">Bäst i klass för sömnfasdata och nattlig HRV. Readiness-poängen är en stark signal för prediktionsmodellen. Enkel API — snabb koppling.</div>
+        <div class="source-action">
+          <a href="/auth/oura" class="source-btn sb-connect">Koppla Oura</a>
+        </div>
+      </div>
+
+      <div class="source-card" data-cat="wearable">
+        <div class="source-status ss-available">Tillgänglig</div>
+        <div class="source-header">
+          <div class="source-icon wh">W</div>
+          <div><div class="source-name">Whoop</div><div class="source-type">Performance tracker</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag key">HRV</span>
+          <span class="data-tag key">Återhämtning</span>
+          <span class="data-tag key">Belastning</span>
+          <span class="data-tag">Sömn</span>
+          <span class="data-tag">Andning</span>
+        </div>
+        <div class="source-desc">Fokuserat på återhämtning och prestation. Belastnings- och återhämtningspoängen är starka signaler för Signalen. Populärt bland atleter.</div>
+        <div class="source-action">
+          <a href="/auth/whoop" class="source-btn sb-connect">Koppla Whoop</a>
+        </div>
+      </div>
+
+      <div class="source-card" data-cat="wearable">
+        <div class="source-status ss-available">Tillgänglig</div>
+        <div class="source-header">
+          <div class="source-icon fi">F</div>
+          <div><div class="source-name">Fitbit</div><div class="source-type">Fitness tracker</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag key">Sömn</span>
+          <span class="data-tag key">Puls</span>
+          <span class="data-tag">HRV</span>
+          <span class="data-tag">Steg</span>
+          <span class="data-tag">Aktivitet</span>
+        </div>
+        <div class="source-desc">Bra sömndata och pulsmätning. Enkel REST API med snabb integration. Bra alternativ för den som redan har en Fitbit.</div>
+        <div class="source-action">
+          <a href="/auth/fitbit" class="source-btn sb-connect">Koppla Fitbit</a>
+        </div>
+      </div>
+
+      <div class="source-card" data-cat="wearable">
+        <div class="source-status ss-available">Tillgänglig</div>
+        <div class="source-header">
+          <div class="source-icon po">P</div>
+          <div><div class="source-name">Polar</div><div class="source-type">Sports watch</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag key">HRV</span>
+          <span class="data-tag key">Träning</span>
+          <span class="data-tag">Sömn</span>
+          <span class="data-tag">Aktivitet</span>
+          <span class="data-tag">Puls</span>
+        </div>
+        <div class="source-desc">Detaljerad tränings- och HRV-data. Populärt bland uthållighetsidrottare. Polars HRV-mätning är en av de mest tillförlitliga på marknaden.</div>
+        <div class="source-action">
+          <a href="/auth/polar" class="source-btn sb-connect">Koppla Polar</a>
+        </div>
+      </div>
+
+      <div class="source-card" data-cat="wearable">
+        <div class="source-status ss-available">Tillgänglig</div>
+        <div class="source-header">
+          <div class="source-icon wi">W</div>
+          <div><div class="source-name">Withings</div><div class="source-type">Smart scale · Watch</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag">Vikt</span>
+          <span class="data-tag">Kroppssammansättning</span>
+          <span class="data-tag">Puls</span>
+          <span class="data-tag">Blodtryck</span>
+          <span class="data-tag">Sömn</span>
+        </div>
+        <div class="source-desc">Perfekt komplement för kroppsammansättning och blodtryck. Withings smarta våg ger en dimension ingen wearable ger.</div>
+        <div class="source-action">
+          <a href="/auth/withings" class="source-btn sb-connect">Koppla Withings</a>
+        </div>
+      </div>
+
+      <!-- ── CGM ── -->
+
+      <div class="source-card" data-cat="cgm">
+        <div class="source-status ss-available">Tillgänglig</div>
+        <div class="source-header">
+          <div class="source-icon fl">L</div>
+          <div><div class="source-name">Freestyle Libre 3</div><div class="source-type">Kontinuerlig glukosmätning</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag key">Glukos realtid</span>
+          <span class="data-tag key">Glukostrend</span>
+          <span class="data-tag">Variabilitet</span>
+        </div>
+        <div class="source-desc">Abbotts CGM-sensor. Populärt alternativ till Dexcom för prestationsinriktad glukosmätning. Används av både diabetiker och biohackers.</div>
+        <div class="source-action">
+          <a href="/auth/libre" class="source-btn sb-connect">Koppla Libre</a>
+        </div>
+      </div>
+
+      <!-- ── TRÄNING & KOST ── -->
+
+      <div class="source-card" data-cat="fitness">
+        <div class="source-status ss-available">Tillgänglig</div>
+        <div class="source-header">
+          <div class="source-icon mf">M</div>
+          <div><div class="source-name">MyFitnessPal</div><div class="source-type">Kostapp</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag key">Måltider</span>
+          <span class="data-tag key">Makron</span>
+          <span class="data-tag">Kalorier</span>
+          <span class="data-tag">Timing</span>
+          <span class="data-tag">Vatten</span>
+        </div>
+        <div class="source-desc">Kostdata kopplar direkt mot energimönster och sömnkvalitet. Måltidstimingen är ofta mer avgörande än vad du äter.</div>
+        <div class="source-action">
+          <a href="/auth/myfitnesspal" class="source-btn sb-connect">Koppla MyFitnessPal</a>
+        </div>
+      </div>
+
+      <!-- ── BIOMETRIK & LABB ── -->
+      <div class="source-card" data-cat="bio" id="card-blood_labs">
+        <div class="source-status ss-priority">Hög prioritet</div>
+        <div class="source-header">
+          <div class="source-icon wi">B</div>
+          <div><div class="source-name">Blodprover & Hormoner</div><div class="source-type">PDF · Labbresultat</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag key">Testosteron</span>
+          <span class="data-tag key">Kortisol</span>
+          <span class="data-tag key">Ferritin</span>
+          <span class="data-tag">D-vitamin</span>
+          <span class="data-tag">TSH</span>
+          <span class="data-tag">B12</span>
+        </div>
+        <div class="source-desc">Ladda upp ditt labbsvar som PDF. Agent 6 extraherar biomarkörer, tolkar dem mot dina optimala intervall och kopplar dem till systemets övriga data.</div>
+        <div class="source-action" id="action-blood_labs">
+          <button class="source-btn sb-connect" onclick="document.getElementById('blood-upload').click()">Ladda upp blodprov</button>
+          <input type="file" id="blood-upload" accept=".pdf,.txt" style="display:none" onchange="uploadBio('blood', this)">
+        </div>
+      </div>
+
+      <div class="source-card" data-cat="bio" id="card-dna">
+        <div class="source-status ss-available">Tillgänglig</div>
+        <div class="source-header">
+          <div class="source-icon wi">D</div>
+          <div><div class="source-name">DNA & Genetik</div><div class="source-type">23andMe · AncestryDNA</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag key">COMT · Stressrespons</span>
+          <span class="data-tag key">MTHFR · Methylering</span>
+          <span class="data-tag">CYP1A2 · Koffein</span>
+          <span class="data-tag">ACTN3 · Muskelfibrer</span>
+        </div>
+        <div class="source-desc">Ladda upp rådata från 23andMe eller AncestryDNA. Agent 7 analyserar relevanta genetiska varianter och bygger en permanent biologisk kontext i systemet.</div>
+        <div class="source-action" id="action-dna">
+          <button class="source-btn sb-connect" onclick="document.getElementById('dna-upload').click()">Ladda upp DNA-data</button>
+          <input type="file" id="dna-upload" accept=".txt,.csv,.zip" style="display:none" onchange="uploadBio('dna', this)">
+        </div>
+      </div>
+
+      <div class="source-card" data-cat="fitness" id="card-nutrition">
+        <div class="source-status ss-available">Tillgänglig</div>
+        <div class="source-header">
+          <div class="source-icon mf">N</div>
+          <div><div class="source-name">Kost & Näring</div><div class="source-type">MyFitnessPal · Cronometer · CSV</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag key">Makron</span>
+          <span class="data-tag key">Måltidstiming</span>
+          <span class="data-tag">Kalorier</span>
+          <span class="data-tag">Mikronäring</span>
+        </div>
+        <div class="source-desc">Exportera din kostlogg som CSV från MyFitnessPal eller Cronometer. Agent 8 kopplar kostmönster mot energi, glukos och återhämtning.</div>
+        <div class="source-action" id="action-nutrition">
+          <button class="source-btn sb-connect" onclick="document.getElementById('nutrition-upload').click()">Ladda upp kostdata</button>
+          <input type="file" id="nutrition-upload" accept=".csv,.txt,.pdf" style="display:none" onchange="uploadBio('nutrition', this)">
+        </div>
+      </div>
+
+      <div class="source-card" data-cat="bio" id="card-medical_journal">
+        <div class="source-status ss-available">Tillgänglig</div>
+        <div class="source-header">
+          <div class="source-icon wi">J</div>
+          <div><div class="source-name">Läkarjournal</div><div class="source-type">PDF · Journalutdrag</div></div>
+        </div>
+        <div class="source-data">
+          <span class="data-tag key">Diagnoser</span>
+          <span class="data-tag key">Läkemedel</span>
+          <span class="data-tag">Historik</span>
+          <span class="data-tag">Remisser</span>
+        </div>
+        <div class="source-desc">Ladda upp journalutdrag som PDF. Agent 10 extraherar medicinsk kontext — diagnoser, läkemedel, historik — och kopplar det till systemets mönster.</div>
+        <div class="source-action" id="action-medical_journal">
+          <button class="source-btn sb-connect" onclick="document.getElementById('journal-upload-new').click()">Ladda upp journal</button>
+          <input type="file" id="journal-upload-new" accept=".pdf,.txt" style="display:none" onchange="uploadBio('journal', this)">
+        </div>
+      </div>
+
+    </div>
+
+    <!-- INGEN ENHET -->
+    <div class="no-device-card">
+      <div class="nd-icon">○</div>
+      <div class="nd-body">
+        <div class="nd-title">Har du ingen enhet just nu?</div>
+        <div class="nd-desc">Forsyne fungerar utan wearable. <strong>Det dagliga check-in-flödet</strong> bygger en modell av dig baserat på hur du mår, sover och presterar — helt utan biologisk hårdvara. Systemet lär sig ditt mönster och identifierar vad som påverkar dig mest. När du är redo att koppla en enhet låser det upp djupare insikter ovanpå det du redan byggt.</div>
+        <a href="#checkin" class="nd-btn">Kör på check-ins istället</a>
+      </div>
+    </div>
+
+    <!-- HUR DET FUNGERAR -->
+    <div class="panel">
+      <div class="panel-lbl">Hur datakopplingen fungerar</div>
+      <div class="how-step">
+        <div class="how-num">1</div>
+        <div class="how-body">
+          <div class="how-title">Du kopplar din källa</div>
+          <div class="how-desc">OAuth-inloggning — du loggar in med din Garmin, Oura eller Apple-konto. Forsyne får aldrig ditt lösenord. Vi får tillgång till hälsodata och inget annat.</div>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">2</div>
+        <div class="how-body">
+          <div class="how-title">Data normaliseras till din modell</div>
+          <div class="how-desc">Varje källa använder olika format och skalar. Systemet konverterar allt till ditt personliga snitt-index (PSI) — så att HRV 38ms för dig betyder något annat än för en annan person.</div>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">3</div>
+        <div class="how-body">
+          <div class="how-title">Systemet ser helheten</div>
+          <div class="how-desc">Garmin ser träningen. Oura ser sömnen. Systemet kopplar ihop dem och frågar varför onsdagens stress avgör fredagens krasch. Det är det ingen annan gör.</div>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">4</div>
+        <div class="how-body">
+          <div class="how-title">Modellen skärps med tid</div>
+          <div class="how-desc">Ju längre du kör, desto exaktare blir prediktionerna. Det är inte möjligt att ha utan just din data. Det kan inte kopieras.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEKRETESS -->
+    <div class="privacy-note">
+      <div class="pn-icon">🔒</div>
+      <div class="pn-text"><strong>Din data säljs aldrig.</strong> Den lagras krypterat och används för en sak — att hjälpa dig förstå dig själv. Du kan koppla bort en källa eller radera all data när som helst. Det är inte förhandlingsbart.</div>
+    </div>
+
+  <footer style="padding: 1.5rem 3.5rem 2rem; border-top: 1px solid var(--border);">
+    <p style="font-size: 0.74rem; color: #5B7FA6; line-height: 1.7; max-width: 700px; margin-bottom: 0.5rem;">Din data är krypterad, privat och tillhör bara dig. · Forsyne säljer aldrig data.</p>
+    <p style="font-size: 0.74rem; color: var(--fg4); line-height: 1.7; max-width: 700px; margin-bottom: 0.5rem;">Systemets insikter ersätter inte råd från läkare, psykolog eller annan vårdgivare.</p>
+    <p style="font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg4);"><a href="manifesto.html" style="color:var(--fg4); text-decoration:none;">Manifesto</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Disclaimer</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Integritet</a> · © 2026 Forsyne</p>
+  </footer>
+
+  </main>
+</div>
+
+<script>checkAuth();</script>
+
+<script>
+const d = new Date();
+const days = ['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+const months = ['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+document.getElementById('topDate').textContent = `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+
+// Load user name
+try {
+  const ob = JSON.parse(localStorage.getItem('forsyne_onboarding') || '{}');
+  if (ob.q3_1) document.getElementById('topUser').textContent = ob.q3_1;
+} catch(e) {}
+
+// Filter sources
+function filterSources(cat, btn) {
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.source-card').forEach(c => {
+    c.style.display = cat === 'all' || c.dataset.cat === cat ? '' : 'none';
+  });
+}
+
+// Connect source simulation (for sources without real OAuth)
+function connectSource(source, btn) {
+  btn.textContent = 'Ansluter...';
+  btn.style.opacity = '0.6';
+  setTimeout(() => {
+    btn.textContent = 'Ansluten ✓';
+    btn.className = 'source-btn sb-connected';
+    btn.closest('.source-card').classList.add('connected');
+    updateStats();
+  }, 1500);
+}
+
+// ── OAUTH REDIRECT — passes JWT as query param since browser can't set headers ──
+function connectOAuth(provider) {
+  const token = localStorage.getItem('prv_token');
+  if (!token) { PX.toast('Du måste vara inloggad.', 'error'); return; }
+  window.location.href = `/auth/${provider}?token=${encodeURIComponent(token)}`;
+}
+
+// ── REAL INTEGRATIONS (Strava, Dexcom) ──
+
+// Providers that use file upload (not OAuth sync)
+const UPLOAD_PROVIDERS = {
+  blood_labs:      { type: 'blood',     accept: '.pdf,.txt',      label: 'Uppdatera blodprov' },
+  dna:             { type: 'dna',       accept: '.txt,.csv',      label: 'Uppdatera DNA-data' },
+  nutrition:       { type: 'nutrition', accept: '.csv,.txt,.pdf', label: 'Uppdatera kostdata' },
+  medical_journal: { type: 'journal',   accept: '.pdf,.txt',      label: 'Uppdatera journal' },
+  garmin:          { type: 'garmin',    accept: '.json',          label: 'Uppdatera Garmin-data', multi: true },
+};
+
+function setConnected(provider, lastSynced) {
+  const card   = document.getElementById('card-' + provider);
+  const action = document.getElementById('action-' + provider);
+  if (!card || !action) return;
+
+  card.classList.add('connected');
+
+  const syncedText = lastSynced
+    ? new Date(lastSynced).toLocaleString('sv-SE', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : 'Aldrig';
+
+  const uploadCfg = UPLOAD_PROVIDERS[provider];
+
+  if (uploadCfg) {
+    // File-upload provider — show re-upload + remove, no sync button
+    const multi = uploadCfg.multi ? 'multiple' : '';
+    action.innerHTML = `
+      <span class="source-btn sb-connected">Analyserad</span>
+      <div style="display:flex;gap:1rem;align-items:center;margin-top:0.5rem;">
+        <button class="sb-disconnect" onclick="document.getElementById('reup-${provider}').click()">${uploadCfg.label}</button>
+        <button class="sb-disconnect" onclick="disconnectIntegration('${provider}')">Ta bort</button>
+      </div>
+      <input type="file" id="reup-${provider}" accept="${uploadCfg.accept}" ${multi} style="display:none"
+             onchange="${uploadCfg.type === 'garmin' ? 'uploadGarmin(this)' : "uploadBio('" + uploadCfg.type + "', this)"}">
+      <div class="source-sync" style="margin-top:0.4rem;">Senaste analys: ${syncedText}</div>
+    `;
+  } else {
+    // OAuth provider — show sync + disconnect
+    action.innerHTML = `
+      <span class="source-btn sb-connected">Ansluten</span>
+      <div style="display:flex;gap:1rem;align-items:center;margin-top:0.5rem;">
+        <button class="sb-disconnect" onclick="syncIntegration('${provider}', this)">Synka nu</button>
+        <button class="sb-disconnect" onclick="disconnectIntegration('${provider}')">Koppla från</button>
+      </div>
+      <div class="source-sync" style="margin-top:0.4rem;">Senaste synk: ${syncedText}</div>
+    `;
+  }
+  updateStats();
+}
+
+async function syncIntegration(provider, btn) {
+  const orig = btn.textContent;
+  btn.textContent = 'Synkar...';
+  btn.style.opacity = '0.5';
+  try {
+    const token = localStorage.getItem('prv_token');
+    const r = await fetch('/api/' + provider + '/sync', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const d = await r.json();
+    if (d.ok) {
+      btn.textContent = 'Klar';
+      setTimeout(() => { btn.textContent = orig; btn.style.opacity = ''; }, 2000);
+    } else {
+      btn.textContent = d.error || 'Fel';
+      btn.style.color = 'var(--danger)';
+    }
+  } catch(e) {
+    btn.textContent = 'Fel';
+  }
+}
+
+async function disconnectIntegration(provider) {
+  const token = localStorage.getItem('prv_token');
+  await fetch('/api/' + provider + '/disconnect', {
+    method: 'DELETE',
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  // Reset card to default connect state
+  const card   = document.getElementById('card-' + provider);
+  const action = document.getElementById('action-' + provider);
+  if (card)   card.classList.remove('connected');
+  if (action) {
+    const labels = { strava: 'Koppla Strava', dexcom: 'Koppla Dexcom' };
+    action.innerHTML = `<a onclick="connectOAuth('${provider}')" class="source-btn sb-connect">${labels[provider] || 'Koppla'}</a>`;
+  }
+  updateStats();
+}
+
+// Load real integration state on page load
+async function loadIntegrations() {
+  const token = localStorage.getItem('prv_token');
+  if (!token) return;
+  try {
+    const r = await fetch('/api/integrations', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!r.ok) return;
+    const rows = await r.json();
+    rows.forEach(row => {
+      if (['strava', 'dexcom', 'garmin', 'blood_labs', 'dna', 'nutrition', 'medical_journal'].includes(row.provider)) {
+        setConnected(row.provider, row.last_synced);
+      }
+    });
+  } catch(e) { /* silent */ }
+}
+
+// Handle redirect back from OAuth (?connected=strava or ?connected=dexcom)
+(function handleOAuthReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const connected = params.get('connected');
+  const error     = params.get('error');
+  if (connected) {
+    // State will be loaded by loadIntegrations() — just clean the URL
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+  if (error) {
+    console.warn('OAuth error:', error);
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+})();
+
+loadIntegrations();
+
+// ── BIO UPLOADS (blood, dna, nutrition, journal) ──
+const BIO_CONFIG = {
+  blood:     { endpoint: '/api/blood/upload',     label: 'Blodprov',   provider: 'blood_labs' },
+  dna:       { endpoint: '/api/dna/upload',        label: 'DNA-data',   provider: 'dna' },
+  nutrition: { endpoint: '/api/nutrition/upload',  label: 'Kostdata',   provider: 'nutrition' },
+  journal:   { endpoint: '/api/journal/analyze',   label: 'Journal',    provider: 'medical_journal' },
+};
+
+async function uploadBio(type, input) {
+  const cfg  = BIO_CONFIG[type];
+  const file = input.files[0];
+  if (!file || !cfg) return;
+
+  const card   = document.getElementById('card-' + cfg.provider);
+  const action = document.getElementById('action-' + cfg.provider);
+  const btn    = action?.querySelector('.source-btn');
+  if (btn) { btn.textContent = 'Analyserar...'; btn.style.opacity = '0.6'; }
+
+  const fd = new FormData();
+  fd.append('file', file);
+
+  try {
+    const token = localStorage.getItem('prv_token');
+    const r = await fetch(cfg.endpoint, {
+      method:  'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body:    fd
+    });
+    const d = await r.json();
+
+    if (d.ok) {
+      if (card)   card.classList.add('connected');
+      if (action) action.innerHTML = `
+        <span class="source-btn sb-connected">Analyserad</span>
+        <div style="display:flex;gap:1rem;align-items:center;margin-top:0.5rem;">
+          <button class="sb-disconnect" onclick="document.getElementById('${type}-reupload').click()">Uppdatera</button>
+          <button class="sb-disconnect" onclick="disconnectIntegration('${cfg.provider}')">Ta bort</button>
+        </div>
+        <input type="file" id="${type}-reupload" accept=".pdf,.txt,.csv" style="display:none" onchange="uploadBio('${type}', this)">
+        <div class="source-sync" style="margin-top:0.4rem;">${file.name}</div>
+      `;
+      updateStats();
+    } else {
+      if (btn) { btn.textContent = d.error || 'Fel'; btn.style.color = 'var(--danger)'; btn.style.opacity = ''; }
+    }
+  } catch(e) {
+    if (btn) { btn.textContent = 'Fel — försök igen'; btn.style.opacity = ''; }
+  }
+  input.value = '';
+}
+
+// ── GARMIN — switch to OAuth button if API is configured ──
+(async function checkGarminApi() {
+  try {
+    const token = localStorage.getItem('prv_token');
+    const r = await fetch('/api/garmin/api-available', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d.available) {
+      const wrap = document.getElementById('garmin-connect-btn');
+      if (wrap) wrap.innerHTML = '<a onclick="connectOAuth(\'garmin\')" class="source-btn sb-connect">Koppla Garmin</a>';
+    }
+  } catch(e) { /* silent — stay on import mode */ }
+})();
+
+// ── GARMIN IMPORT ──
+async function uploadGarmin(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+
+  const btn    = document.querySelector('#action-garmin .source-btn');
+  const orig   = btn.textContent;
+  btn.textContent = 'Importerar...';
+  btn.style.opacity = '0.6';
+
+  const fd = new FormData();
+  files.forEach(f => fd.append('files', f));
+
+  try {
+    const token = localStorage.getItem('prv_token');
+    const r = await fetch('/api/garmin/import', {
+      method:  'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body:    fd
+    });
+    const d = await r.json();
+
+    if (d.ok) {
+      const card   = document.getElementById('card-garmin');
+      const action = document.getElementById('action-garmin');
+      card.classList.add('connected');
+
+      const parts = [];
+      if (d.summary.sleep_days)   parts.push(d.summary.sleep_days + ' sömnätter');
+      if (d.summary.hrv_days)     parts.push(d.summary.hrv_days + ' HRV-nätter');
+      if (d.summary.stress_days)  parts.push(d.summary.stress_days + ' stressdagar');
+      if (d.summary.battery_days) parts.push(d.summary.battery_days + ' Body Battery-dagar');
+
+      action.innerHTML = `
+        <span class="source-btn sb-connected">Ansluten</span>
+        <div style="display:flex;gap:1rem;align-items:center;margin-top:0.5rem;">
+          <button class="sb-disconnect" onclick="document.getElementById('garmin-reupload').click()">Uppdatera data</button>
+          <button class="sb-disconnect" onclick="disconnectIntegration('garmin')">Ta bort</button>
+        </div>
+        <input type="file" id="garmin-reupload" accept=".json" multiple style="display:none" onchange="uploadGarmin(this)">
+        <div class="source-sync" style="margin-top:0.4rem;">${parts.join(' · ') || 'Data importerad'}</div>
+      `;
+      updateStats();
+    } else {
+      btn.textContent = d.error || 'Fel vid import';
+      btn.style.color = 'var(--danger)';
+      btn.style.opacity = '';
+    }
+  } catch(e) {
+    btn.textContent = 'Fel — försök igen';
+    btn.style.opacity = '';
+  }
+
+  input.value = '';
+}
+
+// Update stats
+function updateStats() {
+  const connected = document.querySelectorAll('.source-card.connected').length;
+  document.getElementById('statConnected').textContent = connected;
+  document.getElementById('connectedCount').textContent = connected;
+  
+  if (connected === 0) {
+    document.getElementById('statQuality').textContent = '–';
+    document.getElementById('statBio').textContent = '–';
+    document.getElementById('sidebarStatus').textContent = 'Ingen källa kopplad';
+  } else if (connected === 1) {
+    document.getElementById('statQuality').textContent = 'Bas';
+    document.getElementById('statBio').textContent = 'Begränsad';
+    document.getElementById('sidebarStatus').textContent = '1 källa aktiv';
+  } else if (connected <= 3) {
+    document.getElementById('statQuality').textContent = 'Bra';
+    document.getElementById('statBio').textContent = 'God';
+    document.getElementById('sidebarStatus').textContent = connected + ' källor aktiva';
+  } else {
+    document.getElementById('statQuality').textContent = 'Utmärkt';
+    document.getElementById('statBio').textContent = 'Full täckning';
+    document.getElementById('sidebarStatus').textContent = connected + ' källor aktiva';
+  }
+  document.getElementById('statSync').textContent = 'Just nu';
+}
+
+// Nav
+document.querySelectorAll('.nav-link').forEach(l => {
+  l.addEventListener('click', e => {
+    if (l.getAttribute('href') === '#') {
+      e.preventDefault();
+      document.querySelectorAll('.nav-link').forEach(x => x.classList.remove('active'));
+      l.classList.add('active');
+    }
+  });
+});
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

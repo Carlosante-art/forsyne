@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Historik</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<style>
+:root {
+  --ink:#0F1210;--ink2:#131714;
+  --fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;
+  --accent:#8FAE8A;--warn:#C4875A;--danger:#A85C5C;--trust:#5B7FA6;
+  --serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;
+  --border:rgba(242,240,234,0.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;line-height:1.7;overflow-x:hidden;}
+
+/* ── BAKGRUND ── */
+.page-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+.page-bg-img{position:absolute;inset:0;background-image:url('images/Glödande_mänsklig_hjärna_i_mörker.png');background-size:cover;background-position:center;filter:brightness(0.18) saturate(0.4);}
+.page-bg-veil{position:absolute;inset:0;background:linear-gradient(to bottom,var(--ink) 0%,rgba(15,18,16,0.7) 10%,rgba(15,18,16,0.04) 30%,rgba(15,18,16,0.04) 70%,rgba(15,18,16,0.7) 90%,var(--ink) 100%);}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(1.5rem,3vw,2.5rem);height:64px;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.9);backdrop-filter:blur(32px);}
+.logo{font-family:var(--serif);font-size:1.1rem;font-weight:400;letter-spacing:0.18em;color:var(--fg);text-decoration:none;}
+.nav-meta{display:flex;align-items:center;gap:1.5rem;}
+.nav-date{font-family:var(--serif);font-size:0.9rem;color:var(--fg2);}
+.nav-user{font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg3);text-decoration:none;}
+
+/* ── LAYOUT ── */
+.content-wrap{display:flex;align-items:flex-start;height:calc(100vh - 64px);overflow:hidden;position:relative;z-index:1;}
+.sidebar{width:210px;height:100%;overflow-y:auto;scrollbar-width:none;border-right:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;padding:2.5rem 0 1.8rem;}
+.sidebar::-webkit-scrollbar{display:none;}
+.ng{margin-bottom:1.6rem;}
+.ngl{font-size:0.58rem;letter-spacing:0.32em;text-transform:uppercase;color:var(--fg4);padding:0 1.8rem;margin-bottom:0.5rem;}
+.nl{display:flex;align-items:center;padding:0.42rem 1.8rem;font-size:0.84rem;letter-spacing:0.04em;color:var(--fg3);text-decoration:none;transition:color 0.2s;border-left:1px solid transparent;}
+.nl:hover{color:var(--fg2);}
+.nl.active{color:var(--fg);border-left-color:var(--accent);}
+.nl.signal-link{color:var(--danger);display:flex;align-items:center;gap:0.5rem;}
+.nl.signal-link::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+@keyframes sig-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(168,92,92,0.6)}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(168,92,92,0)}}
+.sf{margin-top:auto;padding:1.2rem 1.8rem 0;border-top:1px solid var(--border);font-family:var(--serif);font-style:italic;font-size:0.62rem;color:var(--fg4);line-height:1.8;}
+main{flex:1;min-width:0;overflow-y:auto;height:100%;}
+
+/* ── HEADER ── */
+.ph{padding:3rem 3.5rem 2.5rem;border-bottom:1px solid var(--border);}
+.pe{font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--accent);margin-bottom:0.8rem;display:flex;align-items:center;gap:0.75rem;}
+.pe::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.5;}
+.pt{font-family:var(--serif);font-size:clamp(2rem,3.5vw,3rem);font-weight:300;line-height:1.1;}
+.pt em{font-style:italic;color:var(--fg2);}
+.ps{font-size:0.82rem;color:var(--fg3);line-height:1.7;max-width:420px;margin-top:0.8rem;}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin:2.5rem 3.5rem;}
+.stat-cell{background:var(--ink2);padding:1.4rem 1.6rem;}
+.stat-lbl{font-size:0.56rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg4);margin-bottom:0.6rem;}
+.stat-val{font-family:var(--serif);font-size:2rem;font-weight:300;line-height:1;color:var(--fg);}
+.stat-sub{font-size:0.68rem;color:var(--fg4);margin-top:0.4rem;}
+
+/* ── HEATMAP ── */
+.heatmap-wrap{padding:0 3.5rem 2rem;}
+.heatmap-label{font-size:0.58rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--fg4);margin-bottom:0.8rem;}
+.heatmap-grid{display:flex;gap:3px;flex-wrap:wrap;}
+.hm-cell{width:13px;height:13px;cursor:pointer;position:relative;transition:transform 0.1s;}
+.hm-cell:hover{transform:scale(1.4);z-index:1;}
+
+/* ── FILTER ── */
+.filter-bar{display:flex;align-items:center;gap:0.8rem;padding:0 3.5rem 1.5rem;flex-wrap:wrap;}
+.filter-btn{font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--fg3);border:1px solid var(--border);padding:0.35rem 0.9rem;cursor:pointer;background:none;transition:all 0.2s;font-family:var(--sans);}
+.filter-btn:hover{color:var(--fg2);border-color:rgba(242,240,234,0.15);}
+.filter-btn.active{color:var(--accent);border-color:rgba(143,174,138,0.35);}
+.filter-sep{width:1px;height:16px;background:var(--border);}
+
+/* ── TIMELINE ── */
+.timeline{display:flex;flex-direction:column;margin:0 3.5rem;border-top:1px solid var(--border);}
+.te{display:grid;grid-template-columns:90px auto 1fr;gap:0;border-bottom:1px solid var(--border);}
+.te:hover .te-content{background:rgba(242,240,234,0.015);}
+.te-date{padding:1.4rem 1.4rem 1.4rem 0;border-right:1px solid var(--border);}
+.te-day{font-family:var(--serif);font-size:1.8rem;font-weight:300;color:var(--fg2);line-height:1;}
+.te-month{font-size:0.56rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg4);margin-top:0.2rem;}
+.te-weekday{font-size:0.56rem;letter-spacing:0.1em;color:var(--fg4);margin-top:0.15rem;}
+.te-psi{padding:1.4rem 1.4rem;border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:64px;}
+.te-psi-val{font-family:var(--serif);font-size:1.5rem;font-weight:300;line-height:1;}
+.te-psi-lbl{font-size:0.46rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg4);margin-top:0.2rem;}
+.te-content{padding:1.4rem 0 1.4rem 1.4rem;display:flex;flex-direction:column;gap:0.7rem;}
+.te-metrics{display:flex;gap:1.4rem;flex-wrap:wrap;}
+.te-metric{display:flex;flex-direction:column;gap:0.15rem;}
+.te-metric-lbl{font-size:0.48rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--fg4);}
+.te-metric-val{font-family:var(--serif);font-size:1.35rem;font-weight:300;line-height:1;}
+.te-moods{display:flex;gap:0.5rem;flex-wrap:wrap;}
+.te-mood{font-size:0.64rem;letter-spacing:0.06em;color:var(--fg3);border:1px solid var(--border);padding:0.12rem 0.5rem;}
+.te-reflection{font-size:0.74rem;color:var(--fg3);line-height:1.6;border-left:2px solid var(--border);padding-left:0.8rem;font-style:italic;max-width:560px;}
+.te-signal{display:inline-flex;align-items:center;gap:0.4rem;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--danger);}
+.te-signal::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--danger);box-shadow:0 0 4px var(--danger);flex-shrink:0;}
+
+/* ── PREDIKTION TRÄFFSÄKERHET ── */
+.te-pred{margin-top:.55rem;display:flex;gap:1.4rem;flex-wrap:wrap;padding:.5rem .7rem;background:rgba(242,240,234,0.02);border-left:1px solid rgba(242,240,234,0.07);}
+.te-pred-item{display:flex;flex-direction:column;gap:.15rem;}
+.te-pred-lbl{font-size:.44rem;letter-spacing:.22em;text-transform:uppercase;color:var(--fg4);}
+.te-pred-row{display:flex;align-items:baseline;gap:.3rem;}
+.te-pred-was{font-family:var(--serif);font-size:.9rem;font-weight:300;color:var(--fg4);}
+.te-pred-arr{font-size:.5rem;color:var(--fg4);}
+.te-pred-got{font-family:var(--serif);font-size:.9rem;font-weight:300;}
+.te-pred-delta{font-size:.5rem;letter-spacing:.08em;}
+
+/* ── EMPTY ── */
+.empty-state{padding:4rem 3.5rem;max-width:500px;}
+
+/* ── FOOTER ── */
+footer{padding:1.5rem 3.5rem 2rem;border-top:1px solid var(--border);margin-top:2rem;}
+
+/* ── DOTS LOADER ── */
+.dots{display:flex;align-items:center;gap:0.3rem;}
+.dot{width:4px;height:4px;border-radius:50%;background:var(--fg3);animation:dotPulse 1.4s ease infinite;}
+.dot:nth-child(2){animation-delay:.2s;}
+.dot:nth-child(3){animation-delay:.4s;}
+@keyframes dotPulse{0%,80%,100%{opacity:0.2;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}
+
+@media(max-width:900px){.sidebar{display:none;}.content-wrap{height:auto;overflow:visible;}main{overflow:visible;}
+.stats-row{grid-template-columns:1fr 1fr;margin:1.5rem;}
+.ph,.heatmap-wrap,.filter-bar,.timeline,.empty-state,footer{padding-left:1.5rem;padding-right:1.5rem;}
+.stats-row{margin-left:1.5rem;margin-right:1.5rem;}.te{grid-template-columns:70px auto 1fr;}}
+</style>
+</head>
+<body>
+<div class="page-bg"><div class="page-bg-img"></div><div class="page-bg-veil"></div></div>
+
+<nav>
+  <a href="dashboard.html" class="logo">Forsyne</a>
+  <div class="nav-meta">
+    <span class="nav-date" id="topDate"></span>
+    <span class="nav-user" id="topUser"></span>
+  </div>
+</nav>
+
+<div class="content-wrap">
+  <aside class="sidebar">
+    <div class="ng">
+      <div class="ngl">Idag</div>
+      <a class="nl" href="dashboard.html">Dashboard</a>
+      <a class="nl" href="checkin.html">Check-in</a>
+      <a class="nl signal-link" id="nav-signal" href="signal.html">Signalen</a>
+    </div>
+    <div class="ng">
+      <div class="ngl">Mönster</div>
+      <a class="nl" href="sleep.html">Sömn</a>
+      <a class="nl" href="energy.html">Energi</a>
+      <a class="nl" href="stress.html">Stress</a>
+      <a class="nl" href="training.html">Träning</a>
+      <a class="nl" href="nutrition.html">Kost</a>
+    </div>
+    <div class="ng">
+      <div class="ngl">Förstå dig själv</div>
+      <a class="nl" href="profilering.html">Profilering</a>
+      <a class="nl" href="analys.html">Total analys</a>
+      <a class="nl" href="systemkarta.html">Systemkarta</a>
+    </div>
+    <div class="ng">
+      <div class="ngl">Din resa</div>
+      <a class="nl active" href="historik.html">Historik</a>
+      <a class="nl" href="plan.html">Plan</a>
+    </div>
+    <div class="ng">
+      <div class="ngl">Din biologi</div>
+      <a class="nl" href="wearables.html">Wearables</a>
+      <a class="nl" href="biologi.html">Blodprover &amp; hormoner</a>
+      <a class="nl" href="journal.html">Läkarjournal</a>
+    </div>
+    <div class="sf" id="sf-count">Laddar historik...</div>
+  </aside>
+
+  <main id="main-content">
+    <div class="ph">
+      <div class="pe">Historik · Din data</div>
+      <h1 class="pt">Alla dina dagar.<br><em>Kronologiskt.</em></h1>
+      <p class="ps">Varje check-in du gjort — samlad på ett ställe. Systemet ser vad du kanske glömt.</p>
+    </div>
+
+    <div class="stats-row" id="statsRow" style="display:none;">
+      <div class="stat-cell">
+        <div class="stat-lbl">Totalt check-ins</div>
+        <div class="stat-val" id="statTotal">—</div>
+        <div class="stat-sub" id="statPeriod">Från start</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-lbl">Snitt Balans</div>
+        <div class="stat-val" id="statPsi">—</div>
+        <div class="stat-sub" id="statPsiSub">Systemkapacitet</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-lbl">Snitt energi</div>
+        <div class="stat-val" id="statEnergy">—</div>
+        <div class="stat-sub">av 10</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-lbl">Snitt sömn</div>
+        <div class="stat-val" id="statSleep">—</div>
+        <div class="stat-sub">av 10 · timmar</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-lbl">Snitt stress</div>
+        <div class="stat-val" id="statStress">—</div>
+        <div class="stat-sub" id="statStressSub">av 10</div>
+      </div>
+    </div>
+
+    <div class="heatmap-wrap" id="heatmapWrap" style="display:none;">
+      <div class="heatmap-label">Balans · Senaste 90 dagar</div>
+      <div class="heatmap-grid" id="heatmapGrid"></div>
+    </div>
+
+    <div class="filter-bar" id="filterBar" style="display:none;">
+      <button class="filter-btn active" onclick="setFilter('all',this)">Alla</button>
+      <button class="filter-btn" onclick="setFilter('30',this)">30 dagar</button>
+      <button class="filter-btn" onclick="setFilter('7',this)">7 dagar</button>
+      <div class="filter-sep"></div>
+      <button class="filter-btn" onclick="setFilter('signal',this)">Signalen aktiv</button>
+      <button class="filter-btn" onclick="setFilter('reflection',this)">Med reflektion</button>
+      <button class="filter-btn" onclick="setFilter('best',this)">Bästa dagar</button>
+    </div>
+
+    <div class="timeline" id="timeline"></div>
+
+    <footer>
+      <p style="font-size:.72rem;color:var(--trust);line-height:1.7;max-width:700px;margin-bottom:.4rem;">Din data är krypterad, privat och tillhör bara dig. · Forsyne säljer aldrig data.</p>
+      <p style="font-size:.7rem;color:var(--fg4);line-height:1.7;max-width:700px;margin-bottom:.4rem;">Systemets insikter ersätter inte råd från läkare, psykolog eller annan vårdgivare.</p>
+      <p style="font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--fg4);"><a href="manifesto.html" style="color:var(--fg4);text-decoration:none;">Manifesto</a> · <a href="disclaimer.html" style="color:var(--fg4);text-decoration:none;">Disclaimer</a> · © 2026 Forsyne</p>
+    </footer>
+  </main>
+</div>
+
+<script>
+checkAuth();
+
+const DAYS=['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+const MONTHS=['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'];
+const MONTHS_LONG=['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+
+// Topbar
+(()=>{
+  const d=new Date();
+  document.getElementById('topDate').textContent=DAYS[d.getDay()]+' '+d.getDate()+' '+MONTHS_LONG[d.getMonth()];
+  const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+  const u=API&&API.user?API.user():null;
+  document.getElementById('topUser').textContent=((ob.q3_1||(u?u.email.split('@')[0]:'')||'')).toUpperCase();
+})();
+
+function psiOf(c){
+  const vals=[c.energy,(10-(c.stress||0)),c.focus,c.motivation].filter(v=>v!=null&&v!==0);
+  return vals.length?Math.round(vals.reduce((s,v)=>s+v,0)/vals.length*10):null;
+}
+function psiColor(v){return v>=70?'var(--accent)':v>=50?'var(--warn)':'var(--danger)';}
+function metricColor(val,invert){
+  if(val==null)return'var(--fg4)';
+  if(invert)return val>=7?'var(--danger)':val>=5?'var(--warn)':'var(--accent)';
+  return val>=7?'var(--accent)':val>=5?'var(--warn)':'var(--danger)';
+}
+function isSignal(c){return(c.stress||0)>=7&&(c.sleep||0)<=5;}
+
+let allCheckins=[];
+let predMap={};
+let currentFilter='all';
+
+// ── PREDIKTION (same math as dashboard) ──
+function computePredictions(checkins){
+  if(checkins.length<7) return null;
+  const c=[...checkins].sort((a,b)=>a.date.localeCompare(b.date));
+  const fields=['energy','sleep','stress','focus','motivation','mood'];
+  const targets=['energy','stress','sleep'];
+  const stats=arr=>{
+    const m=arr.reduce((s,v)=>s+v,0)/arr.length;
+    const std=Math.sqrt(arr.reduce((s,v)=>s+(v-m)**2,0)/arr.length)||1;
+    return{m,std};
+  };
+  const lagCorr=(xs,ys,lag)=>{
+    const n=xs.length-lag;if(n<4)return 0;
+    const a=xs.slice(0,n),b=ys.slice(lag,lag+n);
+    const ma=a.reduce((s,v)=>s+v)/n,mb=b.reduce((s,v)=>s+v)/n;
+    const num=a.reduce((s,v,i)=>s+(v-ma)*(b[i]-mb),0);
+    const den=Math.sqrt(a.reduce((s,v)=>s+(v-ma)**2,0)*b.reduce((s,v)=>s+(v-mb)**2,0));
+    return den===0?0:num/den;
+  };
+  const today=c[c.length-1];
+  const results={};
+  for(const tgt of targets){
+    const ys=c.map(d=>d[tgt]||0);
+    const{m:myMean,std:myStd}=stats(ys);
+    const predictors=[];
+    for(const src of fields){
+      if(src===tgt)continue;
+      const xs=c.map(d=>d[src]||0);
+      const r=lagCorr(xs,ys,1);
+      if(Math.abs(r)>0.3)predictors.push({src,r,xs});
+    }
+    if(!predictors.length){results[tgt]={val:Math.round(myMean*10)/10};continue;}
+    const totalW=predictors.reduce((s,p)=>s+Math.abs(p.r),0);
+    let delta=0;
+    for(const p of predictors){
+      const{m:srcMean,std:srcStd}=stats(p.xs);
+      const w=Math.abs(p.r)/totalW;
+      delta+=w*p.r*(myStd/srcStd)*((today[p.src]||0)-srcMean);
+    }
+    const val=Math.max(0,Math.min(10,Math.round((myMean+delta)*10)/10));
+    results[tgt]={val};
+  }
+  return results;
+}
+
+function computeAllPredictions(sorted){
+  const map={};
+  for(let i=7;i<sorted.length;i++){
+    const pred=computePredictions(sorted.slice(0,i));
+    if(pred) map[sorted[i].date]=pred;
+  }
+  return map;
+}
+
+function setFilter(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTimeline(allCheckins);
+}
+
+function filteredCheckins(checkins){
+  let data=[...checkins].sort((a,b)=>a.date>b.date?-1:1);
+  if(currentFilter==='30') data=data.filter(c=>(new Date()-new Date(c.date))/86400000<=30);
+  if(currentFilter==='7')  data=data.filter(c=>(new Date()-new Date(c.date))/86400000<=7);
+  if(currentFilter==='signal') data=data.filter(c=>isSignal(c));
+  if(currentFilter==='reflection') data=data.filter(c=>c.reflection);
+  if(currentFilter==='best'){
+    data=data.filter(c=>psiOf(c)!==null);
+    data.sort((a,b)=>(psiOf(b)||0)-(psiOf(a)||0));
+    data=data.slice(0,10);
+  }
+  return data;
+}
+
+function renderPredRow(c){
+  const pred=predMap[c.date];
+  if(!pred) return '';
+  const items=[
+    {key:'energy',lbl:'Energi',inv:false},
+    {key:'stress',lbl:'Stress',inv:true},
+    {key:'sleep', lbl:'Sömn', inv:false}
+  ].map(({key,lbl,inv})=>{
+    const pVal=pred[key];
+    const aVal=c[key];
+    if(pVal==null||aVal==null) return '';
+    const delta=aVal-pVal;
+    const absDelta=Math.abs(delta);
+    // Accuracy color: within 1 = good, within 2 = ok, beyond = miss
+    const accColor=absDelta<=1?'var(--accent)':absDelta<=2?'var(--warn)':'var(--danger)';
+    const sign=delta>=0?'+':'';
+    // Actual value color (same logic as metrics)
+    const aColor=inv
+      ?(aVal>=7?'var(--danger)':aVal>=5?'var(--warn)':'var(--accent)')
+      :(aVal>=7?'var(--accent)':aVal>=5?'var(--warn)':'var(--danger)');
+    return`<div class="te-pred-item">
+      <div class="te-pred-lbl">${lbl}</div>
+      <div class="te-pred-row">
+        <span class="te-pred-was">${pVal.toFixed(1)}</span>
+        <span class="te-pred-arr">→</span>
+        <span class="te-pred-got" style="color:${aColor};">${aVal.toFixed(1)}</span>
+        <span class="te-pred-delta" style="color:${accColor};">${sign}${delta.toFixed(1)}</span>
+      </div>
+    </div>`;
+  }).join('');
+  if(!items.trim()) return '';
+  return`<div class="te-pred">
+    <div style="font-size:.44rem;letter-spacing:.22em;text-transform:uppercase;color:var(--fg4);align-self:center;margin-right:.4rem;">Prediktion</div>
+    ${items}
+  </div>`;
+}
+
+function renderTimeline(checkins){
+  const filtered=filteredCheckins(checkins);
+  const tl=document.getElementById('timeline');
+  if(!filtered.length){
+    tl.innerHTML=`<div style="padding:2.5rem 0;color:var(--fg3);font-size:.8rem;font-family:var(--serif);font-style:italic;">Inga check-ins matchar filtret.</div>`;
+    return;
+  }
+  tl.innerHTML=filtered.map(c=>{
+    const dt=new Date(c.date);
+    const psi=psiOf(c);
+    const signal=isSignal(c);
+    const metrics=[
+      {lbl:'Energi',val:c.energy,inv:false},
+      {lbl:'Sömn',val:c.sleep,inv:false},
+      {lbl:'Stress',val:c.stress,inv:true},
+      {lbl:'Fokus',val:c.focus,inv:false},
+    ].map(m=>`<div class="te-metric"><div class="te-metric-lbl">${m.lbl}</div><div class="te-metric-val" style="color:${m.val!=null?metricColor(m.val,m.inv):'var(--fg4)'};">${m.val??'—'}</div></div>`).join('');
+    const moods=(c.moods||[]).map(m=>`<span class="te-mood">${m}</span>`).join('');
+    return `<div class="te">
+      <div class="te-date">
+        <div class="te-day">${dt.getDate()}</div>
+        <div class="te-month">${MONTHS[dt.getMonth()]}</div>
+        <div class="te-weekday">${DAYS[dt.getDay()].slice(0,3)}</div>
+      </div>
+      <div class="te-psi">
+        ${psi!==null?`<div class="te-psi-val" style="color:${psiColor(psi)};">${psi}</div><div class="te-psi-lbl">Balans</div>`:`<div class="te-psi-val" style="color:var(--fg4);">—</div><div class="te-psi-lbl">Balans</div>`}
+      </div>
+      <div class="te-content">
+        ${signal?`<div class="te-signal">Signalen aktiv</div>`:''}
+        <div class="te-metrics">${metrics}</div>
+        ${moods?`<div class="te-moods">${moods}</div>`:''}
+        ${c.reflection?`<div class="te-reflection">${c.reflection}</div>`:''}
+        ${renderPredRow(c)}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderHeatmap(checkins){
+  const grid=document.getElementById('heatmapGrid');
+  const byDate={};
+  checkins.forEach(c=>{byDate[c.date]=psiOf(c);});
+  const today=new Date();
+  let html='';
+  for(let i=89;i>=0;i--){
+    const d=new Date(today);d.setDate(today.getDate()-i);
+    const key=d.toISOString().slice(0,10);
+    const val=byDate[key];
+    let bg;
+    if(val==null) bg='rgba(242,240,234,0.04)';
+    else if(val>=70) bg='rgba(143,174,138,0.75)';
+    else if(val>=50) bg='rgba(196,135,90,0.55)';
+    else bg='rgba(168,92,92,0.6)';
+    html+=`<div class="hm-cell" style="background:${bg};" title="${key}: ${val!=null?'Balans '+val:'Ingen data'}"></div>`;
+  }
+  grid.innerHTML=html;
+}
+
+(async()=>{
+  let checkins=[];
+  try{
+    const r=await fetch('/api/checkins',{headers:{Authorization:'Bearer '+API.token()}});
+    if(r.ok){const d=await r.json();checkins=Array.isArray(d)?d:(d.checkins||[]);}
+  }catch(e){
+    document.getElementById('main-content').insertAdjacentHTML('afterbegin',
+      '<div style="padding:3rem 3.5rem;max-width:480px;"><div style="font-size:.6rem;letter-spacing:.28em;text-transform:uppercase;color:var(--danger);margin-bottom:1rem;">Systemfel</div><p style="font-size:.8rem;color:var(--fg3);line-height:1.75;">Systemet kunde inte hämta historiken. Kontrollera anslutningen och ladda om sidan.</p></div>'
+    );
+    return;
+  }
+
+  allCheckins=checkins;
+  const n=checkins.length;
+  const sfEl=document.getElementById('sf-count');
+  if(sfEl)sfEl.textContent=`${n} check-in${n!==1?'s':''}`;
+
+  // Signal nav
+  try{
+    const rev=[...checkins].reverse();
+    let streak=0;for(const c of rev){if((c.stress||0)>=7&&(c.sleep||0)<=5)streak++;else break;}
+    let soft=0;for(const c of rev){if((c.stress||0)>=6&&(c.sleep||0)<=5)soft++;else break;}
+    const navSig=document.getElementById('nav-signal');
+    if(navSig&&(streak>=2||soft>=3))navSig.classList.add('show');
+  }catch(e){}
+
+  if(!n){
+    document.getElementById('main-content').innerHTML=`
+      <div class="empty-state">
+        <div style="width:28px;height:1px;background:rgba(143,174,138,0.4);margin-bottom:1.8rem;"></div>
+        <h2 style="font-family:var(--serif);font-size:clamp(1.6rem,3vw,2.2rem);font-weight:300;line-height:1.2;margin-bottom:1.2rem;">Historiken är tom.<br><em>Den byggs en dag i taget.</em></h2>
+        <p style="font-size:.8rem;color:var(--fg3);line-height:1.75;margin-bottom:1.8rem;">Varje check-in du gör sparas här och byggs upp till en kronologisk bild av hur du mår och presterar. Det är din historia — systemet håller reda på den.</p>
+        <a href="checkin.html" style="font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);text-decoration:none;border:1px solid rgba(143,174,138,0.3);padding:.65rem 1.4rem;">Gör din första check-in →</a>
+      </div>`;
+    return;
+  }
+
+  const sorted=[...checkins].sort((a,b)=>a.date<b.date?-1:1);
+  const first=new Date(sorted[0].date),last=new Date(sorted[sorted.length-1].date);
+  const daySpan=Math.round((last-first)/86400000)+1;
+  const avgFn=f=>(checkins.reduce((s,c)=>s+(c[f]||0),0)/n).toFixed(1);
+
+  // PSI stats
+  const psiVals=checkins.map(c=>psiOf(c)).filter(v=>v!==null);
+  const avgPsi=psiVals.length?Math.round(psiVals.reduce((s,v)=>s+v,0)/psiVals.length):null;
+  const bestPsi=psiVals.length?Math.max(...psiVals):null;
+  const highDays=psiVals.filter(v=>v>=70).length;
+
+  document.getElementById('statTotal').textContent=n;
+  document.getElementById('statPeriod').textContent=`${daySpan} dagar spårade`;
+  if(avgPsi!==null){
+    document.getElementById('statPsi').textContent=avgPsi;
+    document.getElementById('statPsi').style.color=psiColor(avgPsi);
+    document.getElementById('statPsiSub').textContent=`${highDays} av ${psiVals.length} dagar ≥70`;
+  }
+  document.getElementById('statEnergy').textContent=avgFn('energy');
+  document.getElementById('statSleep').textContent=avgFn('sleep');
+  document.getElementById('statStress').textContent=avgFn('stress');
+  const avgStress=parseFloat(avgFn('stress'));
+  document.getElementById('statStress').style.color=avgStress>=7?'var(--danger)':avgStress>=5?'var(--warn)':'var(--accent)';
+  document.getElementById('statStressSub').textContent=avgStress>=7?'Systematiskt högt':avgStress>=5?'Måttligt':avgStress<4?'Stabilt lågt':'av 10';
+
+  document.getElementById('statsRow').style.display='';
+  document.getElementById('heatmapWrap').style.display='';
+  document.getElementById('filterBar').style.display='';
+
+  predMap=computeAllPredictions(sorted);
+  renderHeatmap(checkins);
+  renderTimeline(checkins);
+})();
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

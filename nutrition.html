@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Kost</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<script src="cache.js"></script>
+<style>
+:root {
+  --ink:#0F1210;--ink2:#131714;
+  --fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;
+  --accent:#8FAE8A;--warn:#C4875A;--danger:#A85C5C;--trust:#5B7FA6;
+  --serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;
+  --border:rgba(242,240,234,0.06);
+  --pad:clamp(5rem,8vw,9rem);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;line-height:1.7;overflow-x:hidden;}
+
+/* ── BAKGRUND ── */
+.page-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;}
+.page-bg-img{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.18) saturate(0.4);}
+.page-bg-veil{position:absolute;inset:0;background:linear-gradient(to bottom,var(--ink) 0%,rgba(15,18,16,0.72) 9%,rgba(15,18,16,0.06) 26%,rgba(15,18,16,0.06) 74%,rgba(15,18,16,0.72) 91%,var(--ink) 100%);}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(2rem,5vw,4rem);height:64px;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.85);backdrop-filter:blur(32px);}
+.logo{font-family:var(--serif);font-size:1.15rem;font-weight:400;letter-spacing:0.18em;color:var(--fg);text-decoration:none;}
+.nav-center{font-size:0.58rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg3);}
+.nav-meta{display:flex;align-items:center;gap:1.6rem;}
+.nav-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(143,174,138,0.6);animation:pulse 2.5s ease infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.nav-date{font-family:var(--serif);font-size:0.88rem;color:var(--fg2);}
+.nav-user{font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg3);text-decoration:none;}
+.nav-signal{font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--danger);display:none;align-items:center;gap:0.4rem;text-decoration:none;}
+.nav-signal.show{display:flex;}
+.nav-signal::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+@keyframes sig-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(168,92,92,0.6)}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(168,92,92,0)}}
+
+/* ── MAIN ── */
+main{position:relative;z-index:1;flex:1;min-width:0;overflow-y:auto;height:100%;}
+
+/* ── LABEL ── */
+.s-label{font-size:0.68rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--accent);opacity:0.8;display:flex;align-items:center;gap:0.75rem;margin-bottom:2.2rem;}
+.s-label::before{content:'';width:16px;height:1px;background:var(--accent);opacity:0.5;flex-shrink:0;}
+
+/* ── AKT 1 — HERO ── */
+.s-hero{min-height:100vh;display:flex;align-items:flex-start;justify-content:flex-start;flex-direction:column;padding:calc(68vh - 6rem) clamp(2rem,6vw,5rem) clamp(3.5rem,6vw,5rem);}
+.s-hero-inner{max-width:720px;}
+.s-opening{font-family:var(--serif);font-size:clamp(2.2rem,4.5vw,4rem);font-weight:300;font-style:italic;line-height:1.2;color:var(--fg);text-shadow:0 1px 24px rgba(15,18,16,0.85),0 4px 80px rgba(15,18,16,0.6);min-height:clamp(7rem,13.75vw,12.5rem);margin-bottom:2rem;}
+.s-sub{font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);opacity:0;transition:opacity 0.5s ease 0.3s;display:flex;align-items:center;gap:0.7rem;}
+.s-sub.vis{opacity:1;}
+.s-sub::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+
+/* ── AKT 2 — DATA ── */
+.s-data{padding:var(--pad) clamp(2rem,6vw,5rem);max-width:1000px;margin:0 auto;}
+.cg{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:3rem;}
+.ci{background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);padding:1.3rem 1.5rem;}
+.cl{font-size:0.56rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--fg4);margin-bottom:0.5rem;}
+.cv{font-family:var(--serif);font-size:1.9rem;font-weight:300;line-height:1;color:var(--fg);margin-bottom:0.3rem;}
+.cv small{font-size:0.45em;color:var(--fg3);font-family:var(--sans);}
+.cd{font-size:0.68rem;color:var(--fg3);}
+.cd.up{color:var(--accent);}.cd.dn{color:var(--danger);}.cd.wn{color:var(--warn);}
+.dl-wrap{display:flex;flex-direction:column;}
+.dr{display:grid;grid-template-columns:100px 1fr 70px;align-items:center;gap:1.4rem;padding:0.85rem 0;border-bottom:1px solid var(--border);position:relative;opacity:0;transform:translateX(-10px);}
+.dr:last-child{border-bottom:none;}
+.dr.vis{opacity:1;transform:translateX(0);transition:opacity 0.45s ease,transform 0.45s ease;}
+.dd{font-size:0.7rem;color:var(--fg3);letter-spacing:0.05em;white-space:nowrap;}
+.dbw{height:2px;background:rgba(242,240,234,0.05);position:relative;}
+.db{height:100%;width:0%;transition:width 0.65s ease;position:absolute;left:0;top:0;}
+.dv{font-family:var(--serif);font-size:0.95rem;font-weight:300;color:var(--fg2);text-align:right;opacity:0;transition:opacity 0.3s ease 0.6s;}
+.dr.vis .dv{opacity:1;}
+.dtt{position:absolute;left:0;bottom:calc(100% + 6px);background:rgba(15,18,16,0.95);border:1px solid rgba(143,174,138,0.1);padding:0.45rem 0.8rem;font-family:var(--serif);font-style:italic;font-size:0.78rem;color:var(--fg3);line-height:1.5;pointer-events:none;opacity:0;transition:opacity 0.18s ease;z-index:20;max-width:320px;}
+.dr:hover .dtt{opacity:1;}
+.dr.empty .db{width:12%!important;background:rgba(242,240,234,0.08)!important;}
+.dr.empty .dv{color:var(--fg4);font-style:italic;}
+
+/* ── AKT 3 — INSIKT ── */
+.s-insight{padding:var(--pad) clamp(2rem,6vw,5rem);max-width:800px;margin:0 auto;opacity:0;transform:translateY(16px);transition:opacity 0.6s ease,transform 0.6s ease;}
+.s-insight.vis{opacity:1;transform:translateY(0);}
+.s-insikt{font-family:var(--serif);font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:300;line-height:1.22;color:var(--fg);max-width:680px;margin-bottom:3rem;text-shadow:0 1px 20px rgba(15,18,16,0.85);}
+.s-items{display:flex;flex-direction:column;gap:1.2rem;max-width:580px;}
+.di{display:flex;gap:0.8rem;align-items:flex-start;opacity:0;transform:translateY(8px);transition:opacity 0.4s ease,transform 0.4s ease;font-size:0.88rem;color:var(--fg2);line-height:1.7;text-shadow:0 1px 10px rgba(15,18,16,0.95);}
+.di.vis{opacity:1;transform:translateY(0);}
+.dm{font-size:1.2rem;line-height:1;margin-top:0.1rem;flex-shrink:0;}
+
+/* ── AKT 4 — VALIDERING ── */
+.s-validation{padding:var(--pad) clamp(2rem,6vw,5rem);max-width:800px;margin:0 auto;}
+.val-label{font-size:0.56rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:2.5rem;display:flex;align-items:center;gap:0.7rem;}
+.val-label::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+.val-intro{font-size:0.54rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.2rem;}
+.val-p{font-family:var(--serif);font-size:clamp(0.9rem,1.4vw,1.05rem);font-weight:300;font-style:italic;line-height:1.9;color:var(--fg2);max-width:560px;margin-bottom:2rem;text-shadow:0 1px 18px rgba(15,18,16,0.9);}
+.val-question{font-family:var(--serif);font-size:clamp(1.5rem,2.5vw,2.1rem);font-weight:300;font-style:italic;color:var(--fg);margin-bottom:1.8rem;line-height:1.15;}
+.val-btns{display:flex;gap:1rem;flex-wrap:wrap;}
+.val-btn{background:none;border:1px solid var(--border);color:var(--fg3);font-family:var(--sans);font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.65rem 1.5rem;cursor:pointer;transition:all 0.2s;}
+.val-btn:hover{border-color:rgba(242,240,234,0.15);color:var(--fg2);}
+.val-btn.ja{border-color:rgba(143,174,138,0.35);color:var(--accent);}
+.val-btn.nej{border-color:rgba(168,92,92,0.35);color:var(--danger);}
+.val-fritext{display:none;margin-top:1.4rem;}
+.val-textarea{display:block;width:100%;max-width:500px;background:rgba(15,18,16,0.7);backdrop-filter:blur(8px);border:1px solid var(--border);color:var(--fg2);font-family:var(--sans);font-size:0.82rem;padding:0.8rem 1rem;resize:vertical;margin-bottom:0.8rem;outline:none;}
+.val-textarea:focus{border-color:rgba(143,174,138,0.25);}
+.val-skicka{background:none;border:1px solid rgba(143,174,138,0.3);color:var(--accent);font-family:var(--sans);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;padding:0.55rem 1.3rem;cursor:pointer;transition:all 0.2s;}
+.val-skicka:hover{background:rgba(143,174,138,0.06);}
+.val-tack{display:none;font-family:var(--serif);font-style:italic;color:var(--fg3);font-size:0.9rem;margin-top:1rem;}
+
+/* ── CRONOMETER ── */
+.crono-section{padding:var(--pad) clamp(2rem,6vw,5rem);max-width:1000px;margin:0 auto;}
+.crono-label{font-size:0.56rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:2rem;display:flex;align-items:center;gap:0.7rem;}
+.crono-label::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+.crono-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:1.5rem;}
+.crono-item{background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);padding:1.2rem 1.4rem;}
+.crono-name{font-size:0.54rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg4);margin-bottom:0.5rem;}
+.crono-val{font-family:var(--serif);font-size:1.6rem;font-weight:300;line-height:1;color:var(--fg);margin-bottom:0.3rem;}
+.crono-val small{font-size:0.42em;color:var(--fg3);font-family:var(--sans);}
+.crono-status{font-size:0.54rem;letter-spacing:0.12em;text-transform:uppercase;}
+.cs-ok{color:var(--accent);}.cs-warn{color:var(--warn);}.cs-low{color:var(--danger);}
+.crono-meta{font-size:0.6rem;letter-spacing:0.1em;color:var(--fg4);margin-top:0.5rem;}
+.crono-cta{font-family:var(--serif);font-style:italic;font-size:0.88rem;color:var(--fg3);line-height:1.7;}
+.crono-cta a{color:var(--accent);text-decoration:none;}
+
+/* ── BIO + REK ── */
+.s-bio{padding:var(--pad) clamp(2rem,6vw,5rem);max-width:1000px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:5rem;}
+.s-bio-label{font-size:0.54rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.8rem;display:flex;align-items:center;gap:0.6rem;}
+.s-bio-label::before{content:'';width:10px;height:1px;background:var(--accent);opacity:0.4;}
+.bio-marker{display:flex;justify-content:space-between;align-items:baseline;padding:0.65rem 0;border-bottom:1px solid var(--border);}
+.bio-marker:last-child{border-bottom:none;}
+.bm-name{font-size:0.68rem;color:var(--fg3);letter-spacing:0.03em;line-height:1.4;}
+.bm-right{text-align:right;}
+.bm-val{font-family:var(--serif);font-size:1.05rem;font-weight:300;line-height:1;}
+.bm-status{font-size:0.54rem;letter-spacing:0.14em;text-transform:uppercase;margin-top:0.2rem;}
+.bm-ok{color:var(--accent);}.bm-warn{color:var(--warn);}.bm-bad{color:var(--danger);}
+.rek-step{padding:0.9rem 0;border-bottom:1px solid var(--border);opacity:0;transform:translateY(6px);transition:opacity 0.4s ease,transform 0.4s ease;}
+.rek-step:last-child{border-bottom:none;}
+.rek-step.vis{opacity:1;transform:translateY(0);}
+.rek-atgard{font-family:var(--serif);font-size:0.9rem;font-weight:300;color:var(--fg);line-height:1.5;margin-bottom:0.3rem;}
+.rek-varfor{font-size:0.7rem;color:var(--fg3);line-height:1.6;padding-left:0.75rem;border-left:1px solid var(--border);}
+
+/* ── FOOTER ── */
+.s-footer{border-top:1px solid rgba(143,174,138,0.06);padding:2.5rem clamp(2rem,6vw,5rem);display:flex;align-items:center;justify-content:space-between;}
+.s-footer-quote{font-family:var(--serif);font-style:italic;font-size:0.72rem;color:var(--fg4);line-height:1.8;}
+.s-footer-back{font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg3);text-decoration:none;transition:color 0.2s;}
+.s-footer-back:hover{color:var(--fg2);}
+
+/* ── DOTS ── */
+.dots{display:flex;gap:0.4rem;}
+.dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:dp 1.4s ease infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.load-row{display:flex;align-items:center;gap:0.8rem;}
+.load-txt{font-size:0.6rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+.content-wrap{display:flex;align-items:flex-start;height:calc(100vh - 64px);overflow:hidden;}
+.sidebar{width:210px;height:100%;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:rgba(15,18,16,0.4);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;z-index:50;padding:2.5rem 0 1.8rem;}
+.sidebar::-webkit-scrollbar{display:none;}
+.ng{margin-bottom:0;}
+.ngl{font-size:0.44rem;letter-spacing:0.32em;text-transform:uppercase;color:var(--fg4);padding:0.7rem 1.8rem 0.2rem;}
+.nl{display:block;padding:0.22rem 1.8rem;font-size:0.76rem;letter-spacing:0.06em;color:var(--fg3);text-decoration:none;transition:color 0.2s,border-left-color 0.2s;border-left:1px solid transparent;cursor:pointer;}
+.nl:hover{color:var(--fg2);}
+.nl.active{color:var(--fg);border-left-color:var(--accent);background:rgba(143,174,138,0.04);}
+.nl.signal-link{color:var(--danger);display:flex;align-items:center;gap:0.5rem;}
+.nl.signal-link::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+.selvitas-wrap{margin-top:auto;padding-top:0.5rem;border-top:1px solid var(--border);}.selvitas-nav{display:block;padding:0.6rem 1.8rem 0.3rem;font-family:var(--serif);font-style:italic;font-size:0.78rem;letter-spacing:0.08em;color:var(--fg3);text-decoration:none;transition:color 0.2s;}.selvitas-nav:hover{color:var(--fg2);}
+
+/* ── IDAG-SEKTION ── */
+.today-section{padding:3rem clamp(2rem,6vw,5rem);max-width:1000px;margin:0 auto;border-bottom:1px solid var(--border);}
+.section-header{display:flex;align-items:baseline;gap:1.2rem;margin-bottom:2rem;}
+.section-title{font-family:var(--serif);font-size:clamp(1.6rem,3vw,2.4rem);font-weight:300;color:var(--fg);}
+.section-sub{font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+.psi-badge{display:inline-flex;align-items:baseline;gap:0.3rem;padding:0.3rem 0.8rem;border:1px solid var(--border);background:var(--ink2);}
+.psi-badge-val{font-family:var(--serif);font-size:1.4rem;font-weight:300;line-height:1;}
+.psi-badge-lbl{font-size:0.52rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--fg4);}
+.today-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);}
+.today-card{background:var(--ink2);padding:1.8rem 2rem;position:relative;}
+.today-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.today-card.kost-today::before{background:var(--warn);opacity:0.6;}
+.today-card.insikt-today::before{background:var(--accent);opacity:0.4;}
+.today-card-label{font-size:0.54rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--fg4);margin-bottom:1rem;}
+.today-card-main{font-family:var(--serif);font-size:1.05rem;font-weight:300;color:var(--fg);line-height:1.5;margin-bottom:0.8rem;}
+.today-card-sub{font-size:0.78rem;color:var(--fg3);line-height:1.7;}
+.follow-tag{display:inline-block;font-size:0.52rem;letter-spacing:0.2em;text-transform:uppercase;padding:0.2rem 0.6rem;border:1px solid;margin-bottom:0.8rem;}
+.follow-yes{color:var(--accent);border-color:rgba(143,174,138,0.3);}
+.follow-no{color:var(--warn);border-color:rgba(196,135,90,0.3);}
+.systeminsikt{margin-top:1.5rem;padding:1rem 1.4rem;border-left:2px solid var(--accent);background:rgba(143,174,138,0.04);}
+.systeminsikt-lbl{font-size:0.5rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--accent);margin-bottom:0.4rem;}
+.systeminsikt-txt{font-family:var(--serif);font-style:italic;font-size:0.92rem;color:var(--fg2);line-height:1.6;}
+
+/* ── PROTOKOLL-FORMULÄR ── */
+.protocol-section{padding:3rem clamp(2rem,6vw,5rem);max-width:680px;margin:0 auto;border-bottom:1px solid var(--border);}
+.form-group{margin-bottom:1.6rem;}
+.form-label{font-size:0.58rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--fg4);margin-bottom:0.6rem;display:block;}
+.form-input{width:100%;background:var(--ink);border:1px solid var(--border);color:var(--fg2);font-family:var(--sans);font-size:0.82rem;padding:0.65rem 0.9rem;outline:none;transition:border-color 0.2s;}
+.form-input:focus{border-color:rgba(143,174,138,0.3);}
+.form-select{width:100%;background:var(--ink);border:1px solid var(--border);color:var(--fg2);font-family:var(--sans);font-size:0.82rem;padding:0.65rem 0.9rem;outline:none;cursor:pointer;}
+.form-select option{background:var(--ink);}
+.form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.2rem;}
+.form-textarea{width:100%;background:var(--ink);border:1px solid var(--border);color:var(--fg2);font-family:var(--sans);font-size:0.82rem;padding:0.65rem 0.9rem;outline:none;resize:vertical;min-height:80px;}
+.form-textarea:focus{border-color:rgba(143,174,138,0.3);}
+.toggle-row{display:flex;align-items:center;gap:1.2rem;}
+.toggle-btn{background:none;border:1px solid var(--border);color:var(--fg3);font-family:var(--sans);font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.5rem 1.2rem;cursor:pointer;transition:all 0.2s;}
+.toggle-btn.active-yes{border-color:rgba(143,174,138,0.4);color:var(--accent);}
+.toggle-btn.active-no{border-color:var(--border);color:var(--fg3);}
+.fasting-window{display:none;margin-top:0.8rem;}
+.form-save-btn{background:none;border:1px solid rgba(143,174,138,0.35);color:var(--accent);font-family:var(--sans);font-size:0.72rem;letter-spacing:0.2em;text-transform:uppercase;padding:0.7rem 2rem;cursor:pointer;transition:all 0.2s;margin-top:1rem;}
+.form-save-btn:hover{background:rgba(143,174,138,0.06);}
+.form-save-btn.saving{opacity:0.5;pointer-events:none;}
+.form-save-msg{font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg4);margin-top:0.8rem;display:none;}
+
+@media(max-width:860px){
+  .sidebar{display:none!important;}
+  .content-wrap,.page-wrap,.layout-wrap{display:block!important;}
+  #main,.main-content,.page-content{width:100%!important;max-height:none!important;overflow-y:auto!important;}
+  .mg,.pred-grid,.today-plan-grid,.bio-grid,.src-grid,.prof-grid{grid-template-columns:1fr 1fr!important;}
+  .pred-grid,.prof-grid{grid-template-columns:1fr!important;}
+}
+</style>
+</head>
+<body>
+<script>checkAuth();</script>
+<div class="page-bg">
+  <div class="page-bg-img" style="background-image:url('images/DALL·E 2026-04-11 15.30.02 - A dark, minimal kitchen scene with moody lighting emphasizing natural ingredients and organic textures. The palette is deep and subdued—charcoal, blac.webp')"></div>
+  <div class="page-bg-veil"></div>
+</div>
+
+<nav>
+  <a href="dashboard.html" class="logo">Forsyne</a>
+  <span class="nav-center">Kost &amp; näring</span>
+  <div class="nav-meta">
+    <div class="nav-dot"></div>
+    <span class="nav-date" id="topDate"></span>
+    <a class="nav-user" id="topUser" href="profile.html"></a>
+  </div>
+</nav>
+
+<div class="content-wrap">
+<aside class="sidebar">
+  <div class="ng">
+    <div class="ngl">Idag</div>
+    <a class="nl" href="dashboard.html">Dashboard</a>
+    <a class="nl" href="checkin.html">Check-in</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Mönster</div>
+    <a class="nl" href="sleep.html">Sömn</a>
+    <a class="nl" href="energy.html">Energi</a>
+    <a class="nl" href="stress.html">Stress</a>
+    <a class="nl" href="training.html">Träning</a>
+    <a class="nl" href="kostlogg.html">Kost</a>
+    <a class="nl" href="wearables.html">Wearables</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Djupet</div>
+    <a class="nl" href="biologi.html">Biologi</a>
+    <a class="nl" href="dna.html">DNA</a>
+    <a class="nl" href="journal.html">Journal</a>
+    <a class="nl" href="analys.html">Analys</a>
+    <a class="nl" href="coach.html">Coach</a>
+  </div>
+</aside>
+
+<main>
+
+  <!-- ── IDAG ── -->
+  <section class="today-section">
+    <div class="section-header">
+      <div class="section-title">Idag</div>
+      <span class="section-sub" id="today-date-label"></span>
+      <span id="psi-badge-wrap"></span>
+    </div>
+    <div id="today-load" class="load-row">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Systemet beräknar dagens kostplan</span>
+    </div>
+    <div id="today-content" style="display:none;">
+      <div class="today-grid">
+        <div class="today-card kost-today">
+          <div class="today-card-label">Kost idag</div>
+          <div id="today-follow-tag"></div>
+          <div class="today-card-main" id="today-kost-main"></div>
+          <div class="today-card-sub" id="today-kost-sub"></div>
+        </div>
+        <div class="today-card insikt-today">
+          <div class="today-card-label">Timing &amp; prioritet</div>
+          <div class="today-card-main" id="today-timing-main"></div>
+          <div class="today-card-sub" id="today-timing-sub"></div>
+        </div>
+      </div>
+      <div class="systeminsikt" id="today-systeminsikt" style="display:none;">
+        <div class="systeminsikt-lbl">Systeminsikt</div>
+        <div class="systeminsikt-txt" id="today-systeminsikt-txt"></div>
+      </div>
+    </div>
+    <div id="today-empty" style="display:none;font-family:var(--serif);font-style:italic;font-size:0.88rem;color:var(--fg4);margin-top:1rem;">Logga ett check-in för att se dagens kostplan.</div>
+  </section>
+
+  <!-- ── PROTOKOLL-EDITOR ── -->
+  <section class="protocol-section">
+    <div class="section-header">
+      <div class="section-title">Mitt protokoll</div>
+      <span class="section-sub">Dina kostprinciper</span>
+    </div>
+    <div id="protocol-load" class="load-row" style="margin-bottom:1.5rem;">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Hämtar protokoll</span>
+    </div>
+    <div id="protocol-form" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Fastar du?</label>
+        <div class="toggle-row">
+          <button class="toggle-btn" id="fastar-ja" onclick="toggleFasting(true)">Ja</button>
+          <button class="toggle-btn" id="fastar-nej" onclick="toggleFasting(false)">Nej</button>
+        </div>
+        <div class="fasting-window" id="fasting-window-wrap">
+          <label class="form-label" style="margin-top:0.8rem;">Fastfönster</label>
+          <input type="text" class="form-input" id="fastfonster" placeholder="16:8, 18:6, 20:4 ...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kolhydratsstrategi</label>
+        <select class="form-select" id="kolhydratsstrategi">
+          <option value="normal">Normal</option>
+          <option value="lågkolhydrat">Lågkolhydrat</option>
+          <option value="cyklisk">Cyklisk</option>
+          <option value="keto">Keto</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dagliga mål</label>
+        <div class="form-row">
+          <div>
+            <label class="form-label">Kolhydrater (g)</label>
+            <input type="number" class="form-input" id="kolhydrater-gram" placeholder="150" min="0">
+          </div>
+          <div>
+            <label class="form-label">Protein (g)</label>
+            <input type="number" class="form-input" id="protein-gram" placeholder="120" min="0">
+          </div>
+          <div>
+            <label class="form-label">Kalorier</label>
+            <input type="number" class="form-input" id="kalorier" placeholder="2000" min="0">
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tillskott (kommaseparerat)</label>
+        <input type="text" class="form-input" id="tillskott" placeholder="Magnesium, Vitamin D, Kreatin">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Anteckningar</label>
+        <textarea class="form-textarea" id="anteckningar" placeholder="Allergier, preferenser, undantag ..."></textarea>
+      </div>
+      <button class="form-save-btn" id="protocol-save-btn" onclick="saveProtocol()">Spara protokoll</button>
+      <div class="form-save-msg" id="protocol-save-msg">Protokollet är sparat.</div>
+    </div>
+  </section>
+
+  <!-- AKT 1 -->
+  <section class="s-hero">
+    <div class="s-hero-inner">
+      <div class="s-label">Mönster &amp; historik · Senaste 14 dagar</div>
+      <div class="s-opening" id="ot">
+        <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      </div>
+      <div class="s-sub" id="ol">Kost &amp; näring · Senaste 14 dagar</div>
+    </div>
+  </section>
+
+  <!-- AKT 2 -->
+  <section class="s-data" id="a2" style="opacity:0;transition:opacity 0.5s ease;">
+    <div class="load-row" id="a2-load">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Hämtar kostdata</span>
+    </div>
+    <div class="cg" id="cg" style="display:none;">
+      <div class="ci"><div class="cl">Kostkvalitet snitt · 14 d</div><div class="cv" id="cv-avg">—<small>/10</small></div><div class="cd" id="cd-avg"></div></div>
+      <div class="ci"><div class="cl">Kost → energi</div><div class="cv" id="cv-corr">—</div><div class="cd" id="cd-corr"></div></div>
+      <div class="ci"><div class="cl">Senaste check-in</div><div class="cv" id="cv-last">—<small>/10</small></div><div class="cd" id="cd-last"></div></div>
+      <div class="ci"><div class="cl">Check-ins totalt</div><div class="cv" id="cv-total">—</div><div class="cd">loggade dagar</div></div>
+    </div>
+    <div class="dl-wrap" id="dl" style="display:none;"></div>
+  </section>
+
+  <!-- AKT 3 -->
+  <section class="s-insight" id="a3">
+    <div class="load-row" id="a3-load">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Systemet analyserar</span>
+    </div>
+    <div id="a3-body" style="display:none;">
+      <div class="s-insikt" id="a3-dom"></div>
+      <div class="s-items" id="a3-items"></div>
+    </div>
+  </section>
+
+  <!-- AKT 4 -->
+  <section class="s-validation">
+    <div class="val-label">Validering</div>
+    <div class="load-row" id="a4-load">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Systemet formulerar ett påstående</span>
+    </div>
+    <div id="a4-body" style="display:none;">
+      <div class="val-intro">Systemet säger såhär:</div>
+      <div class="val-p" id="val-stmt"></div>
+      <div class="val-question">Känner du igen dig?</div>
+      <div class="val-btns" id="val-btns">
+        <button class="val-btn ja" onclick="svara('ja')">Ja, stämmer</button>
+        <button class="val-btn nej" onclick="svara('nej')">Nej, stämmer inte</button>
+      </div>
+      <div class="val-fritext" id="val-fritext">
+        <textarea class="val-textarea" id="val-text" rows="3" placeholder="Berätta mer — systemet lyssnar."></textarea>
+        <button class="val-skicka" onclick="skicka()">Skicka</button>
+      </div>
+      <div class="val-tack" id="val-tack">Tack. Systemet uppdaterar sin modell av dig.</div>
+    </div>
+  </section>
+
+  <!-- Bio + Rek -->
+  <section class="s-bio">
+    <div>
+      <div class="s-bio-label">Biologiska markörer</div>
+      <div id="bio-markers">
+        <div class="load-row"><span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></div>
+      </div>
+    </div>
+    <div>
+      <div class="s-bio-label">Systemets rekommendation</div>
+      <div id="rek-steps">
+        <div class="load-row"><span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span><span class="load-txt">Systemet formulerar</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CRONOMETER -->
+  <section class="crono-section" id="crono-section">
+    <div class="crono-label">Mikronäringsämnen · Cronometer · Snitt 7d</div>
+    <div id="crono-body"><div class="load-row"><span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span><span class="load-txt">Hämtar mikronäringsdata</span></div></div>
+  </section>
+
+  <footer class="s-footer">
+    <div class="s-footer-quote">Inte baserat på genomsnitt.<br>Baserat på dig.</div>
+    <a href="dashboard.html" class="s-footer-back">← Dashboard</a>
+  </footer>
+
+</main>
+</div>
+
+<script>
+// ── Sidebar: auto-active baserat på URL ──
+(function(){
+  const page = location.pathname.split('/').pop() || 'dashboard.html';
+  document.querySelectorAll('.sidebar a.nl').forEach(a => {
+    if (a.getAttribute('href') === page) a.classList.add('active');
+  });
+})();
+
+function tw(el,text,ms,cb){let i=0;el.textContent='';const t=()=>{if(i<text.length){el.textContent+=text[i++];setTimeout(t,ms);}else if(cb)cb();};t();}
+function pearsonCorr(xs,ys){const n=xs.length;if(n<3)return null;const mx=xs.reduce((a,b)=>a+b,0)/n,my=ys.reduce((a,b)=>a+b,0)/n;let num=0,dx2=0,dy2=0;for(let i=0;i<n;i++){const dx=xs[i]-mx,dy=ys[i]-my;num+=dx*dy;dx2+=dx*dx;dy2+=dy*dy;}const den=Math.sqrt(dx2*dy2);return den===0?null:num/den;}
+function nutritionColor(v){return v>=8?'var(--accent)':v>=5?'var(--warn)':'var(--danger)';}
+function nutritionComment(v,energy){
+  if(!v||v===0)return 'Ingen data loggad denna dag.';
+  if(v>=9){if(energy&&energy>=7)return 'Utmärkt kost och hög energi — det är inte en slump.';return 'Utmärkt kostkvalitet. Effekten syns vanligtvis dagen efter.';}
+  if(v>=7)return 'Bra dag. Systemet bygger sin modell av vad som fungerar för dig.';
+  if(v>=5){if(energy&&energy<5)return 'Måttlig kost och låg energi — se om mönstret håller tre dagar.';return 'Acceptabelt. Under din potential men inte destruktivt.';}
+  if(v>=3)return 'Under nivå. Blodsockervariationer påverkar fokus och energi kommande timmar.';
+  return 'Låg kostkvalitet. Inflammationsmarkörer och energidip är sannolika konsekvenser.';
+}
+function computePd(c14) {
+  const getN=c=>c._crono_score!=null?c._crono_score:c.nutrition!=null?parseFloat(c.nutrition):(c.food!=null?parseFloat(c.food):null);
+  const withN=c14.filter(c=>getN(c)!==null);
+  if(withN.length<3) return null;
+  const vals=withN.map(c=>getN(c));
+  const avg=vals.reduce((s,v)=>s+v,0)/vals.length;
+  const lowDays=withN.filter(c=>getN(c)<4).length;
+  const highDays=withN.filter(c=>getN(c)>=7).length;
+  const lowRatio=lowDays/withN.length;
+  const nePairs=withN.filter(c=>c.energy>0);
+  const neCorr=nePairs.length>=3?pearsonCorr(nePairs.map(c=>getN(c)),nePairs.map(c=>c.energy)):null;
+  const nextDay=[];c14.forEach((c,i)=>{if(i<c14.length-1&&getN(c)!==null&&c14[i+1].energy!=null)nextDay.push({n:getN(c),e:c14[i+1].energy});});
+  const ndCorr=nextDay.length>=3?pearsonCorr(nextDay.map(p=>p.n),nextDay.map(p=>p.e)):null;
+  let insikt,styrka,risk,rekommendation,validation,steg;
+  if(neCorr!==null&&neCorr>0.55) insikt=`Kostkvalitet och energi hänger ihop med ${neCorr.toFixed(2)} i din data — en av de starkaste kopplingarna systemet hittat. Det du äter idag syns direkt i hur du presterar.`;
+  else if(ndCorr!==null&&ndCorr>0.5) insikt=`Kostkvaliteten idag förutsäger energin imorgon — samband ${ndCorr.toFixed(2)}. Systemet ser en 24-timmarsfördröjning i effekten.`;
+  else if(lowRatio>0.5) insikt=`${lowDays} av ${withN.length} dagar med låg kostkvalitet — det är inte en undantagsdag, det är normen.`;
+  else if(avg>7) insikt=`Snitt ${avg.toFixed(1)}/10 — kostkvaliteten är konsekvent hög. Systemet letar efter vad det kostar dig de dagar det brister.`;
+  else insikt=`Snitt ${avg.toFixed(1)}/10 på ${withN.length} loggade dagar. Variansen berättar mer än medelvärdet.`;
+  if(highDays>=5) styrka=`${highDays} av ${withN.length} dagar med kostkvalitet ≥7 — en konsekvent bas att bygga på.`;
+  else if(neCorr!==null&&neCorr>0.4) styrka=`Dagarna med hög kostkvalitet hänger ihop med din bästa energi i datan — systemet ser sambandet tydligt.`;
+  else styrka=`Systemet ser dagar med hög kostkvalitet — de visar vad som är möjligt.`;
+  if(lowRatio>0.4) risk=`${Math.round(lowRatio*100)}% låg-kost-dagar skapar biologisk skuld — inflammation, blodsockervarians, energidip.`;
+  else if(ndCorr!==null&&ndCorr>0.4) risk=`Låg-kost-dagarna kostar dig energi nästa dag — effekten är fördröjd och svårare att se i stunden.`;
+  else risk=`Variansen i kostkvalitet skapar instabilt blodsocker och energidip som påverkar fokus och återhämtning.`;
+  if(lowRatio>0.4) rekommendation=`Ersätt ett låg-kost-mål per dag med ett bättre alternativ du faktiskt äter — tre dagar i rad.`;
+  else if(neCorr!==null&&neCorr>0.5) rekommendation=`Identifiera de 3 specifika måltiderna som ger dig högst kostkvalitet och ät dem konsekvent 5 dagar.`;
+  else rekommendation=`Identifiera vad du åt de tre dagar med högst energi — börja där.`;
+  if(lowRatio>0.5) validation=`Systemet ser att mer än hälften av dina dagar innehåller lägre kostkvalitet. Det brukar inte upplevas som att man äter dåligt — mer som att det är praktiskt, att det funkar, att det är en tuff period. Att det aldrig riktigt är rätt tillfälle att ändra det.`;
+  else if(neCorr!==null&&neCorr>0.55) validation=`Systemet ser att dagarna du äter bättre är energinivån märkbart högre — samma dag. Du kanske redan känner det, men kopplar det inte alltid ihop. Att det verkar vara mer än en tillfällighet, men det är svårt att veta säkert.`;
+  else if(ndCorr!==null&&ndCorr>0.5) validation=`Systemet ser att vad du äter idag påverkar hur du mår imorgon. Det är ett samband som är svårt att känna i stunden — du äter, du sover, du vaknar, och förbindelsen försvinner. Att det aldrig riktigt hänger ihop inifrån.`;
+  else if(lowRatio>0.3) validation=`Systemet ser att ungefär var tredje dag innehåller lägre kostkvalitet. Det brukar inte kännas som ett mönster — mer som enstaka undantag, speciella tillfällen. Att det är svårt att se det som ett mönster när man är mitt i det.`;
+  else validation=`Systemet ser ett relativt konsekvent kostmönster. Det brukar inte märkas tydligt i vardagen — kosten är som den är, och energin varierar ändå. Att kopplingen är svår att se utan att titta på det utifrån.`;
+  steg=[];
+  if(lowRatio>0.3) steg.push({atgard:`Ersätt ett låg-kost-mål per dag med ett alternativ du faktiskt gillar — tre dagar i rad.`,varfor:`${Math.round(lowRatio*100)}% av dina dagar är under kost-tröskeln — beteendeförändringar måste vara hållbara för att ge resultat.`});
+  else steg.push({atgard:`Identifiera de tre måltiderna med högst kostkvalitet och ät dem konsekvent 5 dagar.`,varfor:`Systemet ser att din bästa energi hänger ihop med dessa måltider.`});
+  if(ndCorr!==null&&ndCorr>0.4) steg.push({atgard:`Ät din mest proteintäta måltid inom 90 min efter uppvaknande.`,varfor:`Kostkvaliteten idag förutsäger energin imorgon i din data — morgonmåltiden sätter tonen.`});
+  else steg.push({atgard:`Ät din mest proteintäta måltid inom 90 min efter uppvaknande.`,varfor:`Systemet ser att morgonenergin hänger ihop med frukostval i din data.`});
+  return{insikt,styrka,risk,rekommendation,validation,steg};
+}
+
+function computeOpening(c14) {
+  const getN = c => c.nutrition!=null?parseFloat(c.nutrition):(c.food!=null?parseFloat(c.food):null);
+  const hasN = c14.some(c => getN(c) !== null);
+  if (!hasN || c14.length < 3) return 'Det du äter formar biologin som formar allting annat.';
+  const withM = c14.filter(c => getN(c) !== null && getN(c) > 0);
+  if (withM.length < 3) return 'Det du äter formar biologin som formar allting annat.';
+  const avg = withM.reduce((s,c) => s + getN(c), 0) / withM.length;
+  const lowDays = withM.filter(c => getN(c) < 5).length;
+  const highDays = withM.filter(c => getN(c) >= 8).length;
+  if (lowDays >= Math.ceil(withM.length * 0.4)) return `${lowDays} av ${withM.length} dagar under 5/10 i kostkvalitet — kroppen märker det.`;
+  if (highDays >= 3) return `${highDays} dagar med kostkvalitet ≥8/10 — det syns i energin.`;
+  if (avg < 5) return `Snitt ${avg.toFixed(1)}/10 i kostkvalitet — under vad biologin behöver för att leverera.`;
+  return `Snitt ${avg.toFixed(1)}/10 — mönstret i kosten berättar mer än siffran.`;
+}
+
+let _pageCheckins=[];
+let valAnswer=null;
+let _fastarState = false;
+
+function toggleFasting(ja) {
+  _fastarState = ja;
+  document.getElementById('fastar-ja').className = 'toggle-btn' + (ja ? ' active-yes' : '');
+  document.getElementById('fastar-nej').className = 'toggle-btn' + (!ja ? ' active-yes' : '');
+  document.getElementById('fasting-window-wrap').style.display = ja ? 'block' : 'none';
+}
+
+function populateProtocol(p) {
+  if (!p) return;
+  toggleFasting(!!p.fastar);
+  if (p.fastfönster) document.getElementById('fastfonster').value = p.fastfönster;
+  if (p.kolhydratsstrategi) document.getElementById('kolhydratsstrategi').value = p.kolhydratsstrategi;
+  if (p.kolhydrater_gram) document.getElementById('kolhydrater-gram').value = p.kolhydrater_gram;
+  if (p.protein_gram) document.getElementById('protein-gram').value = p.protein_gram;
+  if (p.kalorier) document.getElementById('kalorier').value = p.kalorier;
+  if (p.tillskott) document.getElementById('tillskott').value = Array.isArray(p.tillskott) ? p.tillskott.join(', ') : p.tillskott;
+  if (p.anteckningar) document.getElementById('anteckningar').value = p.anteckningar;
+}
+
+async function saveProtocol() {
+  const btn = document.getElementById('protocol-save-btn');
+  const msg = document.getElementById('protocol-save-msg');
+  btn.classList.add('saving');
+  btn.textContent = '...';
+
+  const tillskottRaw = document.getElementById('tillskott').value.trim();
+  const tillskott = tillskottRaw ? tillskottRaw.split(',').map(s=>s.trim()).filter(Boolean) : [];
+  const payload = {
+    fastar: _fastarState,
+    fastfönster: _fastarState ? (document.getElementById('fastfonster').value.trim() || null) : null,
+    kolhydratsstrategi: document.getElementById('kolhydratsstrategi').value || 'normal',
+    kolhydrater_gram: parseInt(document.getElementById('kolhydrater-gram').value) || null,
+    protein_gram: parseInt(document.getElementById('protein-gram').value) || null,
+    kalorier: parseInt(document.getElementById('kalorier').value) || null,
+    tillskott: tillskott.length ? tillskott : null,
+    anteckningar: document.getElementById('anteckningar').value.trim() || null
+  };
+
+  try {
+    const token = API && API.token ? API.token() : null;
+    const h = token ? {'Content-Type':'application/json','Authorization':'Bearer '+token} : {'Content-Type':'application/json'};
+    const r = await fetch('/api/nutrition-protocol', { method: 'POST', headers: h, body: JSON.stringify(payload) });
+    if (r.ok) {
+      // Invalidate schedule cache so next load reflects new protocol
+      sessionStorage.removeItem('schedule_today');
+      sessionStorage.removeItem('schedule_today_ts');
+      btn.textContent = 'Sparat';
+      btn.classList.remove('saving');
+      msg.style.display = 'block';
+      setTimeout(() => { btn.textContent = 'Spara protokoll'; msg.style.display = 'none'; }, 3000);
+    } else {
+      btn.textContent = 'Fel — försök igen';
+      btn.classList.remove('saving');
+      setTimeout(() => { btn.textContent = 'Spara protokoll'; }, 2000);
+    }
+  } catch(e) {
+    btn.textContent = 'Fel — försök igen';
+    btn.classList.remove('saving');
+    setTimeout(() => { btn.textContent = 'Spara protokoll'; }, 2000);
+  }
+}
+
+function svara(ans){valAnswer=ans;document.querySelector('.val-btn.ja').style.opacity=ans==='ja'?'1':'0.4';document.querySelector('.val-btn.nej').style.opacity=ans==='nej'?'1':'0.4';document.getElementById('val-fritext').style.display='block';const stmt=document.getElementById('val-stmt').textContent;const s=JSON.parse(localStorage.getItem('forsyne_val_nutrition')||'{}');s.statement=stmt;s.answer=ans;s.timestamp=Date.now();localStorage.setItem('forsyne_val_nutrition',JSON.stringify(s));}
+async function skicka(){const text=document.getElementById('val-text').value.trim();const stmt=document.getElementById('val-stmt').textContent;const btn=document.querySelector('.val-skicka');btn.textContent='...';btn.disabled=true;let larda='Systemet uppdaterar sin modell av dig.';try{const r=await fetch('/api/agent/validate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.token()},body:JSON.stringify({kategori:'nutrition',paastående:stmt,svar:valAnswer==='ja'?'stämmer':'stämmer inte',kommentar:text||null,datapunkter:_pageCheckins.slice(-7)})});if(r.ok){const d=await r.json();if(d.larda_notering)larda=d.larda_notering;if(d.battre_paastående){const s=JSON.parse(localStorage.getItem('forsyne_val_nutrition')||'{}');s.battre=d.battre_paastående;localStorage.setItem('forsyne_val_nutrition',JSON.stringify(s));}}}catch(e){}document.getElementById('val-fritext').style.display='none';document.getElementById('val-btns').style.display='none';const tackEl=document.getElementById('val-tack');tackEl.textContent=larda;tackEl.style.display='block';}
+
+// ── IDAG-REKOMMENDATION ──
+async function loadTodayRecommendation() {
+  const token = API && API.token ? API.token() : null;
+  const h = token ? {'Content-Type':'application/json','Authorization':'Bearer '+token} : {'Content-Type':'application/json'};
+
+  const cached = sessionStorage.getItem('schedule_today');
+  const cachedTime = sessionStorage.getItem('schedule_today_ts');
+  const FOUR_HOURS = 4 * 60 * 60 * 1000;
+  if (cached && cachedTime && (Date.now() - parseInt(cachedTime)) < FOUR_HOURS) {
+    renderTodayKost(JSON.parse(cached));
+    return;
+  }
+
+  try {
+    const r = await fetch('/api/agent/schedule/recommend', { method: 'POST', headers: h });
+    if (!r.ok) throw new Error('server error');
+    const data = await r.json();
+    if (data.ok === false) {
+      document.getElementById('today-load').style.display = 'none';
+      document.getElementById('today-empty').style.display = 'block';
+      return;
+    }
+    sessionStorage.setItem('schedule_today', JSON.stringify(data));
+    sessionStorage.setItem('schedule_today_ts', Date.now().toString());
+    renderTodayKost(data);
+  } catch(e) {
+    document.getElementById('today-load').style.display = 'none';
+    document.getElementById('today-empty').style.display = 'block';
+  }
+}
+
+function renderTodayKost(data) {
+  document.getElementById('today-load').style.display = 'none';
+
+  if (data.psi != null) {
+    const psiColor = data.psi >= 70 ? 'var(--accent)' : data.psi >= 55 ? 'var(--warn)' : 'var(--danger)';
+    document.getElementById('psi-badge-wrap').innerHTML = `<span class="psi-badge"><span class="psi-badge-val" style="color:${psiColor}">${data.psi}</span><span class="psi-badge-lbl">PSI</span></span>`;
+  }
+
+  const kost = data['kost'] || {};
+
+  // Follow-protokoll tag
+  const tagEl = document.getElementById('today-follow-tag');
+  if (kost.följ_protokoll != null) {
+    tagEl.innerHTML = `<span class="follow-tag ${kost.följ_protokoll?'follow-yes':'follow-no'}">${kost.följ_protokoll?'Följ protokoll':'Justera idag'}</span>`;
+  }
+
+  // Kost main
+  const kostMain = document.getElementById('today-kost-main');
+  const kostSub = document.getElementById('today-kost-sub');
+  if (kost.prioritet_idag) {
+    kostMain.textContent = kost.prioritet_idag;
+    kostSub.textContent = kost.justering || '';
+  } else {
+    kostMain.textContent = 'Följ ditt kostprotokoll idag.';
+  }
+
+  // Timing
+  const timingMain = document.getElementById('today-timing-main');
+  const timingSub = document.getElementById('today-timing-sub');
+  if (kost.timing) {
+    timingMain.textContent = kost.timing;
+  } else {
+    timingMain.textContent = 'Inga specifika tidsjusteringar idag.';
+  }
+  if (data['träning'] && data['träning'].rekommendation) {
+    timingSub.textContent = 'Träning: ' + data['träning'].rekommendation;
+  }
+
+  // Systeminsikt
+  if (data.systeminsikt) {
+    document.getElementById('today-systeminsikt-txt').textContent = data.systeminsikt;
+    document.getElementById('today-systeminsikt').style.display = 'block';
+  }
+
+  document.getElementById('today-content').style.display = 'block';
+}
+
+(async()=>{
+  const d=new Date();
+  const DAYS=['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+  const MONTHS=['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+  const DS=['Sön','Mån','Tis','Ons','Tor','Fre','Lör'];
+  const MS=['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'];
+  const dateEl=document.getElementById('topDate'),userEl=document.getElementById('topUser');
+  if(dateEl)dateEl.textContent=DAYS[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()];
+  if(userEl){const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');const u=API&&API.user?API.user():null;userEl.textContent=(ob.q3_1||(u?u.email.split('@')[0]:'')||'').toUpperCase();}
+
+  const todayLabel = document.getElementById('today-date-label');
+  if (todayLabel) todayLabel.textContent = DAYS[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()];
+
+  const token = API && API.token ? API.token() : null;
+  const h = token ? {Authorization:'Bearer '+token} : {};
+
+  // ── Hämta protokoll ──
+  try {
+    const pr = await fetch('/api/nutrition-protocol', { headers: h });
+    const protocol = pr.ok ? await pr.json() : null;
+    document.getElementById('protocol-load').style.display = 'none';
+    document.getElementById('protocol-form').style.display = 'block';
+    if (protocol) populateProtocol(protocol);
+    else toggleFasting(false);
+  } catch(e) {
+    document.getElementById('protocol-load').style.display = 'none';
+    document.getElementById('protocol-form').style.display = 'block';
+    toggleFasting(false);
+  }
+
+  // ── Idag-rekommendation ──
+  loadTodayRecommendation();
+
+  // ── Historisk data ──
+  let checkins=[];
+  try{const r=await fetch('/api/checkins',{headers:h});if(r.ok){const data=await r.json();checkins=Array.isArray(data)?data:(data.checkins||[]);}}catch(e){}
+  _pageCheckins=checkins;
+  const last14=checkins.slice(-14);
+  const profile=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+
+  // Cronometer berika
+  const _isFemale=(profile.q3_3||'').toLowerCase().includes('kvinna');
+  function _cronoScore(day){
+    let s=10;
+    const e=day.energy_kcal;
+    if(e!=null){if(e<1000)s-=2;else if(e<1400)s-=1;}else s-=0.5;
+    const pr=day.protein_g,pg=_isFemale?46:56;
+    if(pr!=null){if(pr<pg*0.5)s-=2;else if(pr<pg*0.75)s-=1;}
+    const fi=day.fiber_g,fg=_isFemale?25:38;
+    if(fi!=null){if(fi<fg*0.4)s-=1.5;else if(fi<fg*0.7)s-=0.5;}
+    const mg=day.magnesium_mg,mgg=_isFemale?310:400;
+    if(mg!=null){if(mg<mgg*0.5)s-=1;else if(mg<mgg*0.75)s-=0.5;}
+    if(day.vitamin_d_iu!=null){if(day.vitamin_d_iu<200)s-=1;else if(day.vitamin_d_iu<400)s-=0.5;}
+    if(day.omega3_g!=null&&day.omega3_g<0.5)s-=0.5;
+    return Math.max(1,Math.min(10,Math.round(s*10)/10));
+  }
+  let cronoDateMap={};
+  try{
+    const cr=await fetch('/api/integrations',{headers:h});
+    if(cr.ok){
+      const ints=await cr.json();
+      const crEntry=(Array.isArray(ints)?ints:[]).find(i=>i.provider==='cronometer');
+      if(crEntry?.data?.days) crEntry.data.days.forEach(day=>{cronoDateMap[day.date]=_cronoScore(day);});
+    }
+  }catch(e){}
+  checkins.forEach(c=>{
+    const dk=(c.date||c.created_at||'').slice(0,10);
+    if(cronoDateMap[dk]!=null) c._crono_score=cronoDateMap[dk];
+  });
+
+  try{const signalEl=document.getElementById('nav-signal');const recent=(checkins||[]).slice(-3);if(recent.filter(c=>c.stress>=7&&c.sleep<=5).length>=2&&signalEl)signalEl.classList.add('show');}catch(e){}
+
+  const getVal=c=>{
+    if(c._crono_score!=null)return c._crono_score;
+    if(c.nutrition!=null&&parseFloat(c.nutrition)>0)return parseFloat(c.nutrition);
+    if(c.food!=null&&parseFloat(c.food)>0)return parseFloat(c.food);
+    return null;
+  };
+  const hasNutrition=last14.some(c=>getVal(c)!==null);
+  const hasCronometer=last14.some(c=>c._crono_score!=null);
+  const metricLabel=hasCronometer?'Kostkvalitet · Cronometer · 14 d':hasNutrition?'Kostkvalitet snitt · 14 d':'Energi (proxy) snitt · 14 d';
+  document.getElementById('cg').querySelector('.cl').textContent=metricLabel;
+  const getMetric=c=>hasNutrition?getVal(c):(c.energy?parseFloat(c.energy):null);
+
+  const _pdc=computePd(last14)||{};
+  let pd={
+    opening:computeOpening(last14),
+    insikt:_pdc.insikt||'Ditt kostmönster är mer konsekvent än du tror — och det syns i energin.',
+    styrka:_pdc.styrka||'Dagarna med hög kostkvalitet hänger ihop med din bästa energi.',
+    risk:_pdc.risk||'Låg-kost-dagarna skapar en biologisk skuld som betalas nästa dag.',
+    rekommendation:_pdc.rekommendation||'Identifiera vad du åt de tre dagar med högst energi — börja där.',
+    validation:_pdc.validation||'Det finns ett samband som är svårt att märka i stunden: att hur du mår under eftermiddagen hänger ihop med vad du åt på förmiddagen. Att energitappet känns som trötthet — men egentligen är ett kostmönster.',
+    steg:_pdc.steg||[{atgard:'Ersätt ett låg-kost-mål per dag med ett alternativ du faktiskt gillar.',varfor:'Beteendeförändringar som inte är hållbara skapar skuld, inte resultat.'},{atgard:'Ät din mest proteintäta måltid inom 90 min efter uppvaknande.',varfor:'Systemet ser att morgonenergin hänger ihop med frukostval i din data.'}]
+  };
+  if(last14.length>=1){
+    try{
+      let _ai=PCache&&PCache.get?PCache.get('page_nutrition'):null;
+      if(!_ai){const r=await fetch('/api/agent/page/generate',{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({page:'nutrition',checkins:last14,profile})});if(r.ok){_ai=await r.json();if(PCache&&PCache.set)PCache.set('page_nutrition',_ai);}}
+      if(_ai){Object.keys(_ai).forEach(k=>{if(_ai[k]!=null&&(!Array.isArray(_ai[k])||_ai[k].length>0))pd[k]=_ai[k];});}
+    }catch(e){}
+  }
+
+  // AKT 1
+  const otEl=document.getElementById('ot'),olEl=document.getElementById('ol');
+  setTimeout(()=>{
+    tw(otEl,pd.opening,16,()=>{
+      olEl.classList.add('vis');
+      setTimeout(()=>{
+        document.getElementById('a2').style.opacity='1';
+
+        const vals=last14.map(c=>getMetric(c)).filter(v=>v!==null&&v>0);
+        const avg14=vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length):null;
+        const withMetric=last14.filter(c=>getMetric(c)!==null&&getMetric(c)>0);
+        const lastC=withMetric.length?withMetric[withMetric.length-1]:null;
+
+        const pairs=last14.filter(c=>getMetric(c)!==null&&c.energy>0);
+        const corrVal=pairs.length>=3?pearsonCorr(pairs.map(c=>getMetric(c)),pairs.map(c=>parseFloat(c.energy))):null;
+
+        if(avg14!==null){document.getElementById('cv-avg').innerHTML=avg14.toFixed(1)+'<small>/10</small>';const cls=avg14>=8?'up':avg14>=5?'wn':'dn';document.getElementById('cd-avg').textContent=avg14>=8?'Konsekvent hög kvalitet':avg14>=5?'Acceptabel — under potential':'Systematiskt låg';document.getElementById('cd-avg').className='cd '+cls;}
+        if(corrVal!==null){document.getElementById('cv-corr').textContent=corrVal.toFixed(2);const cls=corrVal>0.4?'up':corrVal<-0.2?'dn':'wn';document.getElementById('cd-corr').textContent=corrVal>0.4?'Stark: bra kost = mer energi':corrVal<-0.2?'Svag eller negativ koppling':'Måttlig koppling';document.getElementById('cd-corr').className='cd '+cls;}
+        else{document.getElementById('cv-corr').textContent='—';document.getElementById('cd-corr').textContent='Otillräcklig data';}
+        if(lastC){const lv=getMetric(lastC);document.getElementById('cv-last').innerHTML=lv.toFixed(1)+'<small>/10</small>';const cls=lv>=8?'up':lv>=5?'wn':'dn';document.getElementById('cd-last').textContent=lv>=8?'Hög kvalitet':lv>=5?'Acceptabel':'Låg kvalitet';document.getElementById('cd-last').className='cd '+cls;}
+        document.getElementById('cv-total').textContent=checkins.length;
+
+        document.getElementById('a2-load').style.display='none';
+        document.getElementById('cg').style.display='grid';
+        document.getElementById('dl').style.display='flex';
+
+        const dlEl=document.getElementById('dl');
+        if(last14.length===0){dlEl.innerHTML='<div style="padding:2rem 0;font-family:var(--serif);font-style:italic;font-size:0.82rem;color:var(--fg4);">Inga check-ins loggade ännu.</div>';return;}
+        last14.forEach((c,i)=>{
+          const v=getMetric(c);
+          const energy=c.energy?parseFloat(c.energy):null;
+          const date=new Date(c.date||c.created_at);
+          const dateStr=DS[date.getDay()]+' '+date.getDate()+' '+MS[date.getMonth()];
+          const isEmpty=v===null||v===0;
+          const pct=isEmpty?0:Math.min((v/10)*100,100);
+          const color=isEmpty?'rgba(242,240,234,0.08)':nutritionColor(v);
+          const comment=nutritionComment(v,energy);
+          const isCrono=!isEmpty&&c._crono_score!=null;
+          const label=isEmpty?'ingen data':v.toFixed(1)+'/10';
+          const srcTag=isCrono?`<span style="font-size:0.48rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg4);display:block;margin-top:0.2rem;">Cronometer</span>`:'';
+          const row=document.createElement('div');
+          row.className='dr'+(isEmpty?' empty':'');
+          row.dataset.bw=pct;
+          row.innerHTML=`<span class="dd">${dateStr}</span><div class="dbw"><div class="db" style="background:${color};"></div></div><span class="dv" style="color:${isEmpty?'var(--fg4)':color};text-align:right;">${label}${srcTag}</span><div class="dtt">${comment}</div>`;
+          dlEl.appendChild(row);
+          setTimeout(()=>{row.classList.add('vis');const b=row.querySelector('.db');if(b)setTimeout(()=>{b.style.width=pct+'%';},60);},i*50);
+        });
+
+        document.getElementById('a3-load').style.display='none';
+        document.getElementById('a3-dom').textContent=pd.insikt;
+        document.getElementById('a3-items').innerHTML=`<div class="di"><span class="dm" style="color:var(--accent);">↑</span><span>${pd.styrka}</span></div><div class="di"><span class="dm" style="color:var(--danger);">↓</span><span>${pd.risk}</span></div><div class="di"><span class="dm" style="color:var(--trust);">→</span><span>${pd.rekommendation}</span></div>`;
+        document.getElementById('a3-body').style.display='block';
+        {const a3=document.getElementById('a3');new IntersectionObserver(entries=>{if(entries[0].isIntersecting){a3.classList.add('vis');a3.querySelectorAll('.di').forEach((di,i)=>setTimeout(()=>di.classList.add('vis'),300+i*120));}},{threshold:0.2}).observe(a3);}
+
+        document.getElementById('a4-load').style.display='none';
+        const _prev=JSON.parse(localStorage.getItem('forsyne_val_nutrition')||'null');
+        const _valEl=document.getElementById('val-stmt');
+        if(_prev&&_prev.answer&&(Date.now()-(_prev.timestamp||0))<30*24*60*60*1000){
+          _valEl.textContent=(_prev.answer==='nej'&&_prev.battre)?_prev.battre:pd.validation;
+          const _note=document.createElement('div');
+          _note.style.cssText='font-size:0.54rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--fg4);margin-bottom:1rem;';
+          _note.textContent=_prev.answer==='ja'?'Du kände igen dig här senast.':'Du kände inte igen dig senast — systemet har sökt ett annat mönster.';
+          document.querySelector('#a4-body .val-intro').after(_note);
+        } else { _valEl.textContent=pd.validation; }
+        document.getElementById('a4-body').style.display='block';
+
+        (()=>{
+          const bm14=last14.map(c=>getMetric(c)).filter(v=>v!==null&&v>0);
+          const avg14n=bm14.length?bm14.reduce((a,b)=>a+b,0)/bm14.length:null;
+          const lowDays=last14.filter(c=>{const v=getMetric(c);return v!==null&&v>0&&v<5;}).length;
+          const corrPairs=last14.filter(c=>getMetric(c)!==null&&getMetric(c)>0&&c.energy>0);
+          const corrNE=corrPairs.length>=3?pearsonCorr(corrPairs.map(c=>getMetric(c)),corrPairs.map(c=>parseFloat(c.energy))):null;
+          const l7v=checkins.slice(-7).map(c=>getMetric(c)).filter(v=>v!==null&&v>0);
+          const p7v=checkins.slice(-14,-7).map(c=>getMetric(c)).filter(v=>v!==null&&v>0);
+          const al7=l7v.length?l7v.reduce((a,b)=>a+b,0)/l7v.length:null;
+          const ap7=p7v.length?p7v.reduce((a,b)=>a+b,0)/p7v.length:null;
+          const td=al7!==null&&ap7!==null?al7-ap7:null;
+          const mkr=[
+            {name:'Kostkvalitet snitt · 14d',val:avg14n!==null?avg14n.toFixed(1)+'/10':'—',cls:avg14n===null?'bm-ok':avg14n>=8?'bm-ok':avg14n>=5?'bm-warn':'bm-bad',lbl:avg14n===null?'Ingen data':avg14n>=8?'Konsekvent hög kvalitet':avg14n>=5?'Under potential':'Systematiskt låg'},
+            {name:'Dagar under 5/10 · 14d',val:bm14.length?lowDays+'d':'—',cls:lowDays<=2?'bm-ok':lowDays<=5?'bm-warn':'bm-bad',lbl:lowDays<=2?'Inom normalt':lowDays<=5?'Observera mönster':'Biologisk belastning'},
+            {name:'Kost–energi-koppling',val:corrNE!==null?corrNE.toFixed(2):'—',cls:corrNE===null?'bm-ok':corrNE>0.4?'bm-ok':corrNE>0.1?'bm-warn':'bm-bad',lbl:corrNE===null?'Otillräcklig data':corrNE>0.4?'Stark: bra kost = mer energi':corrNE>0.1?'Måttlig koppling':'Svag koppling'},
+            {name:'Kosttrend · 7d vs 7d',val:td!==null?(td>=0?'+':'')+td.toFixed(1):'—',cls:td===null?'bm-ok':td>=0.5?'bm-ok':td>=-0.5?'bm-warn':'bm-bad',lbl:td===null?'Otillräcklig data':td>=0.5?'Förbättring':td>=-0.5?'Stabil':'Försämring'}
+          ];
+          document.getElementById('bio-markers').innerHTML=mkr.map(m=>`<div class="bio-marker"><span class="bm-name">${m.name}</span><div class="bm-right"><div class="bm-val">${m.val}</div><div class="bm-status ${m.cls}">${m.lbl}</div></div></div>`).join('');
+        })();
+
+        {const rekEl=document.getElementById('rek-steps');rekEl.innerHTML='';
+        pd.steg.forEach((s,i)=>{const div=document.createElement('div');div.className='rek-step';div.innerHTML=`<div class="rek-atgard">· ${s.atgard}</div><div class="rek-varfor">${s.varfor}</div>`;rekEl.appendChild(div);setTimeout(()=>div.classList.add('vis'),i*180);});}
+      },500);
+    });
+  },500);
+})();
+
+// Cronometer mikronäringsämnen
+(async()=>{
+  const el=document.getElementById('crono-body');
+  if(!el)return;
+  try{
+    const token = API && API.token ? API.token() : null;
+    const h = token ? {Authorization:'Bearer '+token} : {};
+    const r=await fetch('/api/integrations',{headers:h});
+    if(!r.ok)throw new Error();
+    const ints=await r.json();
+    const intArr=Array.isArray(ints)?ints:[];
+    const crEntry=intArr.find(i=>i.provider==='cronometer');
+    const cr=crEntry?.data;
+    if(!cr?.avg_7d){
+      el.innerHTML='<div class="crono-cta">Cronometer är inte kopplat ännu — exportera CSV från Cronometer och <a href="wearables.html">importera här →</a></div>';
+      return;
+    }
+    const a=cr.avg_7d;
+    const profile2=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+    const gender=(profile2.q3_3||'').toLowerCase();
+    const isFemale=gender.includes('kvinna')||gender.includes('female')||gender==='f';
+    const nutrients=[
+      {key:'energy_kcal', name:'Energi',      unit:'kcal', ok:1600,         warn:1200,        fmt:v=>Math.round(v)+''},
+      {key:'protein_g',   name:'Protein',      unit:'g',    ok:isFemale?46:56,  warn:isFemale?35:45,  fmt:v=>v.toFixed(1)},
+      {key:'carbs_g',     name:'Kolhydrater',  unit:'g',    ok:130,          warn:80,          fmt:v=>Math.round(v)+''},
+      {key:'fat_g',       name:'Fett',         unit:'g',    ok:44,           warn:25,          fmt:v=>v.toFixed(1)},
+      {key:'fiber_g',     name:'Fiber',        unit:'g',    ok:isFemale?25:38,  warn:isFemale?15:20,  fmt:v=>v.toFixed(1)},
+      {key:'magnesium_mg',name:'Magnesium',    unit:'mg',   ok:isFemale?310:400,warn:isFemale?200:250,fmt:v=>Math.round(v)+''},
+      {key:'iron_mg',     name:'Järn',         unit:'mg',   ok:isFemale?18:8,   warn:isFemale?10:5,   fmt:v=>v.toFixed(1)},
+      {key:'zinc_mg',     name:'Zink',         unit:'mg',   ok:isFemale?8:11,   warn:isFemale?5:7,    fmt:v=>v.toFixed(1)},
+      {key:'vitamin_d_iu',name:'Vitamin D',    unit:'IU',   ok:600,          warn:200,         fmt:v=>Math.round(v)+''},
+      {key:'vitamin_b12_ug',name:'Vitamin B12',unit:'µg',   ok:2.4,          warn:1.5,         fmt:v=>v.toFixed(1)},
+      {key:'omega3_g',    name:'Omega-3',      unit:'g',    ok:1.1,          warn:0.5,         fmt:v=>v.toFixed(2)},
+    ];
+    const items=nutrients.map(n=>{
+      const v=a[n.key];
+      if(v==null)return `<div class="crono-item"><div class="crono-name">${n.name}</div><div class="crono-val" style="color:var(--fg4);">—<small> ${n.unit}</small></div><div class="crono-status" style="color:var(--fg4);">Ingen data</div></div>`;
+      const cls=v>=n.ok?'cs-ok':v>=n.warn?'cs-warn':'cs-low';
+      const lbl=v>=n.ok?'Inom referens':v>=n.warn?'Under referens':'Låg';
+      return `<div class="crono-item"><div class="crono-name">${n.name}</div><div class="crono-val">${n.fmt(v)}<small> ${n.unit}</small></div><div class="crono-status ${cls}">${lbl}</div></div>`;
+    });
+    el.innerHTML=`<div class="crono-grid">${items.join('')}</div><div class="crono-meta">Snitt 7d · ${cr.date_range?.from||'—'} – ${cr.date_range?.to||'—'} · ${cr.total_days||0} dagar importerade</div>`;
+  }catch(e){
+    const sec=document.getElementById('crono-section');
+    if(sec)sec.style.display='none';
+  }
+})();
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

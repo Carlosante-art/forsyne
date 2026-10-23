@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Signalen</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<script src="cache.js"></script>
+<style>
+:root{
+  --ink:#0F1210;--ink2:#131714;--ink3:#171c18;
+  --fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;
+  --accent:#8FAE8A;--warn:#C4875A;--danger:#A85C5C;--trust:#5B7FA6;
+  --serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;
+  --border:rgba(242,240,234,0.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;line-height:1.7;overflow-x:hidden;}
+
+.page-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;}
+.page-bg-img{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.18) saturate(0.4);}
+.page-bg-veil{position:absolute;inset:0;background:linear-gradient(to bottom,var(--ink) 0%,rgba(15,18,16,0.72) 9%,rgba(15,18,16,0.06) 26%,rgba(15,18,16,0.06) 74%,rgba(15,18,16,0.72) 91%,var(--ink) 100%);}
+
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(2rem,5vw,4rem);height:64px;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.85);backdrop-filter:blur(32px);}
+.logo{font-family:var(--serif);font-size:1.1rem;font-weight:400;letter-spacing:0.18em;color:var(--fg);text-decoration:none;}
+.nav-center{font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+.nav-meta{display:flex;align-items:center;gap:1.5rem;}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--danger);box-shadow:0 0 8px rgba(168,92,92,0.6);animation:pulse 2.5s ease infinite;flex-shrink:0;}
+.nav-dot.clear{background:var(--accent);box-shadow:0 0 8px rgba(143,174,138,0.6);}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.nav-date{font-family:var(--serif);font-size:0.9rem;color:var(--fg2);}
+.nav-user{font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg3);text-decoration:none;}
+
+.content-wrap{display:flex;align-items:flex-start;height:calc(100vh - 64px);overflow:hidden;}
+.sidebar{width:210px;height:100%;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:rgba(15,18,16,0.4);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;z-index:50;padding:2.5rem 0 1.8rem;}
+.sidebar::-webkit-scrollbar{display:none;}
+.ng{margin-bottom:0;}
+.ngl{font-size:0.44rem;letter-spacing:0.32em;text-transform:uppercase;color:var(--fg4);padding:0.7rem 1.8rem 0.2rem;}
+.nl{display:block;padding:0.22rem 1.8rem;font-size:0.76rem;letter-spacing:0.06em;color:var(--fg3);text-decoration:none;transition:color 0.2s,border-left-color 0.2s;border-left:1px solid transparent;}
+.nl:hover{color:var(--fg2);}
+.nl.active{color:var(--fg);border-left-color:var(--accent);background:rgba(143,174,138,0.04);}
+.nl.signal-link{color:var(--danger);display:none;align-items:center;gap:0.5rem;}
+.nl.signal-link.show{display:flex;}
+.nl.signal-link.active{border-left-color:var(--danger);}
+.nl.signal-link::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+@keyframes sig-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(168,92,92,0.6)}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(168,92,92,0)}}
+.selvitas-wrap{margin-top:auto;padding-top:0.5rem;border-top:1px solid var(--border);}.selvitas-nav{display:block;padding:0.6rem 1.8rem 0.3rem;font-family:var(--serif);font-style:italic;font-size:0.78rem;letter-spacing:0.08em;color:var(--fg3);text-decoration:none;transition:color 0.2s;}.selvitas-nav:hover{color:var(--fg2);}
+
+main{position:relative;z-index:1;flex:1;min-width:0;overflow-y:auto;height:100%;}
+
+/* LOADING */
+.dots{display:flex;gap:.4rem;}
+.dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:dp 1.4s ease infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.load-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6rem 0;gap:1.2rem;}
+.load-txt{font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;color:var(--fg4);}
+
+/* SHARED */
+.sp{padding:3rem 3.5rem;}
+.lbl{font-size:.58rem;letter-spacing:.28em;text-transform:uppercase;color:var(--fg4);display:flex;align-items:center;gap:.7rem;margin-bottom:1.6rem;}
+.lbl::before{content:'';width:14px;height:1px;opacity:.4;}
+.lbl.dl{color:var(--danger);}.lbl.dl::before{background:var(--danger);}
+.lbl.al{color:var(--accent);}.lbl.al::before{background:var(--accent);}
+
+/* SIGNAL HEADER */
+.sig-header{display:flex;align-items:flex-start;gap:1.5rem;padding:4rem 3.5rem 3rem;border-bottom:1px solid var(--border);}
+.sig-big-dot{width:16px;height:16px;border-radius:50%;flex-shrink:0;margin-top:.7rem;}
+.sig-big-dot.danger{background:var(--danger);box-shadow:0 0 20px rgba(168,92,92,0.8);animation:spulse 1.5s ease infinite;}
+.sig-big-dot.clear{background:var(--accent);box-shadow:0 0 16px rgba(143,174,138,0.5);}
+@keyframes spulse{0%,100%{box-shadow:0 0 12px rgba(168,92,92,0.6)}50%{box-shadow:0 0 28px rgba(168,92,92,0.9)}}
+.sig-severity{font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;margin-bottom:.5rem;}
+.sig-title{font-family:var(--serif);font-size:clamp(2rem,4vw,3.2rem);font-weight:300;line-height:1.15;}
+.sig-title em{font-style:italic;}
+.sig-sub{font-family:var(--serif);font-style:italic;font-size:1rem;color:var(--fg3);line-height:1.8;max-width:520px;margin-top:.6rem;}
+
+/* PATTERN CARDS */
+.pattern-cards{display:flex;flex-direction:column;gap:1px;border:1px solid rgba(168,92,92,0.2);}
+.pc{background:var(--ink2);padding:1.8rem 2rem;border-bottom:1px solid rgba(168,92,92,0.08);}
+.pc:last-child{border-bottom:none;}
+.pc-label{font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--danger);margin-bottom:.6rem;}
+.pc-desc{font-size:.88rem;color:var(--fg2);line-height:1.8;}
+.pc-desc strong{color:var(--fg);font-weight:400;}
+.pc-action-wrap{margin-top:1rem;padding-top:.9rem;border-top:1px solid rgba(168,92,92,0.1);}
+.pc-action-label{font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;color:var(--trust);margin-bottom:.5rem;}
+.pc-action{font-family:var(--serif);font-style:italic;font-size:.9rem;color:var(--fg2);line-height:1.7;}
+
+/* IF-GRID */
+.if-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);}
+.if-col{background:var(--ink2);padding:1.4rem 1.6rem;}
+.if-col-label{font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;margin-bottom:.8rem;}
+.if-col-label.act{color:var(--accent);}
+.if-col-label.noact{color:var(--danger);}
+.if-row{padding:.65rem 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:baseline;}
+.if-row:last-child{border-bottom:none;}
+.if-metric{font-size:.72rem;color:var(--fg3);}
+.if-val.pos{font-size:.75rem;color:var(--accent);}
+.if-val.neg{font-size:.75rem;color:var(--danger);}
+
+/* PRED BOXES */
+.pred-box{background:var(--ink2);border:1px solid var(--border);border-left:2px solid var(--danger);padding:1.8rem 2rem;}
+.pred-box-label{font-size:.54rem;letter-spacing:.22em;text-transform:uppercase;color:var(--fg4);margin-bottom:.7rem;}
+.pred-text{font-family:var(--serif);font-style:italic;font-size:1rem;color:var(--fg2);line-height:1.8;}
+.action-box{background:var(--ink2);border:1px solid var(--border);border-left:2px solid var(--trust);padding:1.8rem 2rem;}
+.action-box-label{font-size:.54rem;letter-spacing:.24em;text-transform:uppercase;color:var(--trust);margin-bottom:.8rem;}
+.action-text{font-family:var(--serif);font-style:italic;font-size:1rem;color:var(--fg2);line-height:1.8;}
+
+/* CLEAR STATE */
+.clear-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:2.5rem;}
+.cm{background:var(--ink2);padding:1.3rem 1.5rem;}
+.cm-label{font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--fg4);margin-bottom:.5rem;}
+.cm-val{font-family:var(--serif);font-size:2rem;font-weight:300;line-height:1;margin-bottom:.3rem;}
+.cm-val.ok{color:var(--accent);}
+.cm-val.warn{color:var(--warn);}
+.cm-val.bad{color:var(--danger);}
+.cm-delta{font-size:.66rem;color:var(--fg3);}
+
+/* HISTORY */
+.history-wrap{padding-top:2rem;border-top:1px solid var(--border);}
+.history-list{display:flex;flex-direction:column;border:1px solid var(--border);}
+.hl-row{background:var(--ink2);padding:.85rem 1.4rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.hl-row:last-child{border-bottom:none;}
+.hl-date{font-size:.7rem;color:var(--fg3);}
+.hl-vals{display:flex;gap:1.5rem;}
+.hl-val{font-size:.66rem;color:var(--fg4);}
+.hl-val span.ok{color:var(--accent);}
+.hl-val span.warn{color:var(--warn);}
+.hl-val span.bad{color:var(--danger);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .45s ease both;}
+
+@media(max-width:860px){
+  .sidebar{display:none!important;}
+  .content-wrap,.page-wrap,.layout-wrap{display:block!important;}
+  #main,.main-content,.page-content{width:100%!important;max-height:none!important;overflow-y:auto!important;}
+  .mg,.pred-grid,.today-plan-grid,.bio-grid,.src-grid,.prof-grid{grid-template-columns:1fr 1fr!important;}
+  .pred-grid,.prof-grid{grid-template-columns:1fr!important;}
+}
+</style>
+</head>
+<body>
+<script>checkAuth();</script>
+<div class="page-bg">
+  <div class="page-bg-img" style="background-image:url('images/DALL·E 2026-04-11 15.20.51 - A dark, minimal interior room with a single tall window. Soft morning light streams in, casting long, gentle shadows across bare walls and a simple fl.webp')"></div>
+  <div class="page-bg-veil"></div>
+</div>
+
+<nav>
+  <a href="dashboard.html" class="logo">Forsyne</a>
+  <span class="nav-center">Signalen</span>
+  <div class="nav-meta">
+    <div class="nav-dot" id="navDot"></div>
+    <span class="nav-date" id="topDate"></span>
+    <a class="nav-user" id="topUser" href="profile.html"></a>
+  </div>
+</nav>
+
+<div class="content-wrap">
+<aside class="sidebar">
+  <div class="ng">
+    <div class="ngl">Idag</div>
+    <a class="nl" href="dashboard.html">Dashboard</a>
+    <a class="nl" href="checkin.html">Check-in</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Mönster</div>
+    <a class="nl" href="sleep.html">Sömn</a>
+    <a class="nl" href="energy.html">Energi</a>
+    <a class="nl" href="stress.html">Stress</a>
+    <a class="nl" href="training.html">Träning</a>
+    <a class="nl" href="kostlogg.html">Kost</a>
+    <a class="nl" href="wearables.html">Wearables</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Djupet</div>
+    <a class="nl" href="biologi.html">Biologi</a>
+    <a class="nl" href="dna.html">DNA</a>
+    <a class="nl" href="journal.html">Journal</a>
+    <a class="nl" href="analys.html">Analys</a>
+    <a class="nl" href="coach.html">Coach</a>
+  </div>
+</aside>
+
+<main id="main">
+  <div class="load-state" id="loadState">
+    <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div class="load-txt">Systemet analyserar mönster</div>
+  </div>
+</main>
+</div>
+
+<script>
+// ── Sidebar: auto-active baserat på URL ──
+(function(){
+  const page = location.pathname.split('/').pop() || 'dashboard.html';
+  document.querySelectorAll('.sidebar a.nl').forEach(a => {
+    if (a.getAttribute('href') === page) a.classList.add('active');
+  });
+})();
+
+const MONTHS=['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'];
+const DAGAR=['Sön','Mån','Tis','Ons','Tor','Fre','Lör'];
+
+// ── TOPBAR ──
+(function(){
+  const d=new Date();
+  const days=['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+  const months=['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+  const dateEl=document.getElementById('topDate');
+  const userEl=document.getElementById('topUser');
+  if(dateEl)dateEl.textContent=days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()];
+  if(userEl){
+    const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+    const u=API&&API.user?API.user():null;
+    const name=(ob.q3_1||(u?u.email.split('@')[0]:'')||'').toUpperCase();
+    userEl.textContent=name;
+  }
+})();
+
+function computeSignal(checkins){
+  if(!checkins.length)return{active:false,patterns:[],severity:'ingen',days:0};
+  const rev=[...checkins].reverse();
+  const latest=checkins[checkins.length-1];
+  const patterns=[];
+
+  let s1=0;for(const c of rev){if((c.stress||0)>=7&&(c.sleep||0)<=5)s1++;else break;}
+  if(s1>=2)patterns.push({id:'stress_sleep',label:'Stress & sömnbrist',days:s1,
+    desc:`Stress ≥7 och sömn ≤5h kombinerat i ${s1} dagar i rad. HPA-axeln är aktiverad — kroppen producerar kortisol dygnet runt. Prestation, immunförsvar och kognitiv funktion är mätbart nedsatta.`,
+    action:'Sömn 8h+ ikväll. Det är den enda variabeln som bryter detta mönster.'});
+
+  let s2=0;for(const c of rev){if((c.sleep||0)<=5)s2++;else break;}
+  if(s2>=3&&!patterns.find(p=>p.id==='stress_sleep'))
+    patterns.push({id:'sleep_deficit',label:'Sömnunderskott',days:s2,
+      desc:`${s2} nätter under 5h. Ackumulerat sömnunderskott kan inte repareras med en natt — det tar 2–3 nätter >7h för full återhämtning. Kognition och energi påverkas direkt.`,
+      action:'Lägg dig 60 min tidigare ikväll. Blockera morgonen imorgon.'});
+
+  let s3=0;for(const c of rev){if((c.energy||0)<=3)s3++;else break;}
+  if(s3>=3)patterns.push({id:'energy_crash',label:'Energikrasch',days:s3,
+    desc:`Energi ≤3 i ${s3} dagar i rad. Systemet tolkar detta som biologisk utmattning — inte motivationsproblem. Cellulär energiproduktion är komprometterad.`,
+    action:'Ingen hård träning de närmaste 2 dagarna. Prioritera återhämtning framför prestation.'});
+
+  let s4=0;for(const c of rev){if((c.motivation||0)<=2)s4++;else break;}
+  if(s4>=3)patterns.push({id:'motivation_bottom',label:'Motivationsbotten',days:s4,
+    desc:`Motivation ≤2 i ${s4} dagar i rad. Ihållande låg motivation är nästan alltid symptom — inte orsak. Sömn- och stressdata är troligaste drivare.`,
+    action:'Kontrollera sömn och stressnivå — de är troligaste drivarna.'});
+
+  let s5=0;for(const c of rev){if((c.stress||0)>=8)s5++;else break;}
+  if(s5>=2&&!patterns.find(p=>p.id==='stress_sleep'))
+    patterns.push({id:'stress_peak',label:'Stresstopp',days:s5,
+      desc:`Stress ≥8 i ${s5} dagar i rad. Kortisol och noradrenalin är kroniskt förhöjda — immunförsvar, sömnkvalitet och kognitiv kapacitet påverkas mätbart.`,
+      action:'Inga nya åtaganden de närmaste 48h. Ta bort, delegera, skjut upp.'});
+
+  if(latest){
+    const bad=[];
+    if((latest.stress||0)>=7)bad.push('stress');
+    if((latest.sleep||0)<=4)bad.push('sömn');
+    if((latest.energy||0)<=3)bad.push('energi');
+    if((latest.motivation||0)<=2)bad.push('motivation');
+    if((latest.focus||0)<=2)bad.push('fokus');
+    if(bad.length>=3&&!patterns.find(p=>p.id==='stress_sleep'))
+      patterns.push({id:'convergence',label:'Systemkonvergens',days:1,
+        desc:`${bad.length} indikatorer i kritisk zon idag: ${bad.join(', ')}. När så många variabler sammanfaller är det ett systemproblem — inte enskilda händelser.`,
+        action:'Det finns ingen partial fix. En åtgärd: sov mer ikväll.'});
+  }
+
+  if(checkins.length>=5){
+    const last5=checkins.slice(-5);
+    const firstAvg=last5.slice(0,2).reduce((s,c)=>s+(c.energy||0),0)/2;
+    const lastAvg=last5.slice(3).reduce((s,c)=>s+(c.energy||0),0)/2;
+    const drop=firstAvg-lastAvg;
+    if(drop>=2.5&&lastAvg<=4&&!patterns.find(p=>p.id==='energy_crash'))
+      patterns.push({id:'downward_spiral',label:'Nedåtgående spiral',days:5,
+        desc:`Energin har sjunkit ${drop.toFixed(1)} enheter de senaste 5 dagarna (${firstAvg.toFixed(1)} → ${lastAvg.toFixed(1)}). Systemet ser en strukturell nedåtgående trend.`,
+        action:'Identifiera vad som förändrades för 5 dagar sedan. Börja eliminera därifrån.'});
+  }
+
+  if(!patterns.length)return{active:false,patterns:[],severity:'ingen',days:0};
+  const maxDays=Math.max(...patterns.map(p=>p.days));
+  const severity=maxDays>=5||patterns.length>=3?'kritiskt':maxDays>=3||patterns.length>=2?'aktivt':'tidig_signal';
+  const primary=patterns.slice().sort((a,b)=>b.days-a.days)[0];
+  const en=latest?latest.energy||5:5;
+  return{
+    active:true,severity,patterns,days:primary.days,
+    primary_label:primary.label,primary_action:primary.action,
+    if_action:[
+      {metrik:'Varsel',prediktion:'Deaktiveras om 24–48h',positiv:true},
+      {metrik:'Kortisol',prediktion:'Normaliseras gradvis',positiv:true},
+      {metrik:'Prestandakrasch',prediktion:'Avvärjd',positiv:true},
+      {metrik:'Energi imorgon',prediktion:'Stabiliseras',positiv:true}
+    ],
+    if_nothing:[
+      {metrik:`Energi dag ${primary.days+2}`,prediktion:`Under ${Math.max(en-2,1)}/10`,positiv:false},
+      {metrik:'Immunförsvar',prediktion:'Komprometterat',positiv:false},
+      {metrik:'Prestandakrasch',prediktion:`Inom ${Math.max(1,7-primary.days)} dagar`,positiv:false},
+      {metrik:'Återhämtning',prediktion:'7+ dagar',positiv:false}
+    ]
+  };
+}
+
+function fmtDate(s){const d=new Date(s);return`${DAGAR[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;}
+function vc(v,t){if(t==='stress')return v<=3?'ok':v<=6?'warn':'bad';if(t==='sleep')return v>=7?'ok':v>=5.5?'warn':'bad';return v>=7?'ok':v>=5?'warn':'bad';}
+
+function renderClear(checkins){
+  const avg7=f=>{const s=checkins.slice(-7);return s.length?parseFloat((s.reduce((a,c)=>a+(c[f]||0),0)/s.length).toFixed(1)):null;};
+  const sl=avg7('sleep'),en=avg7('energy'),st=avg7('stress');
+  const navDot=document.getElementById('navDot');
+  if(navDot)navDot.classList.add('clear');
+  const metrics=sl!=null?`<div class="clear-metrics">
+    <div class="cm"><div class="cm-label">Sömn · 7-dagarssnitt</div><div class="cm-val ${vc(sl,'sleep')}">${sl}<small style="font-size:.42em;font-family:var(--sans);color:var(--fg3);">h</small></div><div class="cm-delta">${sl>=7?'Bra nivå':'Systemet vill se ≥7h'}</div></div>
+    <div class="cm"><div class="cm-label">Energi · 7-dagarssnitt</div><div class="cm-val ${vc(en,'energy')}">${en}<small style="font-size:.42em;font-family:var(--sans);color:var(--fg3);">/10</small></div><div class="cm-delta">${en>=7?'Optimal nivå':'Under optimal'}</div></div>
+    <div class="cm"><div class="cm-label">Stress · 7-dagarssnitt</div><div class="cm-val ${vc(st,'stress')}">${st}<small style="font-size:.42em;font-family:var(--sans);color:var(--fg3);">/10</small></div><div class="cm-delta">${st<=4?'Kontrollerad':'Förhöjt'}</div></div>
+  </div>`:'';
+  const history=checkins.slice(-7).reverse().map(c=>`<div class="hl-row">
+    <div class="hl-date">${fmtDate(c.date)}</div>
+    <div class="hl-vals">
+      ${c.sleep!=null?`<div class="hl-val">Sömn <span class="${vc(c.sleep,'sleep')}">${c.sleep}h</span></div>`:''}
+      ${c.energy!=null?`<div class="hl-val">Energi <span class="${vc(c.energy,'energy')}">${c.energy}/10</span></div>`:''}
+      ${c.stress!=null?`<div class="hl-val">Stress <span class="${vc(c.stress,'stress')}">${c.stress}/10</span></div>`:''}
+    </div>
+  </div>`).join('');
+  return `<div class="sig-header fade-up">
+    <div class="sig-big-dot clear"></div>
+    <div>
+      <div class="sig-severity" style="color:var(--accent);">Inget aktivt varsel</div>
+      <div class="sig-title">Systemet<br><em style="color:var(--accent);">är i balans.</em></div>
+      <div class="sig-sub">Inga aktiva mönster just nu. Systemet övervakar kontinuerligt — Signalen aktiveras om stress, sömn, energi eller motivation rör sig mot kritiska zoner under 2–3 dagar i rad.</div>
+    </div>
+  </div>
+  <div class="sp" style="padding-top:2.5rem;">
+    ${metrics}
+    ${history?`<div class="history-wrap fade-up"><div class="lbl al" style="margin-bottom:1.2rem;">Senaste 7 dagarna</div><div class="history-list">${history}</div></div>`:''}
+  </div>`;
+}
+
+function renderActive(sig){
+  const sevLabel={tidig_signal:'Tidig signal',aktivt:'Aktivt varsel',kritiskt:'Kritiskt varsel'}[sig.severity];
+  const sevColor={tidig_signal:'var(--warn)',aktivt:'var(--danger)',kritiskt:'var(--danger)'}[sig.severity];
+  const patternCards=sig.patterns.map(p=>`<div class="pc fade-up">
+    <div class="pc-label">${p.label} · ${p.days===1?'Idag':'Dag '+p.days}</div>
+    <div class="pc-desc">${p.desc}</div>
+    <div class="pc-action-wrap">
+      <div class="pc-action-label">Rekommenderad åtgärd</div>
+      <div class="pc-action">${p.action}</div>
+    </div>
+  </div>`).join('');
+  const ifAtg=sig.if_action.map(x=>`<div class="if-row"><span class="if-metric">${x.metrik}</span><span class="if-val ${x.positiv?'pos':'neg'}">${x.prediktion}</span></div>`).join('');
+  const ifInget=sig.if_nothing.map(x=>`<div class="if-row"><span class="if-metric">${x.metrik}</span><span class="if-val ${x.positiv?'pos':'neg'}">${x.prediktion}</span></div>`).join('');
+  return `<div class="sig-header fade-up">
+    <div class="sig-big-dot danger"></div>
+    <div>
+      <div class="sig-severity" style="color:${sevColor};">${sevLabel}</div>
+      <div class="sig-title">Systemet<br><em style="color:var(--danger);">varnar dig.</em></div>
+    </div>
+  </div>
+  <div class="sp" style="padding-top:2.5rem;padding-bottom:0;">
+    <div class="lbl dl">${sig.patterns.length} aktivt${sig.patterns.length>1?' mönster — sammansatt varsel':' mönster'} · Dag ${sig.days}</div>
+    <div class="pattern-cards" style="margin-bottom:2.5rem;">${patternCards}</div>
+    <div class="if-grid fade-up" style="animation-delay:.1s;margin-bottom:1px;">
+      <div class="if-col"><div class="if-col-label act">Om du agerar nu</div>${ifAtg}</div>
+      <div class="if-col"><div class="if-col-label noact">Om ingenting ändras</div>${ifInget}</div>
+    </div>
+    <div id="pred-section">
+      <div id="pred-loading" style="padding:1.4rem 2rem;background:var(--ink2);border:1px solid var(--border);display:flex;align-items:center;gap:1rem;">
+        <div class="dots"><div class="dot" style="background:var(--accent)"></div><div class="dot" style="background:var(--accent);animation-delay:.2s"></div><div class="dot" style="background:var(--accent);animation-delay:.4s"></div></div>
+        <div style="font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--fg4);">Systemet beräknar djupanalys</div>
+      </div>
+      <div id="pred-content" style="display:none;"></div>
+    </div>
+  </div>`;
+}
+
+// ── SIGNAL ACCURACY ──
+async function loadSignalAccuracy(h, mainEl) {
+  try {
+    const r = await fetch('/api/signal/accuracy', { headers: h });
+    if (!r.ok) return;
+    const acc = await r.json();
+
+    // Show pending signals that need manual confirmation first
+    if (acc.pending && acc.pending.length > 0) {
+      const el = document.createElement('div');
+      el.className = 'sp fade-up';
+      el.style.cssText = 'padding-top:0;padding-bottom:2rem;';
+      el.innerHTML = `<div class="lbl" style="color:var(--warn);">Vad hände sedan?</div>
+        ${acc.pending.map(p => `<div class="pred-box fade-up" style="margin-bottom:1px;" data-pred-id="${p.id}">
+          <div class="pred-box-label">Signal ${p.created_at.split('T')[0]} — förväntad krasch ${p.predicted_date}</div>
+          <div style="display:flex;gap:.6rem;margin-top:.9rem;">
+            <button onclick="confirmOutcome('${p.id}','traffade',this)" style="font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--danger);background:rgba(168,92,92,0.1);border:1px solid rgba(168,92,92,0.3);padding:.5rem .9rem;cursor:pointer;font-family:var(--sans);">Krasch kom</button>
+            <button onclick="confirmOutcome('${p.id}','avvärjt',this)" style="font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);background:rgba(143,174,138,0.08);border:1px solid rgba(143,174,138,0.2);padding:.5rem .9rem;cursor:pointer;font-family:var(--sans);">Jag avvärjde det</button>
+            <button onclick="confirmOutcome('${p.id}','missade',this)" style="font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--fg4);background:transparent;border:1px solid var(--border);padding:.5rem .9rem;cursor:pointer;font-family:var(--sans);">Inget hände</button>
+          </div>
+        </div>`).join('')}`;
+      mainEl.appendChild(el);
+    }
+
+    // Show accuracy only after ≥3 evaluated
+    if (acc.total < 3) return;
+    const pctColor = acc.pct >= 70 ? 'var(--accent)' : acc.pct >= 50 ? 'var(--warn)' : 'var(--danger)';
+    const el = document.createElement('div');
+    el.className = 'sp fade-up';
+    el.style.cssText = 'padding-top:0;padding-bottom:3rem;';
+    el.innerHTML = `<div class="lbl al">Systemets träffsäkerhet</div>
+      <div style="background:var(--ink2);border:1px solid var(--border);padding:1.6rem 2rem;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.9rem;">
+          <div style="font-family:var(--serif);font-size:1.8rem;font-weight:300;color:var(--fg);">${acc.relevant}<small style="font-size:.45em;font-family:var(--sans);color:var(--fg3);font-weight:300;"> av ${acc.total}</small></div>
+          <div style="font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:${pctColor};">${acc.pct}% träffsäkert</div>
+        </div>
+        <div style="height:1px;background:rgba(255,255,255,0.05);margin-bottom:.9rem;"><div style="height:100%;width:${acc.pct}%;background:${pctColor};transition:width .8s ease;"></div></div>
+        <div style="font-size:.7rem;color:var(--fg3);line-height:1.7;">${acc.traffade} signal${acc.traffade!==1?'er':''} träffade · ${acc.avvärjt} avvärjt · ${acc.missade} falsk${acc.missade!==1?' alarmer':' alarm'}</div>
+      </div>`;
+    mainEl.appendChild(el);
+  } catch(e) {}
+}
+
+async function confirmOutcome(id, outcome, btn) {
+  const h = API && API.token ? { Authorization: 'Bearer ' + API.token(), 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+  try {
+    const r = await fetch('/api/signal/outcome', { method: 'POST', headers: h, body: JSON.stringify({ id, outcome }) });
+    if (r.ok) {
+      const row = btn.closest('[data-pred-id]');
+      if (row) { row.style.opacity = '0'; row.style.transition = 'opacity .3s'; setTimeout(() => row.remove(), 320); }
+    }
+  } catch(e) {}
+}
+
+(async()=>{
+  const loadEl=document.getElementById('loadState');
+  const mainEl=document.getElementById('main');
+  const authH=API&&API.token?{Authorization:'Bearer '+API.token()}:{};
+  let checkins=[];
+  try{
+    const cached=PCache.get('checkins_signal');
+    if(cached){checkins=cached;}
+    else{
+      const r=await fetch('/api/checkins',{headers:authH});
+      if(r.ok){const d=await r.json();checkins=(d.checkins||d||[]).sort((a,b)=>a.date.localeCompare(b.date));PCache.set('checkins_signal',checkins);}
+    }
+  }catch(e){}
+
+  const sig=computeSignal(checkins);
+  loadEl.style.display='none';
+  const div=document.createElement('div');
+  div.innerHTML=sig.active?renderActive(sig):renderClear(checkins);
+  mainEl.appendChild(div);
+
+  // Load accuracy for all states (pending confirmations + stats badge)
+  loadSignalAccuracy(authH, mainEl);
+
+  if(sig.active){
+    const predLoading=document.getElementById('pred-loading');
+    const predContent=document.getElementById('pred-content');
+    try{
+      const profile=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+      const r=await fetch('/api/agent/prediction/generate',{
+        method:'POST',headers:{...authH,'Content-Type':'application/json'},
+        body:JSON.stringify({checkins:checkins.slice(-14),profile})
+      });
+      if(r.ok){
+        const pred=await r.json();
+        if(predLoading)predLoading.style.display='none';
+
+        // Auto-save this signal — deduped server-side, fire-and-forget
+        if(pred.varsel_status && pred.varsel_status !== 'ingen'){
+          fetch('/api/signal/save',{method:'POST',headers:{...authH,'Content-Type':'application/json'},body:JSON.stringify({prediction:pred})}).catch(()=>{});
+        }
+
+        if(predContent){
+          predContent.style.display='block';
+          const col=p=>p?'var(--accent)':'var(--danger)';
+          const omAtg=(pred.om_åtgärd||[]).map(x=>`<div class="if-row"><span class="if-metric">${x.metrik}</span><span style="font-size:.75rem;color:${col(x.positiv)};">${x.prediktion}</span></div>`).join('');
+          const omInget=(pred.om_inget||[]).map(x=>`<div class="if-row"><span class="if-metric">${x.metrik}</span><span style="font-size:.75rem;color:${col(x.positiv)};">${x.prediktion}</span></div>`).join('');
+          predContent.innerHTML=`
+            ${pred.insikt?`<div class="pred-box fade-up" style="margin-bottom:1px;">
+              <div class="pred-box-label">Systemets djupanalys</div>
+              <div class="pred-text">${pred.insikt}</div>
+            </div>`:''}
+            ${pred.kritisk_åtgärd?`<div class="action-box fade-up" style="animation-delay:.1s;margin-bottom:2rem;">
+              <div class="action-box-label">Kritisk åtgärd</div>
+              <div class="action-text">${pred.kritisk_åtgärd}</div>
+            </div>`:''}
+            ${omAtg||omInget?`<div class="if-grid fade-up" style="animation-delay:.2s;margin-bottom:1px;">
+              <div class="if-col"><div class="if-col-label act">Agentens prediktion · Åtgärd</div>${omAtg}</div>
+              <div class="if-col"><div class="if-col-label noact">Agentens prediktion · Utan åtgärd</div>${omInget}</div>
+            </div>`:''}
+            ${pred.sannolikhet_krasch>0?`<div style="background:var(--ink2);border:1px solid var(--border);padding:1.4rem 1.6rem;margin-bottom:3rem;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:.5rem;font-size:.54rem;letter-spacing:.18em;text-transform:uppercase;color:var(--fg4);"><span>Sannolikhet prestandakrasch</span><span style="color:var(--danger);">${pred.sannolikhet_krasch}%</span></div>
+              <div style="height:2px;background:rgba(255,255,255,0.05);"><div style="height:100%;width:0%;background:var(--danger);transition:width .8s ease;" data-w="${pred.sannolikhet_krasch}"></div></div>
+            </div>`:''}
+          `;
+          setTimeout(()=>{const b=predContent.querySelector('[data-w]');if(b)b.style.width=b.dataset.w+'%';},100);
+        }
+      }else{if(predLoading)predLoading.style.display='none';}
+    }catch(e){if(predLoading)predLoading.style.display='none';}
+  }
+})();
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Måltidslogg</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<script src="cache.js"></script>
+<script src="mobile-nav.js" defer></script>
+<style>
+:root{--ink:#0F1210;--ink2:#131714;--fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;--accent:#8FAE8A;--warn:#C4875A;--danger:#A85C5C;--serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;--border:rgba(242,240,234,0.06);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;min-height:100vh;overflow-x:hidden;}
+nav{display:flex;align-items:center;justify-content:space-between;padding:0 clamp(1.5rem,4vw,2.5rem);height:60px;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.95);backdrop-filter:blur(24px);position:sticky;top:0;z-index:100;}
+.logo{font-family:var(--serif);font-size:1.1rem;font-weight:400;letter-spacing:0.16em;color:var(--fg);text-decoration:none;}
+.nav-right{display:flex;align-items:center;gap:1.2rem;}
+.nav-date-btn{font-size:0.66rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg3);background:none;border:none;cursor:pointer;font-family:var(--sans);}
+.nav-date-btn:hover{color:var(--fg2);}
+.hamburger-btn{display:none;background:none;border:none;cursor:pointer;flex-direction:column;gap:5px;padding:4px;}
+.hamburger-btn span{display:block;width:22px;height:1px;background:var(--fg3);}
+@media(max-width:768px){.hamburger-btn{display:flex;}}
+
+.wrap{max-width:640px;margin:0 auto;padding:2.5rem 1.5rem 6rem;}
+
+/* ── DATE NAV ── */
+.date-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:2.5rem;}
+.date-arrow{background:none;border:1px solid var(--border);color:var(--fg3);font-size:1rem;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color 0.2s,color 0.2s;}
+.date-arrow:hover{border-color:rgba(143,174,138,0.3);color:var(--fg2);}
+.date-label{font-family:var(--serif);font-size:1.4rem;color:var(--fg);}
+
+/* ── MACRO SUMMARY ── */
+.macro-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:2.5rem;}
+.macro-cell{background:var(--ink);padding:1rem 0.8rem;text-align:center;}
+.macro-val{font-family:var(--serif);font-size:1.6rem;color:var(--fg);}
+.macro-lbl{font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg4);margin-top:0.2rem;}
+
+/* ── MEAL SECTION ── */
+.meal-section{margin-bottom:2.5rem;}
+.meal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+.meal-title{font-size:0.66rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--accent);}
+.add-btn{background:none;border:1px solid var(--border);color:var(--fg3);font-family:var(--sans);font-size:0.66rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.4rem 0.9rem;cursor:pointer;transition:all 0.2s;}
+.add-btn:hover{border-color:rgba(143,174,138,0.3);color:var(--fg2);}
+
+/* ── FOOD ITEM ── */
+.food-item{display:flex;align-items:center;justify-content:space-between;padding:0.85rem 0;border-bottom:1px solid var(--border);}
+.food-info{flex:1;}
+.food-name{font-size:0.88rem;color:var(--fg2);}
+.food-meta{font-size:0.68rem;color:var(--fg4);margin-top:0.15rem;}
+.food-kcal{font-family:var(--serif);font-size:1.05rem;color:var(--fg3);margin-right:1rem;white-space:nowrap;}
+.del-btn{background:none;border:none;color:var(--fg4);cursor:pointer;font-size:1rem;padding:0.2rem 0.4rem;transition:color 0.2s;line-height:1;}
+.del-btn:hover{color:var(--danger);}
+.empty-meal{font-size:0.78rem;color:var(--fg4);padding:1rem 0;font-style:italic;}
+
+/* ── SEARCH MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,18,16,0.92);z-index:200;display:none;flex-direction:column;}
+.modal-overlay.open{display:flex;}
+.modal-inner{flex:1;display:flex;flex-direction:column;max-width:600px;width:100%;margin:0 auto;padding:1.5rem;}
+.modal-top{display:flex;align-items:center;gap:0.8rem;margin-bottom:1rem;}
+.modal-title{font-size:0.66rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--accent);flex:1;}
+.modal-close{background:none;border:none;color:var(--fg3);font-size:1.4rem;cursor:pointer;line-height:1;padding:0.2rem;}
+.modal-close:hover{color:var(--fg);}
+.search-row{display:flex;gap:0.6rem;margin-bottom:1rem;}
+.search-input{flex:1;background:none;border:none;border-bottom:1px solid var(--border);color:var(--fg);font-family:var(--sans);font-size:0.94rem;font-weight:300;padding:0.7rem 0;outline:none;transition:border-color 0.2s;}
+.search-input:focus{border-bottom-color:rgba(143,174,138,0.3);}
+.search-input::placeholder{color:var(--fg4);}
+.scan-btn{background:none;border:1px solid var(--border);color:var(--fg3);font-family:var(--sans);font-size:0.66rem;letter-spacing:0.14em;text-transform:uppercase;padding:0 1rem;cursor:pointer;white-space:nowrap;transition:all 0.2s;}
+.scan-btn:hover{border-color:rgba(143,174,138,0.3);color:var(--fg2);}
+.search-results{flex:1;overflow-y:auto;}
+.result-item{padding:0.9rem 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity 0.15s;}
+.result-item:hover{opacity:0.7;}
+.result-name{font-size:0.88rem;color:var(--fg2);}
+.result-brand{font-size:0.7rem;color:var(--fg4);margin-top:0.1rem;}
+.result-macros{font-size:0.7rem;color:var(--fg3);margin-top:0.25rem;}
+.search-status{font-size:0.78rem;color:var(--fg4);padding:2rem 0;text-align:center;font-style:italic;}
+
+/* ── SERVING MODAL ── */
+.serving-modal{position:fixed;inset:0;background:rgba(15,18,16,0.95);z-index:300;display:none;flex-direction:column;align-items:center;justify-content:center;padding:2rem;}
+.serving-modal.open{display:flex;}
+.serving-card{background:var(--ink2);border:1px solid var(--border);padding:2.5rem;width:100%;max-width:400px;}
+.serving-card::before{content:'';display:block;width:14px;height:1px;background:var(--accent);opacity:0.5;margin-bottom:1.5rem;}
+.serving-food{font-family:var(--serif);font-size:1.3rem;margin-bottom:0.3rem;color:var(--fg);}
+.serving-brand{font-size:0.72rem;color:var(--fg4);margin-bottom:1.8rem;}
+.serving-label{font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg3);margin-bottom:0.5rem;display:block;}
+.serving-input{width:100%;background:none;border:none;border-bottom:1px solid var(--border);color:var(--fg);font-family:var(--sans);font-size:1.2rem;font-weight:300;padding:0.5rem 0;outline:none;margin-bottom:0.4rem;}
+.serving-hint{font-size:0.7rem;color:var(--fg4);margin-bottom:1.8rem;}
+.serving-preview{display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;margin-bottom:2rem;}
+.sp-cell{text-align:center;}
+.sp-val{font-family:var(--serif);font-size:1.1rem;color:var(--fg2);}
+.sp-lbl{font-size:0.58rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg4);margin-top:0.1rem;}
+.serving-actions{display:flex;gap:0.75rem;}
+.serving-save{flex:1;background:var(--accent);color:var(--ink);font-family:var(--sans);font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;border:none;padding:1rem;cursor:pointer;transition:opacity 0.2s;}
+.serving-save:hover{opacity:0.85;}
+.serving-cancel{background:none;border:1px solid var(--border);color:var(--fg3);font-family:var(--sans);font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;padding:1rem 1.5rem;cursor:pointer;}
+
+/* ── SCANNER ── */
+#scanner-wrap{display:none;margin-bottom:1rem;}
+#scanner-wrap.open{display:block;}
+#scanner-video{width:100%;max-height:280px;object-fit:cover;background:#000;}
+.scanner-hint{font-size:0.7rem;color:var(--fg4);text-align:center;margin-top:0.5rem;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.food-item{animation:fadeUp 0.25s ease both;}
+
+@media(max-width:860px){
+  .sidebar{display:none!important;}
+  .content-wrap,.page-wrap,.layout-wrap{display:block!important;}
+  #main,.main-content,.page-content{width:100%!important;max-height:none!important;overflow-y:auto!important;}
+  .mg,.pred-grid,.today-plan-grid,.bio-grid,.src-grid,.prof-grid{grid-template-columns:1fr 1fr!important;}
+  .pred-grid,.prof-grid{grid-template-columns:1fr!important;}
+}
+</style>
+</head>
+<body>
+<script>checkAuth();</script>
+
+<nav>
+  <a href="dashboard.html" class="logo">Forsyne</a>
+  <div class="nav-right">
+    <span id="nav-date-display" class="nav-date-btn"></span>
+    <button class="hamburger-btn" onclick="toggleMobileNav()" aria-label="Meny">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <!-- Date navigation -->
+  <div class="date-nav">
+    <button class="date-arrow" onclick="changeDate(-1)">&#8592;</button>
+    <div class="date-label" id="date-display">—</div>
+    <button class="date-arrow" id="next-btn" onclick="changeDate(1)">&#8594;</button>
+  </div>
+
+  <!-- Macro summary -->
+  <div class="macro-bar">
+    <div class="macro-cell"><div class="macro-val" id="tot-kcal">—</div><div class="macro-lbl">kcal</div></div>
+    <div class="macro-cell"><div class="macro-val" id="tot-prot">—</div><div class="macro-lbl">protein g</div></div>
+    <div class="macro-cell"><div class="macro-val" id="tot-carbs">—</div><div class="macro-lbl">kolh g</div></div>
+    <div class="macro-cell"><div class="macro-val" id="tot-fat">—</div><div class="macro-lbl">fett g</div></div>
+  </div>
+
+  <!-- Lunch -->
+  <div class="meal-section">
+    <div class="meal-header">
+      <div class="meal-title">Lunch</div>
+      <button class="add-btn" onclick="openSearch('lunch')">+ Lägg till</button>
+    </div>
+    <div id="lunch-list"><div class="empty-meal">Inget loggat</div></div>
+  </div>
+
+  <!-- Middag -->
+  <div class="meal-section">
+    <div class="meal-header">
+      <div class="meal-title">Middag</div>
+      <button class="add-btn" onclick="openSearch('middag')">+ Lägg till</button>
+    </div>
+    <div id="middag-list"><div class="empty-meal">Inget loggat</div></div>
+  </div>
+</div>
+
+<!-- Search modal -->
+<div class="modal-overlay" id="search-modal">
+  <div class="modal-inner">
+    <div class="modal-top">
+      <div class="modal-title" id="modal-meal-label">Lunch</div>
+      <button class="modal-close" onclick="closeSearch()">&#215;</button>
+    </div>
+    <div class="search-row">
+      <input class="search-input" id="search-input" type="text" placeholder="Sök mat..." autocomplete="off" oninput="onSearch(this.value)">
+      <button class="scan-btn" onclick="toggleScanner()">Streckkod</button>
+    </div>
+    <div id="scanner-wrap">
+      <video id="scanner-video" playsinline autoplay muted></video>
+      <div class="scanner-hint">Rikta kameran mot streckkoden</div>
+    </div>
+    <div class="search-results" id="search-results">
+      <div class="search-status">Skriv ett livsmedel eller scanna streckkod</div>
+    </div>
+  </div>
+</div>
+
+<!-- Serving modal -->
+<div class="serving-modal" id="serving-modal">
+  <div class="serving-card">
+    <div class="serving-food" id="sv-name">—</div>
+    <div class="serving-brand" id="sv-brand"></div>
+    <label class="serving-label">Mängd</label>
+    <input class="serving-input" id="sv-grams" type="number" value="100" min="1" max="2000" oninput="updatePreview()">
+    <div class="serving-hint" id="sv-hint">gram</div>
+    <div class="serving-preview">
+      <div class="sp-cell"><div class="sp-val" id="sv-kcal">—</div><div class="sp-lbl">kcal</div></div>
+      <div class="sp-cell"><div class="sp-val" id="sv-prot">—</div><div class="sp-lbl">protein</div></div>
+      <div class="sp-cell"><div class="sp-val" id="sv-carbs">—</div><div class="sp-lbl">kolh</div></div>
+      <div class="sp-cell"><div class="sp-val" id="sv-fat">—</div><div class="sp-lbl">fett</div></div>
+    </div>
+    <div class="serving-actions">
+      <button class="serving-save" onclick="saveEntry()">Spara</button>
+      <button class="serving-cancel" onclick="closeServing()">Avbryt</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Sidebar: auto-active baserat på URL ──
+(function(){
+  const page = location.pathname.split('/').pop() || 'dashboard.html';
+  document.querySelectorAll('.sidebar a.nl').forEach(a => {
+    if (a.getAttribute('href') === page) a.classList.add('active');
+  });
+})();
+
+const token = () => API.token();
+let currentDate = new Date().toISOString().slice(0, 10);
+let currentMeal = 'lunch';
+let selectedFood = null;
+let scannerStream = null;
+let searchTimer = null;
+let allEntries = [];
+
+const TODAY = new Date().toISOString().slice(0, 10);
+
+function fmtDate(d) {
+  const dt = new Date(d + 'T12:00:00');
+  if (d === TODAY) return 'Idag';
+  const yesterday = new Date(Date.now() - 864e5).toISOString().slice(0,10);
+  if (d === yesterday) return 'Igår';
+  return dt.toLocaleDateString('sv-SE', { weekday:'long', month:'short', day:'numeric' });
+}
+
+function updateDateUI() {
+  document.getElementById('date-display').textContent = fmtDate(currentDate);
+  document.getElementById('nav-date-display').textContent = currentDate;
+  document.getElementById('next-btn').style.opacity = currentDate >= TODAY ? '0.3' : '1';
+  document.getElementById('next-btn').disabled = currentDate >= TODAY;
+}
+
+function changeDate(dir) {
+  const d = new Date(currentDate + 'T12:00:00');
+  d.setDate(d.getDate() + dir);
+  const nd = d.toISOString().slice(0,10);
+  if (nd > TODAY) return;
+  currentDate = nd;
+  updateDateUI();
+  loadDay();
+}
+
+async function loadDay() {
+  try {
+    const r = await fetch('/api/nutrition-log?date=' + currentDate, { headers: { 'Authorization': 'Bearer ' + token() } });
+    if (!r.ok) return;
+    allEntries = await r.json();
+    renderAll();
+  } catch(e) {}
+}
+
+function renderAll() {
+  renderMeal('lunch');
+  renderMeal('middag');
+  updateTotals();
+}
+
+function renderMeal(meal) {
+  const el = document.getElementById(meal + '-list');
+  const items = allEntries.filter(e => e.meal_type === meal);
+  if (!items.length) { el.innerHTML = '<div class="empty-meal">Inget loggat</div>'; return; }
+  el.innerHTML = items.map(e => `
+    <div class="food-item" id="entry-${e.id}">
+      <div class="food-info">
+        <div class="food-name">${e.food_name}${e.brand ? ' <span style="color:var(--fg4)">· ' + e.brand + '</span>' : ''}</div>
+        <div class="food-meta">${e.serving_g ? e.serving_g + 'g' : ''}${e.protein_g ? ' · ' + e.protein_g + 'g protein' : ''}${e.carbs_g ? ' · ' + e.carbs_g + 'g kolh' : ''}${e.fat_g ? ' · ' + e.fat_g + 'g fett' : ''}</div>
+      </div>
+      <div class="food-kcal">${e.kcal ? Math.round(e.kcal) + ' kcal' : '—'}</div>
+      <button class="del-btn" onclick="deleteEntry('${e.id}')">&#215;</button>
+    </div>
+  `).join('');
+}
+
+function updateTotals() {
+  const sum = (f) => Math.round(allEntries.reduce((s, e) => s + (e[f] || 0), 0));
+  const kcal = sum('kcal'), prot = sum('protein_g'), carbs = sum('carbs_g'), fat = sum('fat_g');
+  document.getElementById('tot-kcal').textContent  = kcal  || '—';
+  document.getElementById('tot-prot').textContent  = prot  || '—';
+  document.getElementById('tot-carbs').textContent = carbs || '—';
+  document.getElementById('tot-fat').textContent   = fat   || '—';
+}
+
+async function deleteEntry(id) {
+  try {
+    await fetch('/api/nutrition-log/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token() } });
+    allEntries = allEntries.filter(e => e.id !== id);
+    renderAll();
+  } catch(e) {}
+}
+
+// ── SEARCH ──
+function openSearch(meal) {
+  currentMeal = meal;
+  document.getElementById('modal-meal-label').textContent = meal.charAt(0).toUpperCase() + meal.slice(1);
+  document.getElementById('search-modal').classList.add('open');
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-results').innerHTML = '<div class="search-status">Skriv ett livsmedel eller scanna streckkod</div>';
+  setTimeout(() => document.getElementById('search-input').focus(), 100);
+}
+
+function closeSearch() {
+  document.getElementById('search-modal').classList.remove('open');
+  stopScanner();
+}
+
+function onSearch(q) {
+  clearTimeout(searchTimer);
+  if (q.length < 2) { document.getElementById('search-results').innerHTML = '<div class="search-status">Skriv minst 2 tecken</div>'; return; }
+  document.getElementById('search-results').innerHTML = '<div class="search-status">Söker...</div>';
+  searchTimer = setTimeout(() => searchFood(q), 400);
+}
+
+async function searchFood(q) {
+  try {
+    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&json=1&page_size=12&fields=product_name,brands,code,nutriments,serving_size,product_quantity`;
+    const r = await fetch(url);
+    const d = await r.json();
+    const products = (d.products || []).filter(p => p.product_name && p.nutriments);
+    if (!products.length) { document.getElementById('search-results').innerHTML = '<div class="search-status">Inga träffar</div>'; return; }
+    document.getElementById('search-results').innerHTML = products.map(p => {
+      const n = p.nutriments;
+      const kcal = Math.round(n['energy-kcal_100g'] || n['energy_100g'] / 4.184 || 0);
+      const prot = Math.round(n.proteins_100g || 0);
+      const carbs = Math.round(n.carbohydrates_100g || 0);
+      const fat = Math.round(n.fat_100g || 0);
+      return `<div class="result-item" onclick='selectFood(${JSON.stringify({ name: p.product_name, brand: p.brands || "", barcode: p.code || "", kcal_100g: kcal, prot_100g: prot, carbs_100g: carbs, fat_100g: fat, serving: p.serving_size || "" })})'>
+        <div class="result-name">${p.product_name}</div>
+        ${p.brands ? `<div class="result-brand">${p.brands}</div>` : ''}
+        <div class="result-macros">${kcal} kcal · ${prot}g protein · ${carbs}g kolh · ${fat}g fett &mdash; per 100g</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('search-results').innerHTML = '<div class="search-status">Sökning misslyckades — kontrollera anslutning</div>';
+  }
+}
+
+async function searchByBarcode(code) {
+  try {
+    document.getElementById('search-results').innerHTML = '<div class="search-status">Hämtar produkt...</div>';
+    const r = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
+    const d = await r.json();
+    if (d.status !== 1 || !d.product?.nutriments) {
+      document.getElementById('search-results').innerHTML = '<div class="search-status">Produkten hittades inte i databasen</div>';
+      return;
+    }
+    const p = d.product;
+    const n = p.nutriments;
+    const food = {
+      name: p.product_name || code, brand: p.brands || "",
+      barcode: code,
+      kcal_100g: Math.round(n['energy-kcal_100g'] || n['energy_100g'] / 4.184 || 0),
+      prot_100g: Math.round(n.proteins_100g || 0),
+      carbs_100g: Math.round(n.carbohydrates_100g || 0),
+      fat_100g: Math.round(n.fat_100g || 0),
+      serving: p.serving_size || ""
+    };
+    stopScanner();
+    selectFood(food);
+  } catch(e) {
+    document.getElementById('search-results').innerHTML = '<div class="search-status">Fel vid hämtning</div>';
+  }
+}
+
+// ── SCANNER ──
+async function toggleScanner() {
+  const wrap = document.getElementById('scanner-wrap');
+  if (wrap.classList.contains('open')) { stopScanner(); return; }
+  wrap.classList.add('open');
+  try {
+    scannerStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    const video = document.getElementById('scanner-video');
+    video.srcObject = scannerStream;
+    scanBarcodes(video);
+  } catch(e) {
+    wrap.classList.remove('open');
+    alert('Kameraåtkomst nekad');
+  }
+}
+
+function stopScanner() {
+  const wrap = document.getElementById('scanner-wrap');
+  wrap.classList.remove('open');
+  if (scannerStream) { scannerStream.getTracks().forEach(t => t.stop()); scannerStream = null; }
+}
+
+function scanBarcodes(video) {
+  if (!('BarcodeDetector' in window)) {
+    document.querySelector('.scanner-hint').textContent = 'Streckkodsskanning stöds ej i denna webbläsare — skriv streckkoden manuellt';
+    return;
+  }
+  const detector = new BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39'] });
+  let scanning = true;
+  async function tick() {
+    if (!scanning || !scannerStream) return;
+    try {
+      const codes = await detector.detect(video);
+      if (codes.length > 0) {
+        scanning = false;
+        await searchByBarcode(codes[0].rawValue);
+      }
+    } catch(e) {}
+    if (scanning) requestAnimationFrame(tick);
+  }
+  video.addEventListener('loadeddata', () => requestAnimationFrame(tick), { once: true });
+}
+
+// ── SERVING ──
+function selectFood(food) {
+  selectedFood = food;
+  closeSearch();
+  document.getElementById('sv-name').textContent = food.name;
+  document.getElementById('sv-brand').textContent = food.brand || '';
+  const defaultG = food.serving ? parseFloat(food.serving) || 100 : 100;
+  document.getElementById('sv-grams').value = defaultG;
+  document.getElementById('sv-hint').textContent = food.serving ? 'gram (standard: ' + food.serving + ')' : 'gram';
+  updatePreview();
+  document.getElementById('serving-modal').classList.add('open');
+  setTimeout(() => { document.getElementById('sv-grams').select(); }, 100);
+}
+
+function updatePreview() {
+  if (!selectedFood) return;
+  const g = parseFloat(document.getElementById('sv-grams').value) || 0;
+  const f = g / 100;
+  document.getElementById('sv-kcal').textContent  = Math.round(selectedFood.kcal_100g  * f) || '—';
+  document.getElementById('sv-prot').textContent  = Math.round(selectedFood.prot_100g  * f) || '—';
+  document.getElementById('sv-carbs').textContent = Math.round(selectedFood.carbs_100g * f) || '—';
+  document.getElementById('sv-fat').textContent   = Math.round(selectedFood.fat_100g   * f) || '—';
+}
+
+function closeServing() {
+  document.getElementById('serving-modal').classList.remove('open');
+  selectedFood = null;
+}
+
+async function saveEntry() {
+  if (!selectedFood) return;
+  const g = parseFloat(document.getElementById('sv-grams').value) || 100;
+  const f = g / 100;
+  const payload = {
+    date:       currentDate,
+    meal_type:  currentMeal,
+    food_name:  selectedFood.name,
+    brand:      selectedFood.brand || null,
+    barcode:    selectedFood.barcode || null,
+    serving_g:  g,
+    kcal:       Math.round(selectedFood.kcal_100g  * f),
+    protein_g:  Math.round(selectedFood.prot_100g  * f),
+    carbs_g:    Math.round(selectedFood.carbs_100g * f),
+    fat_g:      Math.round(selectedFood.fat_100g   * f),
+  };
+  try {
+    const r = await fetch('/api/nutrition-log', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (r.ok) {
+      const saved = await r.json();
+      allEntries.push(saved);
+      renderAll();
+      closeServing();
+    }
+  } catch(e) {}
+}
+
+// ── INIT ──
+updateDateUI();
+loadDay();
+</script>
+</body>
+</html>

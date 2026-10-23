@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0F1210">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Forsyne">
+<title>Forsyne — Idag</title>
+<link rel="icon" type="image/svg+xml" href="/images/icon.svg">
+<link rel="apple-touch-icon" href="/images/landing/icon-192.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#0F1210; --ink2:#131714;
+  --fg:#F2F0EA; --fg2:#CCC9BF; --fg3:#8A8E89; --fg4:#4a4e49;
+  --accent:#8FAE8A; --warn:#C4875A; --danger:#A85C5C; --trust:#5B7FA6;
+  --border:rgba(242,240,234,0.06);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Jost',system-ui,sans-serif;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html, body {
+  background: linear-gradient(to bottom, var(--ink) 0%, var(--ink2) 100%);
+  color: var(--fg); font-family: var(--sans); font-weight: 300; line-height: 1.7;
+  min-height: 100vh; min-height: 100dvh;
+  -webkit-font-smoothing: antialiased; -webkit-overflow-scrolling: touch; overflow-x: hidden;
+}
+.frame { max-width: 430px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; position: relative; display: flex; flex-direction: column; }
+@media (min-width: 500px) {
+  body { background: #050605; padding: 2rem 0; }
+  .frame { background: linear-gradient(to bottom, var(--ink) 0%, var(--ink2) 100%); border-radius: 36px; overflow: hidden; box-shadow: 0 0 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05); margin-top: 1rem; padding-bottom: 1rem; }
+}
+
+/* NAV */
+nav {
+  height: 56px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1.5rem; border-bottom: 1px solid var(--border);
+  background: rgba(15,18,16,0.85); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
+  position: sticky; top: 0; z-index: 100;
+}
+.logo { font-family: var(--serif); font-size: 1.05rem; font-weight: 400; letter-spacing: 0.18em; color: var(--fg); }
+.nav-date { font-family: var(--serif); font-size: 0.9rem; color: var(--fg2); }
+.nav-icons { display: flex; gap: 0.9rem; align-items: center; }
+.nav-icon { font-size: 1.05rem; color: var(--fg3); cursor: pointer; text-decoration: none; }
+.nav-icon:hover { color: var(--fg2); }
+
+/* ALERT */
+.alert {
+  display: none;
+  align-items: center; gap: 0.7rem;
+  padding: 0.95rem 1.5rem;
+  background: rgba(168, 92, 92, 0.08);
+  border-top: 1px solid rgba(168, 92, 92, 0.18);
+  border-bottom: 1px solid rgba(168, 92, 92, 0.18);
+  cursor: pointer;
+  animation: alertPulse 2.6s ease-in-out infinite;
+}
+.alert.show { display: flex; }
+.alert-icon { width: 16px; height: 16px; flex-shrink: 0; color: var(--danger); }
+.alert-text { font-size: 0.85rem; color: var(--fg2); flex: 1; line-height: 1.4; }
+.alert-arrow { color: var(--fg3); font-size: 1.2rem; }
+@keyframes alertPulse { 0%, 100% { opacity: 0.92; } 50% { opacity: 1; } }
+
+/* HERO */
+.hero {
+  padding: 2.5rem 1.5rem 1.5rem;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.composite-ring { width: 200px; height: 200px; position: relative; }
+.composite-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.composite-ring .ring-bg { fill: none; stroke: rgba(242,240,234,0.05); stroke-width: 4; }
+.composite-ring .ring-fg {
+  fill: none; stroke: var(--accent); stroke-width: 4; stroke-linecap: round;
+  stroke-dasharray: 565; stroke-dashoffset: 565;
+  transition: stroke-dashoffset 1s ease, stroke 0.4s ease;
+}
+.composite-ring.zone-good .ring-fg { stroke: var(--accent); }
+.composite-ring.zone-caution .ring-fg { stroke: var(--warn); }
+.composite-ring.zone-strain .ring-fg { stroke: var(--danger); animation: ringPulse 2.5s ease infinite; }
+.composite-ring.zone-empty .ring-fg { stroke: var(--fg4); }
+.composite-ring .ring-number {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--serif); font-weight: 300; font-size: 5rem; line-height: 1; color: var(--fg);
+}
+.composite-ring.zone-empty .ring-number { color: var(--fg4); }
+@keyframes ringPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.78; } }
+
+.interpretation {
+  margin-top: 1.4rem;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--fg2);
+  line-height: 1.4;
+  max-width: 320px;
+  min-height: 2.4em;
+}
+
+/* CHIPS */
+.chips {
+  display: flex; gap: 0.55rem;
+  padding: 1.5rem 1.25rem 1.4rem;
+  border-bottom: 1px solid var(--border);
+}
+.chip {
+  flex: 1 1 0; min-width: 0;
+  display: flex; flex-direction: column; gap: 0.18rem;
+  padding: 0.85rem 0.7rem;
+  background: rgba(242,240,234,0.025);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.2s ease;
+}
+.chip:active { transform: scale(0.97); }
+.chip.positive { background: rgba(143,174,138,0.06); border-color: rgba(143,174,138,0.18); }
+.chip.negative { background: rgba(168,92,92,0.06); border-color: rgba(168,92,92,0.18); }
+.chip-label {
+  font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--fg3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.chip-value {
+  font-size: 0.95rem; color: var(--fg);
+  display: flex; align-items: baseline; gap: 0.3rem;
+}
+.chip-arrow { font-size: 0.78rem; color: var(--fg3); }
+.chip.positive .chip-arrow { color: var(--accent); }
+.chip.negative .chip-arrow { color: var(--danger); }
+
+/* ACTION */
+.action { padding: 1.5rem 1.5rem 1.4rem; border-bottom: 1px solid var(--border); }
+.action.hidden { display: none; }
+.action-label {
+  font-size: 0.6rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--fg3); margin-bottom: 0.6rem;
+}
+.action-text { font-size: 1.0rem; color: var(--fg); line-height: 1.5; margin-bottom: 1rem; }
+.action-buttons { display: flex; gap: 0.6rem; }
+.action-btn {
+  flex: 1; padding: 0.65rem 1rem;
+  background: transparent; border: 1px solid var(--border); color: var(--fg2);
+  font-family: var(--sans); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase;
+  cursor: pointer; transition: all 0.2s ease;
+}
+.action-btn:hover { background: rgba(242,240,234,0.04); }
+.action-btn.done.active { border-color: rgba(143,174,138,0.5); background: rgba(143,174,138,0.12); color: var(--accent); }
+.action-btn.skip.active { border-color: var(--fg4); color: var(--fg3); }
+
+/* TREND */
+.trend { padding: 1.4rem 1.5rem; cursor: pointer; border-bottom: 1px solid var(--border); }
+.trend.hidden { display: none; }
+.trend-label {
+  font-size: 0.58rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--fg3); margin-bottom: 0.7rem;
+}
+.trend-svg { width: 100%; height: 38px; display: block; }
+.trend-line { fill: none; stroke: var(--accent); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.trend-fill { opacity: 1; }
+.trend-today { fill: var(--accent); }
+
+/* EMPTY STATES */
+.empty-state {
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--fg2);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+.empty-state .empty-meta {
+  font-family: var(--sans);
+  font-style: normal;
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  margin-bottom: 1rem;
+}
+.empty-state .empty-cta {
+  display: inline-block;
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.8rem;
+  background: var(--accent);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-style: normal;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+}
+
+/* BRIEFING */
+.briefing {
+  padding: 1.8rem 1.5rem 1.6rem;
+  border-bottom: 1px solid var(--border);
+}
+.briefing-label {
+  font-size: 0.6rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--fg3); margin-bottom: 1rem;
+}
+.briefing-narrative {
+  font-family: var(--serif);
+  font-size: 1.05rem; font-weight: 400; color: var(--fg);
+  line-height: 1.65;
+}
+.briefing-narrative p { margin-bottom: 0.9rem; }
+.briefing-narrative p:last-child { margin-bottom: 0; }
+.briefing-empty {
+  font-family: var(--serif); font-style: italic;
+  color: var(--fg2); font-size: 1rem; line-height: 1.6;
+}
+
+/* BOTTOM NAV */
+.bottom-nav {
+  margin-top: auto;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--border);
+  background: rgba(15,18,16,0.85);
+  backdrop-filter: blur(20px);
+  position: sticky; bottom: 0;
+}
+.bn-item {
+  display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+  padding: 0.85rem 0;
+  font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--fg3); cursor: pointer; text-decoration: none;
+  transition: color 0.2s ease;
+  padding-bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px));
+}
+.bn-item.active { color: var(--fg); }
+.bn-item:hover { color: var(--fg2); }
+.bn-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: 0; }
+.bn-item.active .bn-dot { opacity: 1; }
+
+/* LOADING */
+.loading {
+  padding: 4rem 2rem; text-align: center;
+}
+.loading-dots { display: inline-flex; gap: 6px; }
+.loading-dots span {
+  width: 6px; height: 6px; background: var(--fg3); border-radius: 50%;
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+.loading-text {
+  font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--fg3); margin-top: 1rem;
+}
+@keyframes dotPulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div class="frame">
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo">forsyne</div>
+    <div class="nav-date" id="navDate">—</div>
+    <div class="nav-icons">
+      <a href="profile.html" class="nav-icon" title="Profil">◈</a>
+      <a href="../wearables.html" class="nav-icon" title="Inställningar">⚙</a>
+    </div>
+  </nav>
+
+  <!-- ALERT (conditional) -->
+  <div class="alert" id="alert">
+    <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+      <line x1="12" y1="9" x2="12" y2="13"></line>
+      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+    </svg>
+    <div class="alert-text" id="alertText"></div>
+    <div class="alert-arrow">›</div>
+  </div>
+
+  <!-- LOADING (initial) -->
+  <div class="loading" id="loading">
+    <div class="loading-dots"><span></span><span></span><span></span></div>
+    <div class="loading-text">Läser dina senaste data</div>
+  </div>
+
+  <!-- MAIN CONTENT (hidden until data loaded) -->
+  <div id="main" style="display:none;">
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="composite-ring zone-empty" id="ring">
+        <svg viewBox="0 0 200 200">
+          <circle class="ring-bg" cx="100" cy="100" r="90"></circle>
+          <circle class="ring-fg" cx="100" cy="100" r="90" id="ringFg"></circle>
+        </svg>
+        <div class="ring-number" id="composite">—</div>
+      </div>
+      <div class="interpretation" id="interpretation">Bygger din baseline.</div>
+    </div>
+
+    <!-- BRIEFING -->
+    <div class="briefing" id="briefing">
+      <div class="briefing-label">Morgonens observation</div>
+      <div class="briefing-narrative" id="briefingNarrative"></div>
+    </div>
+
+    <!-- CHIPS -->
+    <div class="chips" id="chips"></div>
+
+    <!-- ACTION -->
+    <div class="action hidden" id="action">
+      <div class="action-label">Föreslagen åtgärd</div>
+      <div class="action-text" id="actionText"></div>
+      <div class="action-buttons">
+        <button class="action-btn done" onclick="markAction(this, 'done')">✓ Gjorde</button>
+        <button class="action-btn skip" onclick="markAction(this, 'skip')">✗ Hoppade</button>
+      </div>
+    </div>
+
+    <!-- TREND PREVIEW -->
+    <div class="trend hidden" id="trend" onclick="window.location='../patterns.html'">
+      <div class="trend-label">Senaste 7 dagar</div>
+      <svg class="trend-svg" viewBox="0 0 280 38" preserveAspectRatio="none" id="trendSvg">
+        <!-- populated by JS -->
+      </svg>
+    </div>
+
+  </div>
+
+  <!-- EMPTY STATE (no data at all) -->
+  <div id="empty" style="display:none;">
+    <div class="empty-state">
+      <div class="empty-meta">Välkommen</div>
+      Logga din första check-in så börjar jag bygga din modell.
+      <br>
+      <a href="../checkin.html" class="empty-cta">Gör check-in →</a>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <a class="bn-item active" href="today.html">
+      <div class="bn-dot"></div><span>Idag</span>
+    </a>
+    <a class="bn-item" href="trends.html">
+      <div class="bn-dot"></div><span>Trender</span>
+    </a>
+    <a class="bn-item" href="checkin.html">
+      <div class="bn-dot"></div><span>Check-in</span>
+    </a>
+    <a class="bn-item" href="chat.html">
+      <div class="bn-dot"></div><span>Samtal</span>
+    </a>
+  </div>
+
+</div>
+
+<script>
+// ─── AUTH HELPERS ───
+function token(){ return localStorage.getItem('prv_token') || ''; }
+function authHeaders(){
+  const t = token();
+  return t ? { 'Authorization': 'Bearer ' + t } : {};
+}
+
+// ─── INITIAL: REDIRECT IF NO AUTH ───
+if (!token()) {
+  window.location.href = '/login.html?from=' + encodeURIComponent(location.pathname);
+}
+
+// ─── DATE ───
+const today = new Date();
+const months = ['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'];
+document.getElementById('navDate').textContent = `${today.getDate()} ${months[today.getMonth()]}`;
+const todayISO = today.toISOString().slice(0, 10);
+
+// ─── DATA FETCHERS ───
+async function fetchJSON(url) {
+  const r = await fetch(url, { headers: authHeaders() });
+  if (r.status === 401) {
+    localStorage.removeItem('prv_token');
+    window.location.href = '/login.html';
+    throw new Error('unauthenticated');
+  }
+  if (!r.ok) throw new Error(`HTTP ${r.status} on ${url}`);
+  return r.json();
+}
+
+async function loadAllData() {
+  const [me, checkins, integrations] = await Promise.all([
+    fetchJSON('/api/me').catch(() => null),
+    fetchJSON('/api/checkins').catch(() => []),
+    fetchJSON('/api/integrations').catch(() => []),
+  ]);
+
+  // Try to get today's daily_data if it exists (has psi + insight from agents)
+  let dailyData = null;
+  try {
+    const d = await fetchJSON('/api/daily-data');
+    if (Array.isArray(d) && d.length > 0) {
+      dailyData = d.find(row => row.date === todayISO) || d[0];
+    }
+  } catch (e) { /* ignore */ }
+
+  return { me, checkins, integrations, dailyData };
+}
+
+// ─── BRIEFING (Agent 11) → FALLBACK till Garmin-tolkning (Agent 13) ───
+async function loadBriefing() {
+  const el = document.getElementById('briefingNarrative');
+  const labelEl = document.querySelector('.briefing-label');
+
+  function renderNarrative(text) {
+    const paragraphs = text.split(/\n\n+/).filter(Boolean);
+    el.innerHTML = paragraphs.map(p =>
+      `<p>${p.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</p>`
+    ).join('');
+  }
+
+  try {
+    // Steg 1: försök hämta premium-briefing från Agent 11
+    const b = await fetchJSON('/api/briefing/today');
+    if (b?.briefing?.narrative) {
+      if (labelEl) labelEl.textContent = 'Morgonens observation';
+      renderNarrative(b.briefing.narrative);
+      return;
+    }
+
+    // Steg 2: ingen briefing — försök Garmin-tolkning (basic-tier)
+    const i = await fetchJSON('/api/interpretation/today');
+    if (i?.interpretation) {
+      if (labelEl) labelEl.textContent = 'Garmin-tolkning';
+      renderNarrative(i.interpretation);
+      return;
+    }
+
+    // Steg 3: ingen data alls — vänligt tomt-state
+    if (i?.reason === 'no_garmin_data') {
+      el.innerHTML = '<p class="briefing-empty">Koppla din Garmin så börjar systemet tolka din data.</p>';
+    } else {
+      el.innerHTML = '<p class="briefing-empty">Morgonens observation väntar på dagens data.</p>';
+    }
+  } catch (e) {
+    el.innerHTML = '<p class="briefing-empty">Morgonens observation är otillgänglig just nu.</p>';
+  }
+}
+
+// ─── COMPOSITE COMPUTATION ───
+// Simple weighted score from available signals. Replaced by daily_data.psi if available.
+function computeComposite(checkins, integrations) {
+  // Find latest check-in
+  const latestCheckin = checkins && checkins.length > 0 ? checkins[0] : null;
+
+  // Find Garmin data
+  const garmin = integrations?.find(i => i.provider === 'garmin')?.data || {};
+
+  // Recent values
+  const energy = latestCheckin?.energy ?? null;          // 0-10 scale
+  const sleep = latestCheckin?.sleep ?? null;            // hours typically
+  const mood = latestCheckin?.mood ?? null;              // 0-10 scale
+  const bb = garmin.body_battery?.[0]?.start_of_day ?? null;  // 0-100
+  const hrv = garmin.hrv?.[0]?.avg_hrv ?? null;          // ms (typical 30-100)
+  const rhr = garmin.resting_hr?.[0]?.bpm ?? null;       // bpm
+
+  // Build weighted composite from available signals
+  const scores = [];
+  if (energy != null) scores.push({ value: (energy / 10) * 100, weight: 1 });
+  if (mood != null) scores.push({ value: (mood / 10) * 100, weight: 0.8 });
+  if (sleep != null) {
+    // 7-8h is ideal → 100; <5h or >10h → low
+    const target = 7.5;
+    const dev = Math.abs(sleep - target);
+    const sleepScore = Math.max(0, 100 - dev * 18);
+    scores.push({ value: sleepScore, weight: 1.2 });
+  }
+  if (bb != null) scores.push({ value: bb, weight: 1.4 });
+  if (hrv != null) {
+    // HRV >50 is good; <30 is poor (very rough generic baseline; real should use personal)
+    const hrvScore = Math.min(100, Math.max(0, (hrv - 20) * 2));
+    scores.push({ value: hrvScore, weight: 1.3 });
+  }
+  if (rhr != null) {
+    // Lower is better; 50-60 = great, 70+ = elevated
+    const rhrScore = Math.max(0, 100 - Math.max(0, rhr - 50) * 2.5);
+    scores.push({ value: rhrScore, weight: 0.9 });
+  }
+
+  if (scores.length === 0) return null;
+
+  const totalWeight = scores.reduce((s, x) => s + x.weight, 0);
+  const weighted = scores.reduce((s, x) => s + x.value * x.weight, 0) / totalWeight;
+  return Math.round(weighted);
+}
+
+// ─── INTERPRETATION FALLBACKS (when no AI insight available) ───
+function fallbackInterpretation(value) {
+  if (value == null) return 'Bygger din baseline. Logga några dagar till.';
+  if (value >= 75) return 'Du är välåterhämtad. Push-läge ok idag.';
+  if (value >= 60) return 'Stadig dag. Underhåll det.';
+  if (value >= 40) return 'Halvkapacitet. Välj vad du lägger den på.';
+  if (value >= 25) return 'Kroppen vill ha vila. Lyssna idag.';
+  return 'Recovery first. Allt annat sen.';
+}
+
+function zoneFor(value) {
+  if (value == null) return 'empty';
+  if (value >= 65) return 'good';
+  if (value >= 40) return 'caution';
+  return 'strain';
+}
+
+// ─── CHIPS ───
+function renderChips(checkins, integrations) {
+  const chipsEl = document.getElementById('chips');
+  const chips = [];
+  const latest = checkins && checkins.length > 0 ? checkins[0] : null;
+  const garmin = integrations?.find(i => i.provider === 'garmin')?.data || {};
+
+  // Sleep
+  if (latest?.sleep != null) {
+    const hours = Math.floor(latest.sleep);
+    const mins = Math.round((latest.sleep - hours) * 60);
+    const label = hours + (mins > 0 ? `h${mins.toString().padStart(2,'0')}` : 'h');
+    const positive = latest.sleep >= 7;
+    chips.push({
+      label: 'Sömn',
+      value: label,
+      arrow: positive ? '↗' : (latest.sleep < 6 ? '↘' : '→'),
+      class: positive ? 'positive' : (latest.sleep < 6 ? 'negative' : ''),
+    });
+  }
+
+  // HRV (if available)
+  const hrvLatest = garmin.hrv?.[0];
+  if (hrvLatest) {
+    const all = (garmin.hrv || []).slice(0, 14);
+    const avg = all.length > 0 ? all.reduce((s,r) => s + r.avg_hrv, 0) / all.length : null;
+    const arrow = avg && hrvLatest.avg_hrv > avg + 2 ? '↗' : (avg && hrvLatest.avg_hrv < avg - 2 ? '↘' : '→');
+    const cls = arrow === '↗' ? 'positive' : (arrow === '↘' ? 'negative' : '');
+    chips.push({ label: 'HRV', value: hrvLatest.avg_hrv + 'ms', arrow, class: cls });
+  }
+
+  // Energy
+  if (latest?.energy != null) {
+    const e = latest.energy / 2; // server stored as 2-10, display as 1-5
+    const arrow = e >= 4 ? '↗' : (e <= 2 ? '↘' : '→');
+    const cls = e >= 4 ? 'positive' : (e <= 2 ? 'negative' : '');
+    chips.push({ label: 'Energi', value: e.toFixed(1) + '/5', arrow, class: cls });
+  }
+
+  // Body Battery (if no HRV, use this instead)
+  if (chips.length < 3 && garmin.body_battery?.[0]) {
+    const bb = garmin.body_battery[0];
+    const arrow = bb.start_of_day >= 60 ? '↗' : (bb.start_of_day <= 30 ? '↘' : '→');
+    const cls = bb.start_of_day >= 60 ? 'positive' : (bb.start_of_day <= 30 ? 'negative' : '');
+    chips.push({ label: 'Body Battery', value: bb.start_of_day, arrow, class: cls });
+  }
+
+  // Vilopuls (if room)
+  if (chips.length < 3 && garmin.resting_hr?.[0]) {
+    const rhr = garmin.resting_hr[0];
+    const arrow = rhr.bpm <= 60 ? '↗' : (rhr.bpm >= 70 ? '↘' : '→');
+    const cls = rhr.bpm <= 60 ? 'positive' : (rhr.bpm >= 70 ? 'negative' : '');
+    chips.push({ label: 'Vilopuls', value: rhr.bpm + ' bpm', arrow, class: cls });
+  }
+
+  // Render
+  if (chips.length === 0) {
+    chipsEl.innerHTML = '';
+    return;
+  }
+  chipsEl.innerHTML = chips.map(c => `
+    <div class="chip ${c.class}">
+      <div class="chip-label">${c.label}</div>
+      <div class="chip-value">${c.value} <span class="chip-arrow">${c.arrow}</span></div>
+    </div>
+  `).join('');
+}
+
+// ─── TREND SPARKLINE FROM CHECKINS ───
+function renderTrend(checkins) {
+  const trendEl = document.getElementById('trend');
+  const recent = (checkins || []).slice(0, 7).reverse();
+  if (recent.length < 2) return;
+
+  trendEl.classList.remove('hidden');
+  const w = 280, h = 38;
+  const xs = recent.map((_, i) => (i / Math.max(1, recent.length - 1)) * w);
+  const ys = recent.map(c => {
+    const energy = (c.energy ?? 0) / 10;
+    return h - (energy * (h - 6)) - 3;
+  });
+  const path = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+  const svg = document.getElementById('trendSvg');
+  const last = xs.length - 1;
+  svg.innerHTML = `
+    <path d="${path}" fill="none" stroke="#8FAE8A" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${xs[last]}" cy="${ys[last]}" r="3.5" fill="#8FAE8A"/>
+  `;
+}
+
+// ─── COMPOSITE RING ANIMATION ───
+function setComposite(value, zone) {
+  const ring = document.getElementById('ring');
+  ring.className = 'composite-ring zone-' + zone;
+  const ringFg = document.getElementById('ringFg');
+  const circumference = 565;
+
+  if (value == null) {
+    ringFg.style.strokeDashoffset = circumference;
+    document.getElementById('composite').textContent = '—';
+    return;
+  }
+
+  const offset = circumference - (value / 100) * circumference;
+  setTimeout(() => { ringFg.style.strokeDashoffset = offset; }, 100);
+
+  // Count up
+  const numEl = document.getElementById('composite');
+  const start = 0, end = value;
+  const duration = 800;
+  const t0 = performance.now();
+  function step(t) {
+    const p = Math.min(1, (t - t0) / duration);
+    const eased = 1 - Math.pow(1 - p, 3);
+    const v = Math.round(start + (end - start) * eased);
+    numEl.textContent = v;
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ─── ACTION HANDLERS ───
+function markAction(btn, kind) {
+  document.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // TODO: POST to /api/insights/action when endpoint exists
+}
+
+// ─── MAIN LOAD ───
+async function init() {
+  try {
+    const data = await loadAllData();
+    document.getElementById('loading').style.display = 'none';
+
+    const checkins = data.checkins || [];
+    const integrations = data.integrations || [];
+
+    // Empty state — no data at all
+    if (checkins.length === 0 && integrations.length === 0) {
+      document.getElementById('main').style.display = 'none';
+      document.getElementById('empty').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('main').style.display = 'block';
+    loadBriefing();
+
+    // Use daily_data.psi if available, else compute
+    let value = data.dailyData?.psi ?? null;
+    if (value == null) value = computeComposite(checkins, integrations);
+    const zone = zoneFor(value);
+
+    // Interpretation: from agent's insight or fallback
+    let interp = data.dailyData?.insight?.insikt
+              ?? data.dailyData?.insight?.text
+              ?? fallbackInterpretation(value);
+    // Trim agent text if too long
+    if (interp && interp.length > 140) interp = interp.slice(0, 137) + '…';
+    document.getElementById('interpretation').textContent = interp;
+
+    setComposite(value, zone);
+    renderChips(checkins, integrations);
+    renderTrend(checkins);
+
+    // Action from balance agent (or hide if none)
+    const action = data.dailyData?.balance?.check_in_avslutning
+                ?? data.dailyData?.prediction?.kritisk_atgard
+                ?? null;
+    if (action) {
+      document.getElementById('actionText').textContent = action;
+      document.getElementById('action').classList.remove('hidden');
+    }
+
+    // Alert if active varsel
+    const varsel = data.dailyData?.prediction?.varsel_status;
+    if (varsel && (varsel === 'aktivt' || varsel === 'kritiskt' || varsel.includes('alert'))) {
+      const alertText = data.dailyData?.prediction?.kritisk_atgard
+                     ?? `Aktivt varsel: ${varsel}`;
+      document.getElementById('alertText').textContent = alertText;
+      document.getElementById('alert').classList.add('show');
+    }
+
+  } catch (e) {
+    console.error('init error', e);
+    document.getElementById('loading').innerHTML =
+      '<div class="loading-text" style="color:var(--danger)">Kunde inte ladda data.<br>' + e.message + '</div>';
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>

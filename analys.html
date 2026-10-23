@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Total analys</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<script src="cache.js"></script>
+<style>
+:root{--ink:#0F1210;--ink2:#131714;--ink3:#171c18;--fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;--accent:#8FAE8A;--warn:#C4875A;--danger:#A85C5C;--trust:#5B7FA6;--serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;--border:rgba(242,240,234,0.06);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;line-height:1.7;min-height:100vh;overflow-x:hidden;}
+.page-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;}
+.page-bg-img{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.18) saturate(0.4);}
+.page-bg-veil{position:absolute;inset:0;background:linear-gradient(to bottom,var(--ink) 0%,rgba(15,18,16,0.72) 9%,rgba(15,18,16,0.06) 26%,rgba(15,18,16,0.06) 74%,rgba(15,18,16,0.72) 91%,var(--ink) 100%);}
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(2rem,5vw,4rem);height:64px;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.85);backdrop-filter:blur(32px);}
+.logo{font-family:var(--serif);font-size:1.1rem;font-weight:400;letter-spacing:0.18em;color:var(--fg);text-decoration:none;}
+.nav-center{font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+.nav-meta{display:flex;align-items:center;gap:1.5rem;}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(143,174,138,0.6);animation:pulse 2.5s ease infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.nav-date{font-family:var(--serif);font-size:0.9rem;color:var(--fg2);}
+.nav-user{font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg3);text-decoration:none;}
+.nav-signal{display:none;font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--danger);text-decoration:none;align-items:center;gap:0.4rem;}
+.nav-signal::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);animation:sig-pulse 1.6s ease infinite;}
+.nav-signal.show{display:flex;}
+@keyframes sig-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(168,92,92,0.6)}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(168,92,92,0)}}
+main{position:relative;z-index:1;flex:1;min-width:0;overflow-y:auto;height:100%;}
+
+/* PAGE HEADER — app-vy */
+.page-header{padding:1.8rem 2rem 1.4rem;border-bottom:1px solid var(--border);}
+.page-header-title{font-family:var(--serif);font-size:1.8rem;font-weight:300;font-style:italic;line-height:1.1;color:var(--fg);margin-bottom:0.3rem;}
+.page-header-sub{font-size:0.62rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--fg4);}
+
+/* SEKTION 1 — BORTTAGEN, ersatt av page-header */
+
+.s-section{padding:clamp(2.5rem,4vw,3.5rem) clamp(2rem,6vw,5rem);border-bottom:1px solid var(--border);}
+.s-ey{font-size:0.56rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.5rem;display:flex;align-items:center;gap:0.7rem;}
+.s-ey::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+.ot{font-family:var(--serif);font-size:clamp(1.8rem,3.2vw,2.8rem);font-weight:300;font-style:italic;line-height:1.3;color:var(--fg);text-shadow:0 2px 40px rgba(15,18,16,0.9);max-width:720px;min-height:2em;}
+.ol{font-size:0.56rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);opacity:0;transition:opacity 0.5s ease 0.3s;display:flex;align-items:center;gap:0.7rem;margin-top:1.5rem;}
+.ol.vis{opacity:1;}
+.ol::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+.dots{display:flex;gap:0.4rem;}.dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:dp 1.4s ease infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.load-row{display:flex;align-items:center;gap:0.8rem;}
+.load-txt{font-size:0.6rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+
+.idx-table{width:100%;border-collapse:collapse;border:1px solid var(--border);}
+.idx-table th{font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg4);padding:0.6rem 0.8rem;text-align:left;background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);font-weight:400;}
+.idx-table td{padding:0.7rem 0.8rem;font-family:var(--serif);font-size:0.9rem;font-weight:300;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.4);cursor:pointer;transition:background 0.15s;}
+.idx-table tr:last-child td{border-bottom:none;}
+.idx-table tr:hover td{background:rgba(15,18,16,0.65);}
+.idx-cell{display:inline-block;min-width:2rem;}
+.ic-up{color:var(--accent);}.ic-wn{color:var(--warn);}.ic-dn{color:var(--danger);}.ic-em{color:var(--fg4);}
+.run-btn{display:inline-flex;align-items:center;gap:0.8rem;background:none;border:1px solid rgba(143,174,138,0.3);color:var(--accent);font-family:var(--sans);font-size:0.78rem;letter-spacing:0.18em;text-transform:uppercase;padding:0.9rem 2rem;cursor:pointer;transition:all 0.3s;}
+.run-btn:hover{background:rgba(143,174,138,0.06);border-color:var(--accent);}
+.run-steps{margin-top:2rem;display:none;}
+.run-step{font-size:0.6rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--fg4);padding:0.5rem 0;opacity:0;transition:opacity 0.4s ease;}
+.run-step.vis{opacity:1;color:var(--fg3);}
+.run-step.done{color:var(--accent);}
+.res-sec{padding:clamp(2.5rem,4vw,3.5rem) clamp(2rem,6vw,5rem);display:none;border-bottom:1px solid var(--border);}
+.res-opening{font-family:var(--serif);font-size:clamp(1.6rem,3vw,2.4rem);font-weight:300;font-style:italic;line-height:1.3;color:var(--fg);max-width:680px;margin-bottom:3rem;padding-bottom:2rem;border-bottom:1px solid var(--border);}
+.res-parts{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);}
+.res-part{padding:1.5rem;background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);}
+.res-part-label{font-size:0.54rem;letter-spacing:0.26em;text-transform:uppercase;margin-bottom:0.7rem;display:flex;align-items:center;gap:0.6rem;}
+.res-part-label::before{content:'';width:14px;height:1px;opacity:0.5;}
+.rp-s{color:var(--accent);}.rp-s::before{background:var(--accent);}
+.rp-r{color:var(--danger);}.rp-r::before{background:var(--danger);}
+.rp-p{color:var(--trust);}.rp-p::before{background:var(--trust);}
+.rp-n{color:var(--warn);}.rp-n::before{background:var(--warn);}
+.res-text{font-family:var(--serif);font-size:1rem;font-weight:300;font-style:italic;line-height:1.8;color:var(--fg2);max-width:600px;}
+
+.s-footer{padding:clamp(2rem,4vw,3rem) clamp(2rem,6vw,5rem);font-family:var(--serif);font-style:italic;font-size:0.7rem;color:var(--fg4);}
+.content-wrap{display:flex;align-items:flex-start;height:calc(100vh - 64px);overflow:hidden;}
+.sidebar{width:210px;height:100%;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:rgba(15,18,16,0.4);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;z-index:50;padding:2.5rem 0 1.8rem;}
+.sidebar::-webkit-scrollbar{display:none;}
+.ng{margin-bottom:0;}
+.ngl{font-size:0.44rem;letter-spacing:0.32em;text-transform:uppercase;color:var(--fg4);padding:0.7rem 1.8rem 0.2rem;}
+.nl{display:block;padding:0.22rem 1.8rem;font-size:0.76rem;letter-spacing:0.06em;color:var(--fg3);text-decoration:none;transition:color 0.2s,border-left-color 0.2s;border-left:1px solid transparent;cursor:pointer;}
+.nl:hover{color:var(--fg2);}
+.nl.active{color:var(--fg);border-left-color:var(--accent);background:rgba(143,174,138,0.04);}
+.nl.signal-link{color:var(--danger);display:flex;align-items:center;gap:0.5rem;}
+.nl.signal-link::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+.selvitas-wrap{margin-top:auto;padding-top:0.5rem;border-top:1px solid var(--border);}.selvitas-nav{display:block;padding:0.6rem 1.8rem 0.3rem;font-family:var(--serif);font-style:italic;font-size:0.78rem;letter-spacing:0.08em;color:var(--fg3);text-decoration:none;transition:color 0.2s;}.selvitas-nav:hover{color:var(--fg2);}
+
+@media(max-width:860px){
+  .sidebar{display:none!important;}
+  .content-wrap,.page-wrap,.layout-wrap{display:block!important;}
+  #main,.main-content,.page-content{width:100%!important;max-height:none!important;overflow-y:auto!important;}
+  .mg,.pred-grid,.today-plan-grid,.bio-grid,.src-grid,.prof-grid{grid-template-columns:1fr 1fr!important;}
+  .pred-grid,.prof-grid{grid-template-columns:1fr!important;}
+}
+</style>
+</head>
+<body>
+<script>checkAuth();</script>
+<div class="page-bg">
+  <div class="page-bg-img" style="background-image:url('images/Glödande_mänsklig_hjärna_i_mörker.png')"></div>
+  <div class="page-bg-veil"></div>
+</div>
+<nav>
+  <a href="dashboard.html" class="logo">Forsyne</a>
+  <span class="nav-center">Total analys</span>
+  <div class="nav-meta">
+    <div class="nav-dot"></div>
+    <span class="nav-date" id="topDate"></span>
+    <a class="nav-user" id="topUser" href="profile.html"></a>
+  </div>
+</nav>
+<div class="content-wrap">
+<aside class="sidebar">
+  <div class="ng">
+    <div class="ngl">Idag</div>
+    <a class="nl" href="dashboard.html">Dashboard</a>
+    <a class="nl" href="checkin.html">Check-in</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Mönster</div>
+    <a class="nl" href="sleep.html">Sömn</a>
+    <a class="nl" href="energy.html">Energi</a>
+    <a class="nl" href="stress.html">Stress</a>
+    <a class="nl" href="training.html">Träning</a>
+    <a class="nl" href="kostlogg.html">Kost</a>
+    <a class="nl" href="wearables.html">Wearables</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Djupet</div>
+    <a class="nl" href="biologi.html">Biologi</a>
+    <a class="nl" href="dna.html">DNA</a>
+    <a class="nl" href="journal.html">Journal</a>
+    <a class="nl" href="analys.html">Analys</a>
+    <a class="nl" href="coach.html">Coach</a>
+  </div>
+</aside>
+<main>
+
+  <!-- PAGE HEADER -->
+  <header class="page-header">
+    <div class="page-header-title">Total analys</div>
+    <div class="page-header-sub">Förstå dig själv · Korrelationsanalys av alla datakällor</div>
+  </header>
+
+  <!-- SEKTION 2 — Varför det spelar roll -->
+  <section class="s-section" id="s-why" style="opacity:0;transition:opacity 0.6s ease;">
+    <div class="s-ey">Varför det spelar roll</div>
+    <div class="ot" id="ot"><span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></div>
+    <div class="ol" id="ol">Total analys · Allt på en gång</div>
+  </section>
+
+  <!-- SEKTION 3 — Indexkarta -->
+  <section class="s-section" id="idx-sec" style="opacity:0;transition:opacity 0.5s ease;">
+    <div class="s-ey">Indexkarta · Vecka för vecka</div>
+    <div class="load-row" id="idx-load"><span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span><span class="load-txt">Bygger indexkarta</span></div>
+    <div id="idx-content" style="display:none;">
+      <table class="idx-table" id="idx-table">
+        <thead><tr>
+          <th>Vecka</th><th>Balans</th><th>Sömn</th><th>Energi</th><th>Stress</th><th>Träning</th><th>Kost</th>
+        </tr></thead>
+        <tbody id="idx-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- SEKTION 4 — Kör analys -->
+  <section class="s-section">
+    <div class="s-ey">Kör total analys</div>
+    <button class="run-btn" id="run-btn" onclick="körAnalys()">Kör total analys →</button>
+    <div class="run-steps" id="run-steps">
+      <div class="run-step" id="step-1">Systemet korrelerar alla datapunkter</div>
+      <div class="run-step" id="step-2">Analyserar sömnmönster</div>
+      <div class="run-step" id="step-3">Identifierar veckomönster</div>
+      <div class="run-step" id="step-4">Formulerar analys</div>
+    </div>
+  </section>
+
+  <section class="res-sec" id="res-sec">
+    <div class="res-opening" id="res-opening"></div>
+    <div class="res-parts" id="res-parts"></div>
+  </section>
+
+  <footer class="s-footer">Inte baserat på genomsnitt. Baserat på dig.</footer>
+
+</main>
+</div>
+
+<script>
+// ── Sidebar: auto-active baserat på URL ──
+(function(){
+  const page = location.pathname.split('/').pop() || 'dashboard.html';
+  document.querySelectorAll('.sidebar a.nl').forEach(a => {
+    if (a.getAttribute('href') === page) a.classList.add('active');
+  });
+})();
+
+function tw(el,text,ms,cb){let i=0;el.textContent='';const t=()=>{if(i<text.length){el.textContent+=text[i++];setTimeout(t,ms);}else if(cb)cb();};t();}
+function cellClass(v,field){
+  if(v===null||v===undefined||isNaN(v))return'ic-em';
+  if(field==='stress')return v<=3?'ic-up':v<=6?'ic-wn':'ic-dn';
+  return v>=7?'ic-up':v>=5?'ic-wn':'ic-dn';
+}
+function cellText(v,field,isTraining){if(v===null||v===undefined||isNaN(v))return'—';if(isTraining&&v===0)return'Vila';return v.toFixed(1);}
+
+let allCheckins=[];
+let isRunning=false;
+
+const psiOf=c=>{const vals=[c.energy,(10-(c.stress||0)),c.focus,c.motivation].filter(v=>v!=null&&v!==0);return vals.length?Math.round(vals.reduce((s,v)=>s+v,0)/vals.length*10):null;};
+
+function computeAnalys(checkins){
+  const n=checkins.length;
+  if(!n)return{insight:{insikt:'Mata systemet med data — analysen aktiveras efter första check-in.',sammanfattning:'Otillräcklig data.',rekommendation:'Börja med en daglig check-in.',styrka:'Du är här — det är grunden.'},prediction:{varsel_status:'ingen',varsel_dag:0,sannolikhet_krasch:0,kritisk_åtgärd:null,insikt:null},normalize:{}};
+  const rev=[...checkins].reverse();
+  const r7=checkins.slice(-7),prev7=checkins.slice(-14,-7);
+  const avgFn=(arr,f)=>arr.length?arr.reduce((s,c)=>s+(c[f]||0),0)/arr.length:0;
+  const avgE7=avgFn(r7,'energy'),avgS7=avgFn(r7,'stress'),avgSl7=avgFn(r7,'sleep');
+  const eTrend=prev7.length?avgE7-avgFn(prev7,'energy'):0;
+  let streak=0;for(const c of rev){if((c.stress||0)>=7&&(c.sleep||0)<=5)streak++;else break;}
+  let soft=0;for(const c of rev){if((c.stress||0)>=6&&(c.sleep||0)<=5)soft++;else break;}
+  const days=streak||soft,varselActive=streak>=2||soft>=3;
+  const varselStatus=!varselActive?'ingen':days>=5?'kritiskt':days>=3?'aktivt':'tidig_signal';
+  let styrka,insikt,sammanfattning,rekommendation;
+  if(avgE7>=7&&avgSl7>=7){styrka=`Energi ${avgE7.toFixed(1)}/10 och sömn ${avgSl7.toFixed(1)}h i snitt — systemet registrerar stabilitet.`;}
+  else if(eTrend>0.5){styrka=`Energitrenden de senaste 7 dagarna är uppåt (+${eTrend.toFixed(1)}) — mönstret rör sig i rätt riktning.`;}
+  else if(n>=14){styrka=`${n} check-ins inloggade — systemet ser tillräckligt för att identifiera dina specifika mönster.`;}
+  else{styrka=`Du checkar in konsekvent — det är grunden för allt systemet kan göra.`;}
+  if(varselActive){insikt=`Stress och sömnbrist samverkar dag ${days} i rad. Kortisolnivåerna är förhöjda — återhämtning är biologiskt omöjlig utan intervention.`;sammanfattning=`Varsel aktivt — kroppen är under systematisk belastning sedan ${days} dagar.`;rekommendation=`Sömn 8h+ ikväll. Det är den enda variabeln som bryter kurvan just nu.`;}
+  else if(avgS7>6){insikt=`Snitt stress ${avgS7.toFixed(1)}/10 de senaste 7 dagarna — systematiskt förhöjt. Systemet ser mönstret och flaggar riktningen.`;sammanfattning=`Stress dominerar de senaste 7 dagarna — ännu inget varsel, men trenden är tydlig.`;rekommendation=`Sätt ett hårt stopp för arbete kl 19:00 tre kvällar — mät om stressnivån sjunker.`;}
+  else if(eTrend<-0.8){insikt=`Energin har sjunkit ${Math.abs(eTrend).toFixed(1)} enheter de senaste 7 dagarna jämfört med föregående period.`;sammanfattning=`Energitrenden är nedåt — systemet undersöker orsaken.`;rekommendation=`Prioritera sömnen de närmaste 3 nätterna — energitrend och sömnkvalitet korrelerar i din data.`;}
+  else{insikt=`Systemet ser ett relativt stabilt mönster i dina ${n} check-ins. Energi ${avgE7.toFixed(1)} · Stress ${avgS7.toFixed(1)} · Sömn ${avgSl7.toFixed(1)}h i 7-dagarssnitt.`;sammanfattning=`Systemet registrerar stabilitet — inga aktiva varsel.`;rekommendation=`Håll det stabila mönstret. Nästa förbättring: sömn till 7h+ konsekvent.`;}
+  const kp=varselActive?Math.min(90,30+days*10):5;
+  return{insight:{insikt,sammanfattning,rekommendation,styrka},prediction:{varsel_status:varselStatus,varsel_dag:days,sannolikhet_krasch:kp,kritisk_åtgärd:varselActive?'Sömn 8h+ ikväll — inget annat ändrar kurvan nu.':rekommendation,insikt:varselActive?`Stress och sömnbrist har samverkat ${days} dagar i rad — biologisk overload.`:insikt},normalize:{}};
+}
+
+async function körAnalys(){
+  if(isRunning)return;
+  isRunning=true;
+  const btn=document.getElementById('run-btn');
+  btn.disabled=true;
+  btn.textContent='Analyserar...';
+  const steps=document.getElementById('run-steps');
+  steps.style.display='block';
+  const stepIds=['step-1','step-2','step-3','step-4'];
+  for(let i=0;i<stepIds.length;i++){
+    await new Promise(r=>setTimeout(r,i===0?200:900));
+    document.getElementById(stepIds[i]).classList.add('vis');
+    if(i>0)document.getElementById(stepIds[i-1]).classList.add('done');
+  }
+  await new Promise(r=>setTimeout(r,800));
+  document.getElementById('step-4').classList.add('done');
+
+  const profile=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+  let result=PCache.get('analyze');
+  if(!result){try{const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.token()},body:JSON.stringify({checkins:allCheckins,profile})});if(r.ok){result=await r.json();PCache.set('analyze',result);}}catch(e){}}
+
+  steps.style.display='none';
+  btn.style.display='none';
+
+  // Local fallback if API failed or returned nothing useful
+  if(!result||(!result.insight&&!result.prediction)) result=allCheckins.length>=3?computeAnalys(allCheckins):null;
+  if(!result){
+    document.getElementById('res-sec').style.display='block';
+    document.getElementById('res-opening').textContent='Otillräcklig data för analys. Logga fler check-ins och försök igen.';
+    btn.style.display='block';btn.textContent='Kör total analys →';btn.disabled=false;isRunning=false;
+    return;
+  }
+
+  const resSec=document.getElementById('res-sec');
+  const resOpening=document.getElementById('res-opening');
+  const resParts=document.getElementById('res-parts');
+  resSec.style.display='block';
+
+  const opening = result.insight?.insikt || result.prediction?.insikt || 'Systemets samlade analys är klar.';
+  const styrka  = result.insight?.styrka || 'Konsistens i dina mönster ger systemet precision.';
+  const risk    = result.prediction?.insikt || result.insight?.sammanfattning || 'Kombinationen av underskott i flera system skapar ackumulerad belastning.';
+  const next    = result.insight?.rekommendation || result.prediction?.kritisk_åtgärd || 'Fokusera på sömnkonsistens de kommande sju dagarna — allt annat följer.';
+  const balance = result.insight?.balans || null;
+
+  const sp = result.normalize?.systempoäng;
+  const psiLabel = sp?.värde!=null?`<div style="display:inline-flex;align-items:center;gap:.7rem;margin-bottom:1.8rem;padding:.35rem .9rem;border:1px solid var(--border);font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--fg4);">Systemkapacitet <span style="font-family:var(--serif);font-size:1rem;font-weight:300;color:${sp.psi>=100?'var(--accent)':sp.psi>=80?'var(--warn)':'var(--danger)'};">${sp.värde}</span></div>`:'';
+  const varselActive = result.prediction?.varsel_status && result.prediction.varsel_status!=='ingen';
+  const varselBanner = varselActive?`<div style="font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--danger);margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem;"><span style="width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;display:inline-block;"></span>Varsel aktivt · Dag ${result.prediction.varsel_dag}</div>`:'';
+  const obsNote = result.normalize?.obs?`<div style="font-size:.78rem;color:var(--fg3);font-style:italic;font-family:var(--serif);margin-top:1.2rem;padding-top:1.2rem;border-top:1px solid var(--border);">${result.normalize.obs}</div>`:'';
+
+  tw(resOpening,opening,14,()=>{
+    resParts.innerHTML=`
+      ${psiLabel}${varselBanner}
+      <div class="res-part"><div class="res-part-label rp-s">Styrka</div><div class="res-text">${styrka}</div></div>
+      <div class="res-part"><div class="res-part-label rp-r">Kritisk riskflagga</div><div class="res-text">${risk}</div></div>
+      ${balance?`<div class="res-part"><div class="res-part-label rp-p">Systembalans</div><div class="res-text">${balance}</div></div>`:''}
+      <div class="res-part"><div class="res-part-label rp-n">Konkret nästa steg</div><div class="res-text">${next}</div></div>
+      ${obsNote}
+    `;
+  });
+}
+
+(async()=>{
+  const d=new Date();
+  const DAYS=['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+  const MONTHS=['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+  const dateEl=document.getElementById('topDate'),userEl=document.getElementById('topUser');
+  if(dateEl)dateEl.textContent=DAYS[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()];
+  if(userEl){const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');const u=API&&API.user?API.user():null;userEl.textContent=(ob.q3_1||(u?u.email.split('@')[0]:'')||'').toUpperCase();}
+
+  try{const r=await fetch('/api/checkins',{headers:{'Authorization':'Bearer '+API.token()}});if(r.ok){const data=await r.json();allCheckins=Array.isArray(data)?data:(data.checkins||[]);}}catch(e){}
+  const last14=allCheckins.slice(-14);
+  const profile=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+
+  try{const signalEl=document.getElementById('nav-signal');const recent=(allCheckins||[]).slice(-3);if(recent.filter(c=>c.stress>=7&&c.sleep<=5).length>=2&&signalEl)signalEl.classList.add('show');}catch(e){}
+
+  const otEl=document.getElementById('ot'),olEl=document.getElementById('ol');
+  let opening='Hela bilden av hur du faktiskt fungerar — inte delar, utan du.';
+  try{
+    let _ai=PCache.get('insights_analys_opening');
+    if(!_ai){const r=await fetch('/api/agent/insights/generate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.token()},body:JSON.stringify({checkins:last14,profile,context:'analys_opening'})});if(r.ok){_ai=await r.json();PCache.set('insights_analys_opening',_ai);}}
+    if(_ai?.insikt)opening=_ai.insikt;
+  }catch(e){}
+
+  setTimeout(()=>{
+    document.getElementById('s-why').style.opacity='1';
+    tw(otEl,opening,16,()=>{
+      olEl.classList.add('vis');
+      setTimeout(()=>{
+        document.getElementById('idx-sec').style.opacity='1';
+
+        if(allCheckins.length===0){
+          document.getElementById('idx-load').style.display='none';
+          document.getElementById('idx-content').style.display='block';
+          document.getElementById('idx-body').innerHTML='<tr><td colspan="6" style="font-family:var(--serif);font-style:italic;color:var(--fg4);">Inga check-ins loggade ännu.</td></tr>';
+          return;
+        }
+
+        const weeks={};
+        allCheckins.forEach(c=>{
+          const date=new Date(c.date||c.created_at);
+          const week=getISOWeek(date);
+          const key=`${date.getFullYear()}-W${week}`;
+          if(!weeks[key])weeks[key]={sleep:[],energy:[],stress:[],training:[],nutrition:[],psi:[],label:`Vecka ${week}`};
+          if(c.sleep>0)weeks[key].sleep.push(parseFloat(c.sleep));
+          if(c.energy>0)weeks[key].energy.push(parseFloat(c.energy));
+          if(c.stress>0)weeks[key].stress.push(parseFloat(c.stress));
+          const tv=c.training!=null?parseFloat(c.training):(c.workout!=null?parseFloat(c.workout):null);
+          if(tv!==null)weeks[key].training.push(tv);
+          const nv=c.nutrition!=null?parseFloat(c.nutrition):(c.food!=null?parseFloat(c.food):null);
+          if(nv!==null&&nv>0)weeks[key].nutrition.push(nv);
+          const pv=psiOf(c);if(pv!=null)weeks[key].psi.push(pv);
+        });
+
+        const avg=arr=>arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length):null;
+        const tbody=document.getElementById('idx-body');
+        Object.keys(weeks).slice(-8).forEach(key=>{
+          const w=weeks[key];
+          const s=avg(w.sleep),e=avg(w.energy),st=avg(w.stress),t=avg(w.training),n=avg(w.nutrition),p=avg(w.psi);
+          const psiCol=p!=null?`<span style="font-family:var(--serif);font-size:0.9rem;font-weight:300;color:${p>=70?'var(--accent)':p>=50?'var(--warn)':'var(--danger)'};">${Math.round(p)}</span>`:'<span style="color:var(--fg4);">—</span>';
+          const tr=document.createElement('tr');
+          tr.innerHTML=`<td>${w.label}</td><td>${psiCol}</td><td><span class="idx-cell ${cellClass(s,'sleep')}">${cellText(s,'sleep',false)}</span></td><td><span class="idx-cell ${cellClass(e,'energy')}">${cellText(e,'energy',false)}</span></td><td><span class="idx-cell ${cellClass(st,'stress')}">${cellText(st,'stress',false)}</span></td><td><span class="idx-cell ${cellClass(t,'training')}">${cellText(t,'training',true)}</span></td><td><span class="idx-cell ${cellClass(n,'nutrition')}">${cellText(n,'nutrition',false)}</span></td>`;
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById('idx-load').style.display='none';
+        document.getElementById('idx-content').style.display='block';
+      },500);
+    });
+  },600);
+})();
+
+function getISOWeek(date){const d=new Date(date);d.setHours(0,0,0,0);d.setDate(d.getDate()+3-(d.getDay()+6)%7);const week1=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-week1)/86400000-3+(week1.getDay()+6)%7)/7);}
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

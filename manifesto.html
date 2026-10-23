@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Manifesto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --ink:    #0F1210;
+  --fg:     #F2F0EA;
+  --fg2:    #CCC9BF;
+  --fg3:    #8A8E89;
+  --fg4:    #4a4e49;
+  --accent: #8FAE8A;
+  --trust:  #5B7FA6;
+  --serif:  'Cormorant Garamond', Georgia, serif;
+  --sans:   'Jost', system-ui, sans-serif;
+  --border: rgba(242,240,234,0.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--ink);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-weight: 300;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.5rem clamp(1.5rem, 4vw, 3.5rem);
+  backdrop-filter: blur(32px) saturate(1.5);
+  background: rgba(15,18,16,0.72);
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  font-family: var(--serif); font-size: 1.1rem;
+  font-weight: 400; letter-spacing: 0.16em;
+  color: var(--fg); text-decoration: none;
+}
+.nav-back {
+  font-size: 0.74rem; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--fg3);
+  text-decoration: none; transition: color 0.2s;
+}
+.nav-back:hover { color: var(--fg2); }
+
+/* MAIN */
+.main {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: clamp(8rem, 14vw, 12rem) clamp(1.5rem, 5vw, 3rem) 8rem;
+}
+
+/* EYEBROW */
+.eyebrow {
+  font-size: 0.68rem; letter-spacing: 0.32em;
+  text-transform: uppercase; color: var(--accent);
+  display: flex; align-items: center; gap: 0.75rem;
+  margin-bottom: 3rem; opacity: 0.8;
+}
+.eyebrow::before {
+  content: ''; width: 20px; height: 1px;
+  background: var(--accent); opacity: 0.5;
+}
+
+/* MANIFESTO TEXT */
+.manifesto {
+  font-family: var(--serif);
+  font-size: clamp(1.15rem, 2.2vw, 1.4rem);
+  font-weight: 300;
+  line-height: 2;
+  color: var(--fg2);
+}
+
+.manifesto p {
+  margin-bottom: 2rem;
+}
+
+.manifesto p:last-child {
+  margin-bottom: 0;
+}
+
+.manifesto strong {
+  color: var(--fg);
+  font-weight: 400;
+}
+
+.manifesto em {
+  font-style: italic;
+  color: var(--fg);
+}
+
+/* OPENING LINE — larger */
+.manifesto .opening {
+  font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+  color: var(--fg);
+  line-height: 1.4;
+  margin-bottom: 3rem;
+}
+
+/* DIVIDER */
+.divider {
+  width: 40px; height: 1px;
+  background: rgba(143,174,138,0.3);
+  margin: 3rem 0;
+}
+
+/* CLOSING */
+.closing {
+  font-family: var(--serif);
+  font-size: clamp(0.9rem, 1.8vw, 1.1rem);
+  font-style: italic;
+  color: var(--fg3);
+  line-height: 1.9;
+  padding-left: 1.4rem;
+  border-left: 1px solid rgba(143,174,138,0.2);
+  margin-top: 3.5rem;
+}
+
+/* CTA */
+.manifesto-cta {
+  margin-top: 4rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 2rem;
+}
+.cta-btn {
+  display: inline-block;
+  background: var(--beige, #D6CFC0); color: var(--ink);
+  font-family: var(--sans); font-size: 0.72rem;
+  font-weight: 500; letter-spacing: 0.2em;
+  text-transform: uppercase; text-decoration: none;
+  padding: 0.95rem 2.8rem; transition: all 0.35s;
+}
+.cta-btn:hover { background: #C4BDB0; transform: translateY(-2px); }
+.cta-sub {
+  font-size: 0.74rem; color: var(--fg4);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  line-height: 1.8;
+}
+
+/* FOOTER */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 2.5rem clamp(1.5rem, 5vw, 3rem);
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto;
+}
+footer p {
+  font-size: 0.65rem; color: var(--fg4);
+  letter-spacing: 0.1em;
+}
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.eyebrow { animation: fadeUp 0.6s ease both; }
+.manifesto { animation: fadeUp 0.6s ease 0.1s both; }
+.closing { animation: fadeUp 0.6s ease 0.2s both; }
+.manifesto-cta { animation: fadeUp 0.6s ease 0.3s both; }
+
+@media (max-width: 600px) {
+  .manifesto-cta { flex-direction: column; align-items: flex-start; gap: 1rem; }
+}
+
+
+/* ── FORSYNE DESIGN UPGRADE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+/* Topbar glow line */
+.topbar, nav {
+  border-bottom: 1px solid rgba(143,174,138,0.1) !important;
+  box-shadow: 0 1px 0 rgba(143,174,138,0.04);
+}
+/* Metric cards hover glow */
+.metric-card, .panel, .card, .data-card, .insight-card {
+  transition: box-shadow 0.3s ease;
+}
+.metric-card:hover, .panel:hover, .card:hover, .data-card:hover, .insight-card:hover {
+  box-shadow: 0 0 0 1px rgba(143,174,138,0.1), 0 4px 20px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="landing.html" class="logo">Forsyne</a>
+  <div style="display:flex;align-items:center;gap:2rem;">
+    <a href="selvitas.html" class="nav-back">Selvitas</a>
+    <a href="landing.html" class="nav-back">← Tillbaka</a>
+  </div>
+</nav>
+
+<main class="main">
+
+  <div class="eyebrow">Manifesto</div>
+
+  <div class="manifesto">
+
+    <p class="opening">Du vet inte varför du mår som du gör.<br>Inte riktigt.</p>
+
+    <p>Du har provat. Tränat, sovit, ätit rätt, optimerat rutinerna. Ibland fungerar det. Sedan slutar det fungera — och du vet inte varför. Så du börjar om.</p>
+
+    <p>Det är inte brist på disciplin. <strong>Det är brist på en karta.</strong></p>
+
+    <p>Varje verktyg du använder ser en sak. Sömnappen ser sömnen. Träningsappen ser träningen. Ingen ser hur onsdagens kognitiva belastning avgör fredagens krasch. Ingen ser dig som ett system. Ingen kopplar ihop biologin med beteendet med psykologin — och frågar <em>varför.</em></p>
+
+    <div class="divider"></div>
+
+    <p>Vi byggde Forsyne för att vi saknade det själva.</p>
+
+    <p>Inte ett verktyg till. Inte fler siffror. Inte generella råd baserade på vad som fungerar för genomsnittet.</p>
+
+    <p>Ett system som lär sig hur <em>just du</em> fungerar — din rytm, dina mönster, din biologi — och ser vad som håller på att hända innan du känner det. Som förstår att du inte saknat disciplin.</p>
+
+    <p><strong>Du har saknat en karta.</strong></p>
+
+    <div class="divider"></div>
+
+    <p>Din data säljs inte. Den tillhör dig. Den används för en sak.</p>
+
+    <p>Att hjälpa dig förstå dig själv — på riktigt.</p>
+
+  </div>
+
+  <div class="closing">
+    Forsyne — latin.<br>
+    Att ha sett det innan det sker.
+  </div>
+
+  <div class="manifesto-cta">
+    <a href="onboarding.html" class="cta-btn">Bygg din modell</a>
+    <div class="cta-sub">
+      Tar 15–20 minuter<br>
+      Inget kreditkort
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p style="color:#5B7FA6; margin-bottom:0.4rem;">Din data är krypterad, privat och tillhör bara dig. · Forsyne säljer aldrig data.</p>
+  <p>Systemets insikter ersätter inte råd från läkare, psykolog eller annan vårdgivare.</p>
+  <p style="margin-top:0.4rem;"><a href="manifesto.html" style="color:var(--fg4); text-decoration:none;">Manifesto</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Disclaimer</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Integritet</a> · © 2026 Forsyne</p>
+</footer>
+
+</body>
+</html>

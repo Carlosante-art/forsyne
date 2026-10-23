@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F1210">
+<title>Forsyne — Koppla Garmin</title>
+<meta name="description" content="Koppla din Garmin. Få smartare tolkning direkt.">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="/images/icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="/auth.js"></script>
+<style>
+:root {
+  --ink:#0F1210; --ink2:#131714;
+  --fg:#F2F0EA; --fg2:#CCC9BF; --fg3:#8A8E89; --fg4:#4a4e49;
+  --accent:#8FAE8A; --danger:#A85C5C;
+  --border:rgba(242,240,234,0.06);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Jost',system-ui,sans-serif;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html, body {
+  background: linear-gradient(to bottom, var(--ink) 0%, var(--ink2) 100%);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-weight: 300;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+.frame {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+@media (min-width: 500px) {
+  body { background: #050605; padding: 2rem 0; }
+  .frame {
+    background: linear-gradient(to bottom, var(--ink) 0%, var(--ink2) 100%);
+    border-radius: 36px;
+    overflow: hidden;
+    box-shadow: 0 0 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+    margin-top: 1rem;
+    padding-bottom: 1rem;
+    min-height: calc(100vh - 4rem);
+  }
+}
+
+.top {
+  padding: 3rem 1.5rem 1rem;
+  text-align: center;
+}
+.logo {
+  font-family: var(--serif);
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  color: var(--fg2);
+  margin-bottom: 3rem;
+}
+
+.content {
+  flex: 1;
+  padding: 0 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+h1 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 2rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  margin-bottom: 1.2rem;
+  text-align: center;
+}
+
+.subline {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--fg2);
+  text-align: center;
+  margin-bottom: 3rem;
+  line-height: 1.5;
+}
+
+.field {
+  margin-bottom: 1.4rem;
+}
+.field label {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  margin-bottom: 0.5rem;
+}
+.field input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  background: rgba(242,240,234,0.03);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: 300;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+.field input:focus { border-color: var(--accent); }
+.field input::placeholder { color: var(--fg4); }
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 1.1rem;
+  background: var(--accent);
+  border: none;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+.btn:hover { background: #a5c19f; }
+.btn:disabled { background: var(--fg4); cursor: not-allowed; opacity: 0.7; }
+.btn.secondary {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--fg);
+}
+.btn.secondary:hover { background: rgba(143,174,138,0.08); }
+
+.alt {
+  text-align: center;
+  margin-top: 1.8rem;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--fg2);
+}
+.alt a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(143,174,138,0.3);
+}
+.alt a:hover { border-bottom-color: var(--accent); }
+
+.error {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--danger);
+  margin-top: 1rem;
+  text-align: center;
+  min-height: 1.2em;
+}
+
+.steps {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+.step {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fg4);
+  transition: background 0.3s ease;
+}
+.step.active { background: var(--accent); }
+.step.done { background: var(--fg3); }
+
+.garmin-line {
+  font-family: var(--serif);
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--fg);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.garmin-line em {
+  color: var(--fg2);
+  font-style: italic;
+}
+
+.small-print {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--fg3);
+  text-align: center;
+  margin-top: 1.5rem;
+  line-height: 1.5;
+}
+.small-print a {
+  color: var(--fg2);
+  text-decoration: none;
+  border-bottom: 1px solid var(--fg4);
+}
+</style>
+</head>
+<body>
+
+<div class="frame">
+
+<div class="top">
+  <div class="logo">FORSYNE</div>
+</div>
+
+<div class="content">
+
+  <!-- STEG 1: Signup -->
+  <div id="step1">
+    <div class="steps">
+      <div class="step active"></div>
+      <div class="step"></div>
+    </div>
+    <h1>Börja i 30 sekunder</h1>
+    <div class="subline">Koppla din Garmin. Systemet läser din historik och ger dig smartare tolkning än Garmin Connect kan.</div>
+
+    <form id="signupForm" novalidate>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label for="password">Välj lösenord</label>
+        <input type="password" id="password" name="password" autocomplete="new-password" minlength="8" required>
+      </div>
+      <button type="submit" class="btn" id="signupBtn">Fortsätt →</button>
+      <div class="error" id="signupError"></div>
+    </form>
+
+    <div class="alt">
+      Har du redan ett konto? <a href="/login.html">Logga in</a>
+    </div>
+    <div class="alt" style="margin-top:0.6rem;">
+      Vill du gå djupare direkt? <a href="/onboarding.html">Full onboarding (10 min)</a>
+    </div>
+
+    <div class="small-print">
+      Genom att fortsätta accepterar du Forsynes <a href="/privacy.html">integritetspolicy</a>.
+    </div>
+  </div>
+
+  <!-- STEG 2: Garmin-koppling -->
+  <div id="step2" style="display:none;">
+    <div class="steps">
+      <div class="step done"></div>
+      <div class="step active"></div>
+    </div>
+    <h1>Lägg in din Garmin-data</h1>
+    <div class="garmin-line">
+      <em>Under piloten: ladda upp FIT-filer manuellt.</em>
+      <br><br>
+      Exportera från Garmin Connect (webbversionen → Settings → Export Activities), ladda upp så läser systemet din historik och börjar tolka mönster Garmin Connect själv inte ser.
+    </div>
+
+    <button class="btn" id="connectBtn">Till datakopplingar →</button>
+
+    <div class="alt" style="margin-top:1.5rem;">
+      <a href="#" id="skipGarmin" style="color:var(--fg3);border:none;font-size:0.8rem;">Hoppa över — gör det senare</a>
+    </div>
+    <div class="error" id="garminError"></div>
+
+    <div class="small-print" style="margin-top:2rem;">
+      Automatisk OAuth-koppling kommer när vi är godkända i Garmin Connect IQ Developer Program.
+    </div>
+  </div>
+
+</div>
+
+</div>
+
+<script>
+(() => {
+  const signupForm = document.getElementById('signupForm');
+  const signupBtn  = document.getElementById('signupBtn');
+  const signupErr  = document.getElementById('signupError');
+  const connectBtn = document.getElementById('connectBtn');
+  const skipGarmin = document.getElementById('skipGarmin');
+  const step1 = document.getElementById('step1');
+  const step2 = document.getElementById('step2');
+
+  function showStep2() {
+    step1.style.display = 'none';
+    step2.style.display = 'block';
+    window.scrollTo(0, 0);
+  }
+
+  // Steg 1: signup
+  signupForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    signupErr.textContent = '';
+    signupBtn.disabled = true;
+    signupBtn.textContent = 'Skapar konto…';
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    if (!email || password.length < 8) {
+      signupErr.textContent = 'Email krävs och lösenord måste vara minst 8 tecken.';
+      signupBtn.disabled = false;
+      signupBtn.textContent = 'Fortsätt →';
+      return;
+    }
+
+    try {
+      // Använd auth.js:s register() — finns redan
+      const r = await register(email, password);
+      if (r.error) {
+        signupErr.textContent = r.error;
+        signupBtn.disabled = false;
+        signupBtn.textContent = 'Fortsätt →';
+        return;
+      }
+
+      // Skapa en minimal profil så checkHasProfile() i auth.js passerar
+      // (slipper loopa tillbaka till full onboarding)
+      const token = localStorage.getItem('prv_token');
+      if (token) {
+        try {
+          await fetch('/api/profile', {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              data: {
+                _onboarding_complete: true,
+                _tier: 'basic',
+                _onboarded_at: new Date().toISOString()
+              }
+            })
+          });
+        } catch (e) { /* icke-kritiskt */ }
+      }
+
+      showStep2();
+    } catch (e) {
+      signupErr.textContent = 'Något gick fel. Försök igen.';
+      signupBtn.disabled = false;
+      signupBtn.textContent = 'Fortsätt →';
+    }
+  });
+
+  // Steg 2: Till datakopplings-sidan (FIT-upload under piloten, OAuth senare)
+  connectBtn.addEventListener('click', () => {
+    const token = localStorage.getItem('prv_token');
+    if (!token) {
+      document.getElementById('garminError').textContent = 'Session gick ut. Logga in igen.';
+      setTimeout(() => { window.location.href = '/login.html'; }, 1200);
+      return;
+    }
+    window.location.href = '/wearables.html';
+  });
+
+  // Hoppa över Garmin
+  skipGarmin.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.href = '/app/today.html';
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #1a1a1a; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 24px; }
+button { background: #8FAE8A; color: #0F1210; border: none; padding: 12px 28px; font-size: 14px; letter-spacing: 0.15em; cursor: pointer; font-family: sans-serif; }
+</style>
+</head>
+<body>
+
+<canvas id="c" width="512" height="512"></canvas>
+<button onclick="dl()">Ladda ner PNG</button>
+
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+
+// Background
+ctx.fillStyle = '#0F1210';
+ctx.fillRect(0, 0, 512, 512);
+
+// Lines
+ctx.fillStyle = 'rgba(143,174,138,0.4)';
+ctx.fillRect(80, 80, 352, 1);
+ctx.fillRect(80, 431, 352, 1);
+
+// PRV
+ctx.fillStyle = '#F2F0EA';
+ctx.font = '300 108px "Helvetica Neue", Arial, sans-serif';
+ctx.letterSpacing = '20px';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText('PRV', 256, 256);
+
+// Dot
+ctx.fillStyle = 'rgba(143,174,138,0.7)';
+ctx.beginPath();
+ctx.arc(256, 368, 4, 0, Math.PI * 2);
+ctx.fill();
+
+function dl() {
+  const a = document.createElement('a');
+  a.download = 'forsyne-icon.png';
+  a.href = c.toDataURL('image/png');
+  a.click();
+}
+</script>
+
+</body>
+</html>

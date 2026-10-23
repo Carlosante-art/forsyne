@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<script src="transitions.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Mönster</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --ink:    #0F1210;
+  --ink2:   #131714;
+  --ink3:   #171c18;
+  --fg:     #F2F0EA;
+  --fg2:    #CCC9BF;
+  --fg3:    #8A8E89;
+  --fg4:    #4a4e49;
+  --accent: #8FAE8A;
+  --trust:  #5B7FA6;
+  --warn:   #C4875A;
+  --danger: #A85C5C;
+  --serif:  'Cormorant Garamond', Georgia, serif;
+  --sans:   'Jost', system-ui, sans-serif;
+  --border: rgba(242,240,234,0.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--ink); color: var(--fg); font-family: var(--sans); font-weight: 300; line-height: 1.7; min-height: 100vh; }
+.layout { display: grid; grid-template-columns: 200px 1fr; grid-template-rows: 60px 1fr; height: 100vh; overflow: hidden; }
+
+.topbar { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 60px; border-bottom: 1px solid var(--border); background: rgba(15,18,16,0.95); backdrop-filter: blur(24px); position: sticky; top: 0; z-index: 100; }
+.topbar-logo { font-family: var(--serif); font-size: 1.1rem; font-weight: 400; letter-spacing: 0.16em; color: var(--fg); text-decoration: none; }
+.topbar-right { display: flex; align-items: center; gap: 2rem; }
+.topbar-date { font-size: 0.74rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg3); }
+.topbar-user { font-size: 0.78rem; letter-spacing: 0.12em; color: var(--fg3); text-transform: uppercase; cursor: pointer; transition: color 0.2s; }
+.topbar-user:hover { color: var(--fg2); }
+
+.sidebar { border-right: 1px solid var(--border); padding: 2.5rem 0; overflow-y: auto; scrollbar-width: none; }
+.sidebar::-webkit-scrollbar { display: none; }
+.nav-group { margin-bottom: 2rem; }
+.nav-group-label { font-size: 0.62rem; letter-spacing: 0.32em; text-transform: uppercase; color: var(--fg4); padding: 0 1.8rem; margin-bottom: 0.5rem; }
+.nav-link { display: block; padding: 0.5rem 1.8rem; font-size: 0.88rem; letter-spacing: 0.06em; color: var(--fg3); text-decoration: none; transition: all 0.2s; border-left: 1px solid transparent; position: relative; }
+.nav-link:hover { color: var(--fg2); }
+.nav-link.active { color: var(--fg); border-left-color: var(--accent); }
+.nav-badge { position: absolute; right: 1.8rem; top: 50%; transform: translateY(-50%); width: 5px; height: 5px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+.sidebar-foot { margin-top: auto; padding: 1.5rem 1.8rem 0; border-top: 1px solid var(--border); font-size: 0.74rem; color: var(--fg3); line-height: 1.8; }
+.sidebar-foot strong { display: block; color: var(--accent); font-weight: 300; }
+
+.main { padding: 3rem 3.5rem; overflow-y: auto; height: 100%; }
+
+/* PAGE HEADER */
+.page-header { margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+.page-eyebrow { font-size: 0.68rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.75rem; }
+.page-eyebrow::before { content: ''; width: 14px; height: 1px; background: var(--accent); opacity: 0.5; }
+.page-heading { font-family: var(--serif); font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 300; line-height: 1.1; color: var(--fg); }
+.page-heading em { font-style: italic; color: var(--fg2); }
+.page-sub { font-size: 0.82rem; color: var(--fg3); line-height: 1.7; max-width: 520px; margin-top: 0.8rem; }
+
+/* PATTERN STATS */
+.pattern-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 2.5rem; }
+.pstat { background: var(--ink2); padding: 1.6rem; }
+.pstat-lbl { font-size: 0.64rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--fg3); margin-bottom: 0.8rem; }
+.pstat-val { font-family: var(--serif); font-size: 2.8rem; font-weight: 300; line-height: 1; color: var(--fg); margin-bottom: 0.3rem; }
+.pstat-sub { font-size: 0.65rem; color: var(--fg3); }
+.pstat-sub.c { color: var(--danger); }
+.pstat-sub.w { color: var(--warn); }
+.pstat-sub.g { color: var(--accent); }
+
+/* FILTER BAR */
+.filter-bar { display: flex; gap: 0.4rem; margin-bottom: 2rem; flex-wrap: wrap; }
+.filter-btn { padding: 0.35rem 1rem; border: 1px solid var(--border); font-family: var(--sans); font-size: 0.74rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg3); background: none; cursor: pointer; transition: all 0.2s; }
+.filter-btn:hover { border-color: rgba(143,174,138,0.3); color: var(--fg2); }
+.filter-btn.active { border-color: var(--accent); color: var(--fg); background: rgba(143,174,138,0.06); }
+.filter-btn.c.active { border-color: var(--danger); color: var(--danger); background: rgba(168,92,92,0.06); }
+.filter-btn.w.active { border-color: var(--warn); color: var(--warn); background: rgba(196,135,90,0.06); }
+.filter-btn.g.active { border-color: var(--accent); color: var(--accent); background: rgba(143,174,138,0.06); }
+
+/* PATTERN CARDS */
+.patterns-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 1px; }
+.pattern-card { background: var(--ink2); padding: 0; overflow: hidden; }
+.pattern-card-header { display: flex; align-items: stretch; gap: 0; cursor: pointer; }
+.pattern-card-stripe { width: 3px; flex-shrink: 0; }
+.stripe-c { background: var(--danger); }
+.stripe-w { background: var(--warn); }
+.stripe-g { background: var(--accent); }
+.pattern-card-main { flex: 1; padding: 1.4rem 1.6rem; }
+.pattern-card-meta { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 0.6rem; }
+.pattern-type-badge { font-size: 0.5rem; letter-spacing: 0.22em; text-transform: uppercase; padding: 0.2rem 0.6rem; border: 1px solid; }
+.badge-c { color: var(--danger); border-color: rgba(168,92,92,0.3); background: rgba(168,92,92,0.06); }
+.badge-w { color: var(--warn); border-color: rgba(196,135,90,0.3); background: rgba(196,135,90,0.06); }
+.badge-g { color: var(--accent); border-color: rgba(143,174,138,0.3); background: rgba(143,174,138,0.06); }
+.pattern-area { font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg4); margin-left: auto; }
+.pattern-title { font-family: var(--serif); font-size: 1.1rem; font-weight: 300; color: var(--fg); line-height: 1.3; margin-bottom: 0.4rem; }
+.pattern-desc { font-size: 0.88rem; color: var(--fg2); line-height: 1.65; margin-bottom: 0.8rem; }
+.pattern-card-footer { display: flex; align-items: center; gap: 1.5rem; padding: 0.8rem 1.6rem; border-top: 1px solid var(--border); background: rgba(0,0,0,0.15); }
+.pattern-stat { display: flex; flex-direction: column; gap: 0.1rem; }
+.pattern-stat-lbl { font-size: 0.5rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg4); }
+.pattern-stat-val { font-family: var(--serif); font-size: 0.9rem; font-weight: 300; }
+.pattern-connections { margin-left: auto; display: flex; gap: 0.4rem; }
+.conn-pill { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg4); border: 1px solid var(--border); padding: 0.15rem 0.5rem; }
+
+/* CORRELATION MAP */
+.corr-map { background: var(--ink2); border: 1px solid var(--border); padding: 2rem; margin-bottom: 1px; }
+.corr-grid { display: grid; gap: 1px; background: var(--border); margin-top: 1rem; }
+.corr-cell { background: var(--ink2); padding: 0.8rem 1rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.corr-from-to { display: flex; align-items: center; gap: 0.5rem; font-size: 0.74rem; color: var(--fg3); }
+.corr-arrow { color: var(--fg4); }
+.corr-strength { height: 3px; margin-top: 0.3rem; }
+.corr-effect-txt { font-size: 0.78rem; color: var(--fg2); line-height: 1.5; }
+
+/* WEEKLY HEATMAP */
+.heatmap-wrap { background: var(--ink2); border: 1px solid var(--border); padding: 2rem; margin-bottom: 1px; }
+.heatmap { display: grid; grid-template-columns: 80px repeat(7,1fr); gap: 2px; margin-top: 1rem; }
+.hm-header { font-size: 0.5rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg4); display: flex; align-items: center; justify-content: center; padding: 0.4rem; }
+.hm-row-label { font-size: 0.6rem; color: var(--fg3); display: flex; align-items: center; padding: 0 0.5rem; }
+.hm-cell { height: 32px; display: flex; align-items: center; justify-content: center; font-size: 0.74rem; font-family: var(--serif); font-weight: 300; }
+
+/* INSIGHT */
+.insight { font-family: var(--serif); font-size: 1rem; font-weight: 300; line-height: 1.85; color: var(--fg2); font-style: italic; padding-left: 1.2rem; border-left: 1px solid rgba(143,174,138,0.25); }
+.insight strong { color: var(--fg); font-style: normal; font-weight: 400; }
+
+/* LEDANDE INDIKATORER */
+.lead-section { border: 1px solid var(--border); margin-top: 1px; background: var(--ink2); }
+.lead-header { padding: 2rem 2rem 1.5rem; border-bottom: 1px solid var(--border); }
+.lead-eyebrow { font-size: 0.56rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); opacity: 0.85; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.7rem; }
+.lead-eyebrow::before { content: ''; width: 14px; height: 1px; background: var(--accent); opacity: 0.5; }
+.lead-h { font-family: var(--serif); font-size: clamp(1.3rem, 2.2vw, 1.8rem); font-weight: 300; line-height: 1.25; color: var(--fg); margin-bottom: 0.5rem; }
+.lead-h em { font-style: italic; color: var(--fg2); }
+.lead-sub { font-size: 0.78rem; color: var(--fg3); line-height: 1.7; max-width: 520px; }
+.lead-card { display: grid; grid-template-columns: 1fr 100px; align-items: start; gap: 2rem; padding: 1.6rem 2rem; border-bottom: 1px solid var(--border); }
+.lead-card:last-child { border-bottom: none; }
+.lead-pair { font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--fg4); margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.5rem; }
+.lead-arrow { color: var(--accent); font-size: 0.7rem; }
+.lead-title { font-family: var(--serif); font-size: 1rem; font-weight: 300; color: var(--fg); line-height: 1.35; margin-bottom: 0.4rem; }
+.lead-desc { font-size: 0.78rem; color: var(--fg3); line-height: 1.7; }
+.lead-meta { text-align: right; }
+.lead-lag-val { font-family: var(--serif); font-size: 2.2rem; font-weight: 300; line-height: 1; }
+.lead-lag-lbl { font-size: 0.5rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg4); margin-top: 0.2rem; }
+.lead-r-val { font-size: 0.62rem; letter-spacing: 0.1em; margin-top: 0.6rem; }
+.lead-bar-wrap { height: 2px; background: rgba(255,255,255,0.05); margin-top: 0.5rem; }
+.lead-bar-fill { height: 100%; transition: width 1s ease; }
+
+/* TWO COL */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 1px; }
+.panel { background: var(--ink2); padding: 2rem; }
+.panel-lbl { font-size: 0.64rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--fg3); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.6rem; }
+.panel-lbl::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+@media (max-width: 1100px) { .pattern-stats { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 768px) { .layout { grid-template-columns: 1fr; } .sidebar { display: none; } .main { padding: 1.5rem; } .pattern-stats, .two-col { grid-template-columns: 1fr; } }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.main > * { animation: fadeUp 0.45s ease both; }
+.main > *:nth-child(2) { animation-delay: 0.05s; }
+.main > *:nth-child(3) { animation-delay: 0.1s; }
+.main > *:nth-child(4) { animation-delay: 0.15s; }
+.main > *:nth-child(5) { animation-delay: 0.2s; }
+.main > *:nth-child(6) { animation-delay: 0.25s; }
+.main > *:nth-child(7) { animation-delay: 0.3s; }
+
+
+/* ── FORSYNE DESIGN UPGRADE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+/* Topbar glow line */
+.topbar, nav {
+  border-bottom: 1px solid rgba(143,174,138,0.1) !important;
+  box-shadow: 0 1px 0 rgba(143,174,138,0.04);
+}
+/* Metric cards hover glow */
+.metric-card, .panel, .card, .data-card, .insight-card {
+  transition: box-shadow 0.3s ease;
+}
+.metric-card:hover, .panel:hover, .card:hover, .data-card:hover, .insight-card:hover {
+  box-shadow: 0 0 0 1px rgba(143,174,138,0.1), 0 4px 20px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+<script src="auth.js"></script>
+<script>checkAuth();</script>
+<div class="layout">
+
+  <header class="topbar">
+    <a href="dashboard.html" class="topbar-logo">Forsyne</a>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topDate"></span>
+      <span class="topbar-user" id="topUser"></span>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <div class="nav-group">
+      <div class="nav-group-label">Idag</div>
+      <a class="nav-link" href="dashboard.html">Dashboard</a>
+      <a class="nav-link" href="checkin.html">Check-in</a>
+      <a class="nav-link" href="signal.html">Signalen</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Mönster</div>
+      <a class="nav-link" href="sleep.html">Sömn</a>
+      <a class="nav-link" href="energy.html">Energi</a>
+      <a class="nav-link" href="stress.html">Stress</a>
+      <a class="nav-link" href="training.html">Träning</a>
+      <a class="nav-link" href="nutrition.html">Kost</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Förstå dig själv</div>
+      <a class="nav-link" href="profilering.html">Profilering</a>
+      <a class="nav-link" href="analys.html">Total analys</a>
+      <a class="nav-link" href="systemkarta.html">Systemkarta</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Din biologi</div>
+      <a class="nav-link" href="wearables.html">Wearables</a>
+      <a class="nav-link" href="biologi.html">Blodprover &amp; hormoner</a>
+      <a class="nav-link" href="journal.html">Läkarjournal</a>
+    </div>
+    <div class="sidebar-foot">
+      Mönster · Dag 14
+      <strong>14 identifierade</strong>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- HEADER -->
+    <div class="page-header">
+      <div class="page-eyebrow">Mönster · Identifierade av modellen</div>
+      <h1 class="page-heading">14 mönster på 14 dagar.<br><em>Det här är hur du faktiskt fungerar.</em></h1>
+      <p class="page-sub">Inte vad du tror om dig själv. Inte vad du borde göra. Vad datan faktiskt visar — upprepade gånger, tillräckligt konsekvent för att systemet ska ta dem på allvar.</p>
+    </div>
+
+    <!-- PATTERN STATS -->
+    <div class="pattern-stats">
+      <div class="pstat">
+        <div class="pstat-lbl">Totalt identifierade</div>
+        <div class="pstat-val">14</div>
+        <div class="pstat-sub">På 14 dagars data</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-lbl">Kritiska</div>
+        <div class="pstat-val" style="color:var(--danger);">4</div>
+        <div class="pstat-sub c">Kräver uppmärksamhet nu</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-lbl">Varningar</div>
+        <div class="pstat-val" style="color:var(--warn);">7</div>
+        <div class="pstat-sub w">Återkommande signaler</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-lbl">Positiva</div>
+        <div class="pstat-val" style="color:var(--accent);">3</div>
+        <div class="pstat-sub g">Din styrka — bygg vidare</div>
+      </div>
+    </div>
+
+    <!-- FILTER -->
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filter('all', this)">Alla · 14</button>
+      <button class="filter-btn c" onclick="filter('critical', this)">Kritiska · 4</button>
+      <button class="filter-btn w" onclick="filter('warn', this)">Varningar · 7</button>
+      <button class="filter-btn g" onclick="filter('good', this)">Positiva · 3</button>
+    </div>
+
+    <!-- PATTERN LIST -->
+    <div class="patterns-list" id="patternList">
+
+      <!-- KRITISKA -->
+      <div class="pattern-card" data-type="critical">
+        <div class="pattern-card-header">
+          <div class="pattern-card-stripe stripe-c"></div>
+          <div class="pattern-card-main">
+            <div class="pattern-card-meta">
+              <span class="pattern-type-badge badge-c">Kritiskt</span>
+              <span class="pattern-area">Stress → Sömn → HRV</span>
+            </div>
+            <div class="pattern-title">Onsdagsstress saboterar resten av veckan</div>
+            <div class="pattern-desc">Stress konsekvent hög ons→fre (snitt 68–74). Kortisolet hinner inte återhämta sig innan helgen. HRV sjunker kumulativt från onsdag — och det syns i energin fredag och lördag. Det är inte slumpen. Det händer varje vecka i din data.</div>
+          </div>
+        </div>
+        <div class="pattern-card-footer">
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Frekvens</div><div class="pattern-stat-val" style="color:var(--danger);">4 av 4 veckor</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Styrka</div><div class="pattern-stat-val">Hög</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Effekt</div><div class="pattern-stat-val" style="color:var(--danger);">HRV −18% fre</div></div>
+          <div class="pattern-connections">
+            <span class="conn-pill">Stress</span>
+            <span class="conn-pill">Sömn</span>
+            <span class="conn-pill">HRV</span>
+            <span class="conn-pill">Energi</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pattern-card" data-type="critical">
+        <div class="pattern-card-header">
+          <div class="pattern-card-stripe stripe-c"></div>
+          <div class="pattern-card-main">
+            <div class="pattern-card-meta">
+              <span class="pattern-type-badge badge-c">Kritiskt</span>
+              <span class="pattern-area">Kost → Energi → Stress</span>
+            </div>
+            <div class="pattern-title">Hoppad frukost utlöser stresscykeln</div>
+            <div class="pattern-desc">Frukost hoppas 18 av 30 dagar. På dessa dagar är Body Battery i snitt 14 enheter lägre och stressnivån 12 enheter högre redan vid 10:00. Kaffe på tom mage aktiverar kortisolresponsen — och du spenderar resten av dagen på att kompensera.</div>
+          </div>
+        </div>
+        <div class="pattern-card-footer">
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Frekvens</div><div class="pattern-stat-val" style="color:var(--danger);">60% av dagarna</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Styrka</div><div class="pattern-stat-val">Mycket hög</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Effekt</div><div class="pattern-stat-val" style="color:var(--danger);">−14 Body Battery</div></div>
+          <div class="pattern-connections">
+            <span class="conn-pill">Kost</span>
+            <span class="conn-pill">Energi</span>
+            <span class="conn-pill">Stress</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pattern-card" data-type="critical">
+        <div class="pattern-card-header">
+          <div class="pattern-card-stripe stripe-c"></div>
+          <div class="pattern-card-main">
+            <div class="pattern-card-meta">
+              <span class="pattern-type-badge badge-c">Kritiskt</span>
+              <span class="pattern-area">Träning → Återhämtning → HRV</span>
+            </div>
+            <div class="pattern-title">Du återhämtar dig på 24h — kroppen behöver 36–48h</div>
+            <div class="pattern-desc">Tre hårda pass på fem dagar är ett återkommande mönster. HRV sjunker kumulativt och når botten dag 4–5 efter start av intensiv träningsperiod. Du tränar på ett underskott utan att veta om det — och det förvärrar varje pass.</div>
+          </div>
+        </div>
+        <div class="pattern-card-footer">
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Frekvens</div><div class="pattern-stat-val" style="color:var(--danger);">Varje vecka</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Styrka</div><div class="pattern-stat-val">Hög</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Effekt</div><div class="pattern-stat-val" style="color:var(--danger);">HRV −22% dag 4</div></div>
+          <div class="pattern-connections">
+            <span class="conn-pill">Träning</span>
+            <span class="conn-pill">HRV</span>
+            <span class="conn-pill">Sömn</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pattern-card" data-type="critical">
+        <div class="pattern-card-header">
+          <div class="pattern-card-stripe stripe-c"></div>
+          <div class="pattern-card-main">
+            <div class="pattern-card-meta">
+              <span class="pattern-type-badge badge-c">Kritiskt</span>
+              <span class="pattern-area">Sömn → Energi → Beteende</span>
+            </div>
+            <div class="pattern-title">Tre nätter under 6h föregår alltid en krasch</div>
+            <div class="pattern-desc">Det har hänt tre gånger under 14 dagar. Tre nätter med sömn under 6h — dag 4 kraschar energin och prokrastineringen ökar markant. Du är inne i det mönstret nu. Dag 3 av 3.</div>
+          </div>
+        </div>
+        <div class="pattern-card-footer">
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Frekvens</div><div class="pattern-stat-val" style="color:var(--danger);">3 gånger på 14 dagar</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Styrka</div><div class="pattern-stat-val">Mycket hög</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Status</div><div class="pattern-stat-val" style="color:var(--danger);">Aktivt nu · Dag 3</div></div>
+          <div class="pattern-connections">
+            <span class="conn-pill">Sömn</span>
+            <span class="conn-pill">Energi</span>
+            <span class="conn-pill">Signalen</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- VARNINGAR -->
+      <div class="pattern-card" data-type="warn">
+        <div class="pattern-card-header">
+          <div class="pattern-card-stripe stripe-w"></div>
+          <div class="pattern-card-main">
+            <div class="pattern-card-meta">
+              <span class="pattern-type-badge badge-w">Varning</span>
+              <span class="pattern-area">Koffein → Sömn</span>
+            </div>
+            <div class="pattern-title">Kaffe efter 14:00 kostar 18 minuters djupsömn</div>
+            <div class="pattern-desc">Sker 73% av dagarna. Koffeinets halveringstid i ditt system är ~6h — kopp vid 14:00 innebär 50% koffein vid 20:00. Direkta konsekvenser på djupsömn och HRV under natten. Konsekvent och mätbart i din data.</div>
+          </div>
+        </div>
+        <div class="pattern-card-footer">
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Frekvens</div><div class="pattern-stat-val" style="color:var(--warn);">73% av dagarna</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Effekt</div><div class="pattern-stat-val" style="color:var(--warn);">−18 min djupsömn</div></div>
+          <div class="pattern-connections"><span class="conn-pill">Koffein</span><span class="conn-pill">Sömn</span></div>
+        </div>
+      </div>
+
+      <div class="pattern-card" data-type="warn">
+        <div class="pattern-card-header">
+          <div class="pattern-card-stripe stripe-w"></div>
+          <div class="pattern-card-main">
+            <div class="pattern-card-meta">
+              <span class="pattern-type-badge badge-w">Varning</span>
+              <span class="pattern-area">Träning → Sömn</span>
+            </div>
+            <div class="pattern-title">Kvällsträning minskar djupsömn med 35%</div>
+            <div class="pattern-desc">Pass efter 18:00 höjer kroppstemperatur och kortisol — kroppen är fortfarande i aktivt läge vid läggdags. Konsekvensen är 35% kortare djupsömn samma natt och förlängd återhämtningstid nästa dag.</div>
+          </div>
+        </div>
+        <div class="pattern-card-footer">
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Frekvens</div><div class="pattern-stat-val" style="color:var(--warn);">40% av passen</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Effekt</div><div class="pattern-stat-val" style="color:var(--warn);">−35% djupsömn</div></div>
+          <div class="pattern-connections"><span class="conn-pill">Träning</span><span class="conn-pill">Sömn</span><span class="conn-pill">HRV</span></div>
+        </div>
+      </div>
+
+      <div class="pattern-card" data-type="warn">
+        <div class="pattern-card-header">
+          <div class="pattern-card-stripe stripe-w"></div>
+          <div class="pattern-card-main">
+            <div class="pattern-card-meta">
+              <span class="pattern-type-badge badge-w">Varning</span>
+              <span class="pattern-area">Stress → Sömn</span>
+            </div>
+            <div class="pattern-title">Kvällsstress efter 20:00 förstör nästa natt</div>
+            <div class="pattern-desc">Kognitiv stress efter 20:00 — jobbrelaterat, beslut, skärmar — korrelerar med 40% sämre sömnkvalitet. Du tar med jobbet in i sovrummet biologiskt, inte bara mentalt.</div>
+          </div>
+        </div>
+        <div class="pattern-card-footer">
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Frekvens</div><div class="pattern-stat-val" style="color:var(--warn);">55% av kvällarna</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Effekt</div><div class="pattern-stat-val" style="color:var(--warn);">−40% sömnkvalitet</div></div>
+          <div class="pattern-connections"><span class="conn-pill">Stress</span><span class="conn-pill">Sömn</span></div>
+        </div>
+      </div>
+
+      <div class="pattern-card" data-type="warn">
+        <div class="pattern-card-header">
+          <div class="pattern-card-stripe stripe-w"></div>
+          <div class="pattern-card-main">
+            <div class="pattern-card-meta">
+              <span class="pattern-type-badge badge-w">Varning</span>
+              <span class="pattern-area">Kost → Energi</span>
+            </div>
+            <div class="pattern-title">Sen lunch skapar konsekvent eftermiddagsdipp</div>
+            <div class="pattern-desc">Lunch efter 13:00 följs av energifall 14:00–15:30 i 80% av fallen. Det är inte trötthet — det är blodsockerdipp efter lång fasta och stor måltid. Timingen är orsaken, inte maten.</div>
+          </div>
+        </div>
+        <div class="pattern-card-footer">
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Frekvens</div><div class="pattern-stat-val" style="color:var(--warn);">80% av tillfällena</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Effekt</div><div class="pattern-stat-val" style="color:var(--warn);">−12 BB 14:00–15:30</div></div>
+          <div class="pattern-connections"><span class="conn-pill">Kost</span><span class="conn-pill">Energi</span></div>
+        </div>
+      </div>
+
+      <div class="pattern-card" data-type="warn">
+        <div class="pattern-card-header">
+          <div class="pattern-card-stripe stripe-w"></div>
+          <div class="pattern-card-main">
+            <div class="pattern-card-meta">
+              <span class="pattern-type-badge badge-w">Varning</span>
+              <span class="pattern-area">Helg → Veckostart</span>
+            </div>
+            <div class="pattern-title">Fredags- och lördagnätter saboterar måndagen</div>
+            <div class="pattern-desc">Snitt sömn fre-lör: 5h 20min. Snitt sömn övriga nätter: 6h 45min. Skillnaden är 1h 25min — och det syns direkt i mandagens HRV och Body Battery. Du återhämtar dig inte under helgen.</div>
+          </div>
+        </div>
+        <div class="pattern-card-footer">
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Frekvens</div><div class="pattern-stat-val" style="color:var(--warn);">Varje helg</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Effekt</div><div class="pattern-stat-val" style="color:var(--warn);">Måndag −15 HRV</div></div>
+          <div class="pattern-connections"><span class="conn-pill">Sömn</span><span class="conn-pill">HRV</span><span class="conn-pill">Energi</span></div>
+        </div>
+      </div>
+
+      <div class="pattern-card" data-type="warn">
+        <div class="pattern-card-header">
+          <div class="pattern-card-stripe stripe-w"></div>
+          <div class="pattern-card-main">
+            <div class="pattern-card-meta">
+              <span class="pattern-type-badge badge-w">Varning</span>
+              <span class="pattern-area">Stress → Beteende</span>
+            </div>
+            <div class="pattern-title">Hög stress ökar prokrastinering med 65%</div>
+            <div class="pattern-desc">På dagar med stressnivå över 65 rapporteras prokrastinering 65% oftare i check-in. Det är inte brist på disciplin — det är prefrontal cortex som nedregleras under hög kortisolbelastning. Du kan inte viljestyrka dig ur det.</div>
+          </div>
+        </div>
+        <div class="pattern-card-footer">
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Frekvens</div><div class="pattern-stat-val" style="color:var(--warn);">Stress >65 = 18 dagar</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Effekt</div><div class="pattern-stat-val" style="color:var(--warn);">+65% prokrastinering</div></div>
+          <div class="pattern-connections"><span class="conn-pill">Stress</span><span class="conn-pill">Beteende</span><span class="conn-pill">Kognition</span></div>
+        </div>
+      </div>
+
+      <div class="pattern-card" data-type="warn">
+        <div class="pattern-card-header">
+          <div class="pattern-card-stripe stripe-w"></div>
+          <div class="pattern-card-main">
+            <div class="pattern-card-meta">
+              <span class="pattern-type-badge badge-w">Varning</span>
+              <span class="pattern-area">Energi → Humör</span>
+            </div>
+            <div class="pattern-title">Body Battery under 40 korrelerar med humörsvängningar</div>
+            <div class="pattern-desc">På dagar med morgon-BB under 40 rapporteras irritabilitet och lågt tålamod 70% oftare. Det är inte personlighet — det är biologi. Låg energireserv sänker tröskeln för stressreaktioner.</div>
+          </div>
+        </div>
+        <div class="pattern-card-footer">
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Frekvens</div><div class="pattern-stat-val" style="color:var(--warn);">BB <40 = 8 dagar</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Effekt</div><div class="pattern-stat-val" style="color:var(--warn);">+70% irritabilitet</div></div>
+          <div class="pattern-connections"><span class="conn-pill">Energi</span><span class="conn-pill">Humör</span><span class="conn-pill">Stress</span></div>
+        </div>
+      </div>
+
+      <!-- POSITIVA -->
+      <div class="pattern-card" data-type="good">
+        <div class="pattern-card-header">
+          <div class="pattern-card-stripe stripe-g"></div>
+          <div class="pattern-card-main">
+            <div class="pattern-card-meta">
+              <span class="pattern-type-badge badge-g">Positivt</span>
+              <span class="pattern-area">Sömn → Prestation</span>
+            </div>
+            <div class="pattern-title">7h+ sömn + lätt aktivitet = dina bästa dagar</div>
+            <div class="pattern-desc">De tre bästa prestationsdagarna (enligt check-in) korrelerar exakt med 7h+ sömn och lätt aktivitet dagen innan. Det är din formel. Inte teori — ditt mönster. Och det är replikerbart.</div>
+          </div>
+        </div>
+        <div class="pattern-card-footer">
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Frekvens</div><div class="pattern-stat-val" style="color:var(--accent);">3 av 3 tillfällen</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Effekt</div><div class="pattern-stat-val" style="color:var(--accent);">+28% prestation</div></div>
+          <div class="pattern-connections"><span class="conn-pill">Sömn</span><span class="conn-pill">Träning</span><span class="conn-pill">Energi</span></div>
+        </div>
+      </div>
+
+      <div class="pattern-card" data-type="good">
+        <div class="pattern-card-header">
+          <div class="pattern-card-stripe stripe-g"></div>
+          <div class="pattern-card-main">
+            <div class="pattern-card-meta">
+              <span class="pattern-type-badge badge-g">Positivt</span>
+              <span class="pattern-area">Träning → Stress</span>
+            </div>
+            <div class="pattern-title">Förmiddagsträning sänker kvällsstress med 22%</div>
+            <div class="pattern-desc">På de 6 dagarna med träning före 13:00 var kvällsstressnivån i snitt 22% lägre. Rörelse på förmiddagen sänker kortisolet och ökar BDNF — det gör dig mer stressresistent resten av dagen.</div>
+          </div>
+        </div>
+        <div class="pattern-card-footer">
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Frekvens</div><div class="pattern-stat-val" style="color:var(--accent);">6 av 6 tillfällen</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Effekt</div><div class="pattern-stat-val" style="color:var(--accent);">−22% kvällsstress</div></div>
+          <div class="pattern-connections"><span class="conn-pill">Träning</span><span class="conn-pill">Stress</span><span class="conn-pill">Sömn</span></div>
+        </div>
+      </div>
+
+      <div class="pattern-card" data-type="good">
+        <div class="pattern-card-header">
+          <div class="pattern-card-stripe stripe-g"></div>
+          <div class="pattern-card-main">
+            <div class="pattern-card-meta">
+              <span class="pattern-type-badge badge-g">Positivt</span>
+              <span class="pattern-area">Läggdags → Djupsömn</span>
+            </div>
+            <div class="pattern-title">Läggdags före 22:30 ger 24 min mer djupsömn</div>
+            <div class="pattern-desc">Det är den starkaste enskilda sömnvariabeln i din data. Inte magnesium, inte rutiner, inte kost — läggdagstimingen. Före 22:30 = 24 min mer djupsömn i snitt. Det är mer än de flesta sömninterventioner uppnår.</div>
+          </div>
+        </div>
+        <div class="pattern-card-footer">
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Frekvens</div><div class="pattern-stat-val" style="color:var(--accent);">Konsekvent</div></div>
+          <div class="pattern-stat"><div class="pattern-stat-lbl">Effekt</div><div class="pattern-stat-val" style="color:var(--accent);">+24 min djupsömn</div></div>
+          <div class="pattern-connections"><span class="conn-pill">Sömn</span><span class="conn-pill">HRV</span><span class="conn-pill">Energi</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- KORRELATIONSÖVERSIKT + INSIKT -->
+    <div class="two-col" style="margin-top:1px;">
+      <div class="panel">
+        <div class="panel-lbl">Starkaste kopplingarna i ditt system</div>
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+          <div style="display:flex; align-items:center; gap:1rem; padding:0.8rem 0; border-bottom:1px solid var(--border);">
+            <span style="font-size: 0.7rem; color:var(--fg2); flex:1;">Stress → Sömn</span>
+            <div style="width:120px; height:4px; background:rgba(255,255,255,0.05);"><div style="height:100%; width:92%; background:var(--danger);"></div></div>
+            <span style="font-size: 0.65rem; color:var(--danger); min-width:30px; text-align:right;">92%</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:1rem; padding:0.8rem 0; border-bottom:1px solid var(--border);">
+            <span style="font-size: 0.7rem; color:var(--fg2); flex:1;">Sömn → HRV</span>
+            <div style="width:120px; height:4px; background:rgba(255,255,255,0.05);"><div style="height:100%; width:88%; background:var(--danger);"></div></div>
+            <span style="font-size: 0.65rem; color:var(--danger); min-width:30px; text-align:right;">88%</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:1rem; padding:0.8rem 0; border-bottom:1px solid var(--border);">
+            <span style="font-size: 0.7rem; color:var(--fg2); flex:1;">HRV → Body Battery</span>
+            <div style="width:120px; height:4px; background:rgba(255,255,255,0.05);"><div style="height:100%; width:85%; background:var(--warn);"></div></div>
+            <span style="font-size: 0.65rem; color:var(--warn); min-width:30px; text-align:right;">85%</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:1rem; padding:0.8rem 0; border-bottom:1px solid var(--border);">
+            <span style="font-size: 0.7rem; color:var(--fg2); flex:1;">Frukost → Energi</span>
+            <div style="width:120px; height:4px; background:rgba(255,255,255,0.05);"><div style="height:100%; width:78%; background:var(--warn);"></div></div>
+            <span style="font-size: 0.65rem; color:var(--warn); min-width:30px; text-align:right;">78%</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:1rem; padding:0.8rem 0; border-bottom:1px solid var(--border);">
+            <span style="font-size: 0.7rem; color:var(--fg2); flex:1;">Träning → Återhämtning</span>
+            <div style="width:120px; height:4px; background:rgba(255,255,255,0.05);"><div style="height:100%; width:74%; background:var(--warn);"></div></div>
+            <span style="font-size: 0.65rem; color:var(--warn); min-width:30px; text-align:right;">74%</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:1rem; padding:0.8rem 0;">
+            <span style="font-size: 0.7rem; color:var(--fg2); flex:1;">Läggdags → Djupsömn</span>
+            <div style="width:120px; height:4px; background:rgba(255,255,255,0.05);"><div style="height:100%; width:89%; background:var(--accent);"></div></div>
+            <span style="font-size: 0.65rem; color:var(--accent); min-width:30px; text-align:right;">89%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-lbl">Systemets sammanfattning</div>
+        <p class="insight">Du har ett vältränat, kapabelt system som konsekvent underminerar sig självt på tre sätt: <strong>du sover för lite, för oregelbundet och med för hög stress vid läggdags.</strong> Allt annat — träningen, kosten, energin — är konsekvenser av det. Fixa sömnfundamentet och hälften av de andra mönstren löser sig av sig självt.</p>
+        <div style="margin-top:1.5rem; padding-top:1.2rem; border-top:1px solid var(--border);">
+          <div style="font-size: 0.64rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--fg3); margin-bottom:0.8rem;">En förändring med störst systemeffekt</div>
+          <div style="padding:1.2rem; border:1px solid rgba(143,174,138,0.2); background:rgba(143,174,138,0.04);">
+            <div style="font-family:var(--serif); font-size: 1.1rem; font-weight:300; color:var(--fg); margin-bottom:0.4rem;">Läggdags 22:15 varje kväll i 7 dagar</div>
+            <div style="font-size: 0.72rem; color:var(--fg3); line-height:1.65;">Det är den enskilda förändringen med störst positiv kedjeeffekt på alla andra mönster. Bättre sömn → lägre stress → bättre återhämtning → mer energi → bättre träning → bättre kost. Det börjar där.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEDANDE INDIKATORER -->
+    <div id="leadSection" style="display:none;"></div>
+
+  <footer style="padding: 1.5rem 3.5rem 2rem; border-top: 1px solid var(--border);">
+    <p style="font-size: 0.74rem; color: #5B7FA6; line-height: 1.7; max-width: 700px; margin-bottom: 0.5rem;">Din data är krypterad, privat och tillhör bara dig. · Forsyne säljer aldrig data.</p>
+    <p style="font-size: 0.74rem; color: var(--fg4); line-height: 1.7; max-width: 700px; margin-bottom: 0.5rem;">Systemets insikter ersätter inte råd från läkare, psykolog eller annan vårdgivare.</p>
+    <p style="font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg4);"><a href="manifesto.html" style="color:var(--fg4); text-decoration:none;">Manifesto</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Disclaimer</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Integritet</a> · © 2026 Forsyne</p>
+  </footer>
+
+  </main>
+</div>
+
+<script>
+// Date + user
+const d = new Date();
+const days = ['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+const months = ['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+document.getElementById('topDate').textContent = `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+const _ob = JSON.parse(localStorage.getItem('forsyne_onboarding') || '{}');
+const _u  = API.user();
+document.getElementById('topUser').textContent = (_ob.q3_1 || (_u && _u.email ? _u.email.split('@')[0] : '')).toUpperCase();
+
+// Filter (called from inline onclick)
+function filter(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.pattern-card').forEach(card => {
+    card.style.display = (type === 'all' || card.dataset.type === type) ? '' : 'none';
+  });
+}
+
+// Nav
+document.querySelectorAll('.nav-link').forEach(l => {
+  l.addEventListener('click', e => {
+    if (l.getAttribute('href') === '#') { e.preventDefault(); }
+  });
+});
+
+// Pearson correlation coefficient
+function pearson(data, f1, f2, invert1 = false) {
+  if (data.length < 3) return 0;
+  const xs = data.map(c => invert1 ? 10 - c[f1] : c[f1]);
+  const ys = data.map(c => c[f2]);
+  const mx = xs.reduce((a,b)=>a+b)/xs.length, my = ys.reduce((a,b)=>a+b)/ys.length;
+  const num = xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my), 0);
+  const den = Math.sqrt(xs.reduce((s,x)=>s+(x-mx)**2,0)*ys.reduce((s,y)=>s+(y-my)**2,0));
+  return den===0 ? 0 : num/den;
+}
+
+// ── LEDANDE INDIKATORER — lagged Pearson correlation ──
+function computeLeadIndicators(checkins) {
+  const c = [...checkins].sort((a,b) => a.date.localeCompare(b.date));
+  if (c.length < 7) return [];
+  const fields = ['energy','sleep','stress','focus','motivation'];
+  const labels = {energy:'Energi',sleep:'Sömn',stress:'Stress',focus:'Fokus',motivation:'Motivation'};
+  const pcorr = (xs, ys) => {
+    if (xs.length < 4) return 0;
+    const mx=xs.reduce((a,b)=>a+b)/xs.length, my=ys.reduce((a,b)=>a+b)/ys.length;
+    const num=xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0);
+    const den=Math.sqrt(xs.reduce((s,x)=>s+(x-mx)**2,0)*ys.reduce((s,y)=>s+(y-my)**2,0));
+    return den===0?0:num/den;
+  };
+  const results=[];
+  for (const f1 of fields) {
+    for (const f2 of fields) {
+      if (f1===f2) continue;
+      for (const lag of [1,2,3]) {
+        if (c.length-lag < 4) continue;
+        const xs=c.slice(0,c.length-lag).map(d=>d[f1]||0);
+        const ys=c.slice(lag).map(d=>d[f2]||0);
+        const r=pcorr(xs,ys);
+        if (Math.abs(r)>=0.45) results.push({f1,f2,lag,r:parseFloat(r.toFixed(2)),l1:labels[f1],l2:labels[f2]});
+      }
+    }
+  }
+  // Best lag per pair
+  const best={};
+  for (const x of results.sort((a,b)=>Math.abs(b.r)-Math.abs(a.r))) {
+    const k=`${x.f1}→${x.f2}`;
+    if (!best[k]) best[k]=x;
+  }
+  return Object.values(best).sort((a,b)=>Math.abs(b.r)-Math.abs(a.r)).slice(0,4);
+}
+
+function leadTitle(x) {
+  const d=x.lag===1?'nästa dag':x.lag===2?'om 2 dagar':'om 3 dagar';
+  const map={
+    'motivation→energy':`Din motivation idag förutser energin ${d}`,
+    'sleep→energy':`Nattens sömn förutser energin ${d}`,
+    'stress→sleep':`Hög stress idag kostar sömn ${d}`,
+    'stress→energy':`Stress idag tär på energireserven ${d}`,
+    'sleep→focus':`Sömnkvalitet förutser fokus ${d}`,
+    'energy→motivation':`Energi idag förutser motivation ${d}`,
+    'focus→energy':`Fokus idag förutser energi ${d}`,
+    'motivation→focus':`Motivation och fokus rör sig i tandem — ${x.lag} dags fördröjning`,
+    'stress→focus':`Stress idag slår ut fokus ${d}`,
+    'sleep→motivation':`Sömn idag förutser motivation ${d}`,
+  };
+  return map[`${x.f1}→${x.f2}`]||`${x.l1} förutser ${x.l2.toLowerCase()} ${d}`;
+}
+
+function leadDesc(x) {
+  const d=x.lag===1?'nästa dag':x.lag===2?'om 2 dagar':'om 3 dagar';
+  const map={
+    'motivation→energy':`Det är inte slumpen — motivation är din starkaste ledande signal för energi. Inte omvänt.`,
+    'sleep→energy':`Sömnen laddar batteriet med fördröjning. Effekten märks inte direkt — utan ${d}.`,
+    'stress→sleep':`Kortisol hinner inte sjunka tillräckligt. Du bär stressen in i natten.`,
+    'stress→energy':`Stressresponsen förbrukar resurser som energin behöver. Kostnaden syns ${d}.`,
+    'sleep→focus':`Kognitiv kapacitet byggs under sömnen. Fördröjningen är biologisk, inte slumpmässig.`,
+    'energy→motivation':`Kapaciteten driver viljan — inte omvänt — i din specifika data.`,
+    'focus→energy':`Kognitiv klarhet och energi förstärker varandra med ${x.lag} dags fördröjning.`,
+    'motivation→focus':`Dessa rör sig synkroniserat i ditt system med fördröjning.`,
+    'stress→focus':`Hög kortisolbelastning nedreglerar prefrontal cortex — fokustapet märks ${d}.`,
+    'sleep→motivation':`Systemet laddar motivationen under sömnen. Dålig natt = lägre driv ${d}.`,
+  };
+  return map[`${x.f1}→${x.f2}`]||`Systemet ser ett samband (r ${x.r>0?'+':''}${x.r}) i din data.`;
+}
+
+function renderLeadIndicators(leads) {
+  const el=document.getElementById('leadSection');
+  if (!el) return;
+  if (!leads.length) return; // dölj sektionen om inga indikatorer
+
+  const cards=leads.map(x=>{
+    const lagColor=Math.abs(x.r)>=0.7?'var(--accent)':Math.abs(x.r)>=0.55?'var(--warn)':'var(--fg2)';
+    const barColor=x.r>0?'var(--accent)':'var(--warn)';
+    const pct=Math.round(Math.abs(x.r)*100);
+    return `<div class="lead-card">
+      <div>
+        <div class="lead-pair"><span>${x.l1}</span><span class="lead-arrow">→</span><span>${x.l2}</span><span style="margin-left:auto;color:${lagColor};font-size:0.58rem;">${Math.abs(x.r)>=0.7?'Stark':Math.abs(x.r)>=0.55?'Måttlig':'Svag'} koppling</span></div>
+        <div class="lead-title">${leadTitle(x)}</div>
+        <div class="lead-desc">${leadDesc(x)}</div>
+      </div>
+      <div class="lead-meta">
+        <div class="lead-lag-val" style="color:${lagColor};">${x.lag}</div>
+        <div class="lead-lag-lbl">dag${x.lag>1?'ar':''} fördröjning</div>
+        <div class="lead-r-val" style="color:${barColor};">r ${x.r>0?'+':''}${x.r}</div>
+        <div class="lead-bar-wrap"><div class="lead-bar-fill" style="width:0%;background:${barColor};" data-pct="${pct}"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`<div class="lead-section">
+    <div class="lead-header">
+      <div class="lead-eyebrow">Ledande indikatorer · Tidsfördröjda korrelationer</div>
+      <div class="lead-h">Dessa variabler förutser framtida mönster —<br><em>inte vad de gör idag, utan vad de triggar imorgon.</em></div>
+      <div class="lead-sub">Systemet beräknar vilken variabel som statistiskt förutser en annan med 1–3 dagars fördröjning. Det är din personliga varningsklocka.</div>
+    </div>
+    ${cards}
+  </div>`;
+
+  el.style.display='block';
+  // Animera bars efter render
+  requestAnimationFrame(()=>{
+    el.querySelectorAll('.lead-bar-fill').forEach(b=>{
+      setTimeout(()=>{b.style.width=b.dataset.pct+'%';},200);
+    });
+  });
+}
+
+function renderPatterns(checkins) {
+  const c = [...checkins].sort((a,b)=>a.created_at<b.created_at?-1:1);
+  const n = c.length;
+
+  if (n < 3) {
+    document.querySelector('.main').innerHTML = `
+      <div style="padding:4rem 0;max-width:520px;">
+        <div style="width:28px;height:1px;background:rgba(143,174,138,0.4);margin-bottom:1.8rem;"></div>
+        <h2 style="font-family:var(--serif);font-size:clamp(1.6rem,3vw,2.2rem);font-weight:300;line-height:1.2;margin-bottom:1.2rem;">${n === 0 ? 'Inga mönster ännu.' : `${n} av 3 datapunkter.`}<br><em>Systemet letar — men behöver mer.</em></h2>
+        <p style="font-size: 0.8rem;color:var(--fg3);line-height:1.75;margin-bottom:1.8rem;">Mönsterigenkänning kräver minst tre dagars data. Du har ${n === 0 ? 'inga' : n} check-in${n !== 1 ? 's' : ''}. En till dag — och systemet börjar se korrelationer som är omöjliga att hitta med ögat.</p>
+        <a href="checkin.html" style="font-size: 0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);text-decoration:none;border:1px solid rgba(143,174,138,0.3);padding:0.65rem 1.4rem;">${n === 0 ? 'Gör din första check-in' : 'Fortsätt bygga din data'}</a>
+      </div>`;
+    return;
+  }
+
+  const avg = f => c.reduce((s,x)=>s+x[f],0)/n;
+  const avgSleep=avg('sleep'), avgStress=avg('stress'), avgEnergy=avg('energy');
+  const avgFocus=avg('focus'), avgMotivation=avg('motivation');
+
+  const rStressSleep  = pearson(c,'stress','sleep',true);
+  const rSleepEnergy  = pearson(c,'sleep','energy');
+  const rStressEnergy = pearson(c,'stress','energy',true);
+  const rStressFocus  = pearson(c,'stress','focus',true);
+  const rSleepFocus   = pearson(c,'sleep','focus');
+  const rMotivEnergy  = pearson(c,'motivation','energy');
+
+  const recent = [...c].reverse();
+
+  // Detect streaks
+  const lowSleepDays = c.filter(x=>x.sleep<=5).length;
+  const maxLowSleepStreak = (()=>{ let max=0,cur=0; for(const x of c){if(x.sleep<=5){cur++;max=Math.max(max,cur);}else cur=0;} return max; })();
+  const varselDays = c.filter(x=>x.stress>=7&&x.sleep<=5).length;
+  const highStressDays = c.filter(x=>x.stress>=7).length;
+  const last5 = c.slice(-5), older = c.slice(0,Math.max(1,n-5));
+  const recentEnergyAvg = last5.reduce((s,x)=>s+x.energy,0)/last5.length;
+  const olderEnergyAvg  = older.reduce((s,x)=>s+x.energy,0)/older.length;
+  const bestDays = c.filter(x=>x.sleep>=7&&x.stress<=4);
+  const lowStressDays = c.filter(x=>x.stress<=3);
+  const highMotivDays = c.filter(x=>x.motivation>=7);
+
+  const patterns = [];
+
+  // CRITICAL
+  if (maxLowSleepStreak>=3 || lowSleepDays/n>=0.4) {
+    patterns.push({ type:'critical', area:'Sömn → Energi → Beteende',
+      title:'Sömnunderskott är ditt mest återkommande mönster',
+      desc:`Du registrerar sömn ≤5 (av 10) ${lowSleepDays} av ${n} dagar. Det är inte variation — det är ett systemfel. Tre nätter i rad med kort sömn sänker kognition, energi och stresströskel markant.`,
+      stats:[{lbl:'Frekvens',val:`${lowSleepDays} av ${n} dagar`,col:'var(--danger)'},{lbl:'Max rad',val:`${maxLowSleepStreak} nätter`,col:'var(--danger)'},{lbl:'Snitt sömn',val:`${(avgSleep*10).toFixed(0)}%`,col:''}],
+      pills:['Sömn','Energi','Stress']});
+  }
+
+  if (varselDays>=2 || varselDays/n>=0.25) {
+    patterns.push({ type:'critical', area:'Stress → Sömn → Systemet',
+      title:'Hög stress och dålig sömn uppträder tillsammans',
+      desc:`${varselDays} av ${n} dagar har du haft hög stress (≥7) och dålig sömn (≤5) samma dag. Det är en dubbelbelastning som inte ger systemet tid att återhämta sig. Kortisolet hinner inte sjunka.`,
+      stats:[{lbl:'Frekvens',val:`${varselDays} av ${n} dagar`,col:'var(--danger)'},{lbl:'Koppling',val:`${Math.round(Math.abs(rStressSleep)*100)}%`,col:'var(--danger)'}],
+      pills:['Stress','Sömn','Signalen']});
+  }
+
+  if (n>=7 && recentEnergyAvg < olderEnergyAvg-1.5) {
+    patterns.push({ type:'critical', area:'Energi → Återhämtning',
+      title:'Energin sjunker konsekvent de senaste dagarna',
+      desc:`Energisnitt de senaste 5 dagarna: ${(recentEnergyAvg*10).toFixed(0)}% mot tidigare ${(olderEnergyAvg*10).toFixed(0)}%. Det är inte slump — det är ett system som gradvis tappar sin reserv.`,
+      stats:[{lbl:'Nu',val:`${(recentEnergyAvg*10).toFixed(0)}%`,col:'var(--danger)'},{lbl:'Tidigare',val:`${(olderEnergyAvg*10).toFixed(0)}%`,col:''},{lbl:'Trend',val:'↓ Sjunkande',col:'var(--danger)'}],
+      pills:['Energi','Sömn','Återhämtning']});
+  }
+
+  // WARNINGS
+  if (Math.abs(rStressSleep)>0.35) {
+    patterns.push({ type:'warn', area:'Stress → Sömn',
+      title:'Höga stressdagar ger konsekvent sämre sömn',
+      desc:`Korrelation stress→sömn: ${Math.round(Math.abs(rStressSleep)*100)}%. När stressen är hög (≥7) är sömnen märkbart sämre. Kortisol vid läggdags blockerar de djupaste sömnfaserna.`,
+      stats:[{lbl:'Korrelation',val:`${Math.round(Math.abs(rStressSleep)*100)}%`,col:'var(--warn)'},{lbl:'Styrka',val:Math.abs(rStressSleep)>0.6?'Hög':'Måttlig',col:''}],
+      pills:['Stress','Sömn']});
+  }
+
+  if (highStressDays>=2 && Math.abs(rStressFocus)>0.25) {
+    const hsFocus = c.filter(x=>x.stress>=7).reduce((s,x)=>s+x.focus,0)/Math.max(1,c.filter(x=>x.stress>=7).length);
+    const lsFocus = c.filter(x=>x.stress<=4).length>=2 ? c.filter(x=>x.stress<=4).reduce((s,x)=>s+x.focus,0)/c.filter(x=>x.stress<=4).length : avgFocus+1;
+    const diff = Math.round((lsFocus-hsFocus)*10);
+    if (diff>5) {
+      patterns.push({ type:'warn', area:'Stress → Kognition',
+        title:'Hög stress slår ut din kognitiva förmåga',
+        desc:`På dina höga stressdagar (≥7) är fokus i snitt ${diff}% lägre än på låga stressdagar (≤4). Det är prefrontal cortex som nedregleras under hög kortisolbelastning.`,
+        stats:[{lbl:'Fokus (hög stress)',val:`${(hsFocus*10).toFixed(0)}%`,col:'var(--danger)'},{lbl:'Fokus (låg stress)',val:`${(lsFocus*10).toFixed(0)}%`,col:'var(--accent)'}],
+        pills:['Stress','Fokus','Kognition']});
+    }
+  }
+
+  if (c.filter(x=>x.motivation<=4).length/n>=0.3) {
+    const lowM = c.filter(x=>x.motivation<=4).length;
+    patterns.push({ type:'warn', area:'Motivation → Prestation',
+      title:'Låg motivation är ett återkommande signal',
+      desc:`${lowM} av ${n} dagar registrerar du motivation ≤4. Det är inte lathet — det är en biologisk signal om att systemet är underfinansierat på återhämtning eller belöning.`,
+      stats:[{lbl:'Frekvens',val:`${lowM} av ${n} dagar`,col:'var(--warn)'},{lbl:'Snitt',val:`${(avgMotivation*10).toFixed(0)}%`,col:''}],
+      pills:['Motivation','Energi','Stress']});
+  }
+
+  if (highStressDays/n>=0.3 && !patterns.some(p=>p.area.includes('Stress → Sömn'))) {
+    patterns.push({ type:'warn', area:'Stress → Systemet',
+      title:'Hög stress präglar mer än en tredjedel av dina dagar',
+      desc:`${highStressDays} av ${n} dagar med stressnivå ≥7. Kronisk stress tär på immunförsvar, minne och återhämtning — varje dag det fortsätter.`,
+      stats:[{lbl:'Frekvens',val:`${highStressDays} av ${n} dagar`,col:'var(--warn)'},{lbl:'Snitt stress',val:`${(avgStress*10).toFixed(0)}%`,col:'var(--warn)'}],
+      pills:['Stress','HRV','Immunförsvar']});
+  }
+
+  // POSITIVE
+  if (bestDays.length>=2) {
+    const bE=bestDays.reduce((s,x)=>s+x.energy,0)/bestDays.length;
+    const bF=bestDays.reduce((s,x)=>s+x.focus,0)/bestDays.length;
+    patterns.push({ type:'good', area:'Sömn → Prestation',
+      title:`God sömn + låg stress = dina bästa dagar`,
+      desc:`De ${bestDays.length} dagarna med sömn ≥7 och stress ≤4 har energi ${(bE*10).toFixed(0)}% och fokus ${(bF*10).toFixed(0)}%. Det är din formel — inte teori, utan ditt eget mönster. Replikerbart.`,
+      stats:[{lbl:'Antal',val:`${bestDays.length} av ${n} dagar`,col:'var(--accent)'},{lbl:'Energi',val:`${(bE*10).toFixed(0)}%`,col:'var(--accent)'},{lbl:'Fokus',val:`${(bF*10).toFixed(0)}%`,col:'var(--accent)'}],
+      pills:['Sömn','Energi','Fokus']});
+  }
+
+  if (highMotivDays.length>=2 && rMotivEnergy>0.35) {
+    const hmE=highMotivDays.reduce((s,x)=>s+x.energy,0)/highMotivDays.length;
+    if (hmE>avgEnergy+0.8) {
+      patterns.push({ type:'good', area:'Motivation → Energi',
+        title:'Hög motivation ger markant mer energi',
+        desc:`På de ${highMotivDays.length} dagarna med motivation ≥7 är energin ${(hmE*10).toFixed(0)}% — ${((hmE-avgEnergy)*10).toFixed(0)}% över ditt snitt. Motivation och energi förstärker varandra i ditt system.`,
+        stats:[{lbl:'Dagar',val:`${highMotivDays.length} av ${n}`,col:'var(--accent)'},{lbl:'Energi',val:`${(hmE*10).toFixed(0)}%`,col:'var(--accent)'}],
+        pills:['Motivation','Energi','Fokus']});
+    }
+  }
+
+  if (lowStressDays.length>=2) {
+    const lsE=lowStressDays.reduce((s,x)=>s+x.energy,0)/lowStressDays.length;
+    if (lsE>avgEnergy+1) {
+      patterns.push({ type:'good', area:'Stress → Prestation',
+        title:'Dina lugna dagar visar vad systemet faktiskt klarar',
+        desc:`På de ${lowStressDays.length} dagarna med stress ≤3 var energin ${(lsE*10).toFixed(0)}% — mot snittet ${(avgEnergy*10).toFixed(0)}%. Det är din potential. Den finns där när systemet får återhämta sig.`,
+        stats:[{lbl:'Dagar',val:`${lowStressDays.length} av ${n}`,col:'var(--accent)'},{lbl:'Energi',val:`${(lsE*10).toFixed(0)}%`,col:'var(--accent)'}],
+        pills:['Stress','Energi','Återhämtning']});
+    }
+  }
+
+  // Counts
+  const nC=patterns.filter(p=>p.type==='critical').length;
+  const nW=patterns.filter(p=>p.type==='warn').length;
+  const nG=patterns.filter(p=>p.type==='good').length;
+  const nT=patterns.length;
+
+  // Update pstat values
+  const pv = document.querySelectorAll('.pstat-val');
+  if(pv[0]) pv[0].textContent=nT;
+  if(pv[1]){pv[1].textContent=nC;pv[1].style.color='var(--danger)';}
+  if(pv[2]){pv[2].textContent=nW;pv[2].style.color='var(--warn)';}
+  if(pv[3]){pv[3].textContent=nG;pv[3].style.color='var(--accent)';}
+  const ps=document.querySelectorAll('.pstat-sub');
+  if(ps[0]) ps[0].textContent=`På ${n} dagars data`;
+
+  // Update filter buttons
+  const fb=document.querySelectorAll('.filter-btn');
+  if(fb[0]) fb[0].textContent=`Alla · ${nT}`;
+  if(fb[1]) fb[1].textContent=`Kritiska · ${nC}`;
+  if(fb[2]) fb[2].textContent=`Varningar · ${nW}`;
+  if(fb[3]) fb[3].textContent=`Positiva · ${nG}`;
+
+  // Update header
+  const h=document.querySelector('.page-heading');
+  if(h) h.innerHTML=`${nT} mönster på ${n} dagar.<br><em>Det här är hur du faktiskt fungerar.</em>`;
+  const ey=document.querySelector('.page-eyebrow');
+  if(ey) ey.textContent=`Mönster · Identifierade av modellen · ${n} dagars data`;
+  const ft=document.querySelector('.sidebar-foot');
+  if(ft) ft.innerHTML=`Mönster · Dag ${n}<br><strong>${nT} identifierade</strong>`;
+
+  // Generate cards
+  function cardHTML(p) {
+    const sc=p.type==='critical'?'stripe-c':p.type==='warn'?'stripe-w':'stripe-g';
+    const bc=p.type==='critical'?'badge-c':p.type==='warn'?'badge-w':'badge-g';
+    const bl=p.type==='critical'?'Kritiskt':p.type==='warn'?'Varning':'Positivt';
+    const dt=p.type==='critical'?'critical':p.type==='warn'?'warn':'good';
+    const stats=p.stats.map(s=>`<div class="pattern-stat"><div class="pattern-stat-lbl">${s.lbl}</div><div class="pattern-stat-val" style="${s.col?`color:${s.col}`:''}">` +s.val+`</div></div>`).join('');
+    const pills=p.pills.map(pl=>`<span class="conn-pill">${pl}</span>`).join('');
+    return `<div class="pattern-card" data-type="${dt}">
+      <div class="pattern-card-header">
+        <div class="pattern-card-stripe ${sc}"></div>
+        <div class="pattern-card-main">
+          <div class="pattern-card-meta"><span class="pattern-type-badge ${bc}">${bl}</span><span class="pattern-area">${p.area}</span></div>
+          <div class="pattern-title">${p.title}</div>
+          <div class="pattern-desc">${p.desc}</div>
+        </div>
+      </div>
+      <div class="pattern-card-footer">${stats}<div class="pattern-connections">${pills}</div></div>
+    </div>`;
+  }
+
+  document.getElementById('patternList').innerHTML = patterns.length
+    ? patterns.map(cardHTML).join('')
+    : '<div style="padding:2rem;color:var(--fg3);background:var(--ink2);">Inga tydliga mönster ännu. Fortsätt dagliga check-ins.</div>';
+
+  // Ledande indikatorer
+  const leads = computeLeadIndicators(c);
+  renderLeadIndicators(leads);
+
+  // Update correlation bars (find the panel by label text)
+  document.querySelectorAll('.panel-lbl').forEach(lbl => {
+    if (!lbl.textContent.includes('kopplingarna')) return;
+    const container = lbl.nextElementSibling;
+    if (!container) return;
+    const corrData = [
+      {from:'Stress',to:'Sömn',r:Math.abs(rStressSleep)},
+      {from:'Sömn',to:'Energi',r:Math.abs(rSleepEnergy)},
+      {from:'Stress',to:'Energi',r:Math.abs(rStressEnergy)},
+      {from:'Sömn',to:'Fokus',r:Math.abs(rSleepFocus)},
+      {from:'Motivation',to:'Energi',r:Math.abs(rMotivEnergy)},
+      {from:'Stress',to:'Fokus',r:Math.abs(rStressFocus)},
+    ];
+    container.innerHTML = corrData.map((row,i) => {
+      const col=row.r>0.6?'var(--danger)':row.r>0.3?'var(--warn)':'var(--accent)';
+      const pct=Math.round(row.r*100);
+      const border=i<corrData.length-1?'border-bottom:1px solid var(--border);':'';
+      return `<div style="display:flex;align-items:center;gap:1rem;padding:0.8rem 0;${border}">
+        <span style="font-size: 0.7rem;color:var(--fg2);flex:1;">${row.from} → ${row.to}</span>
+        <div style="width:120px;height:4px;background:rgba(255,255,255,0.05);"><div style="height:100%;width:${pct}%;background:${col};"></div></div>
+        <span style="font-size: 0.65rem;color:${col};min-width:30px;text-align:right;">${pct}%</span>
+      </div>`;
+    }).join('') + `<div style="padding:0.5rem 0;font-size: 0.68rem;color:var(--fg4);">Baserat på ${n} check-ins · Pearson-korrelation</div>`;
+  });
+
+  // Update system insight
+  document.querySelectorAll('.panel-lbl').forEach(lbl => {
+    if (!lbl.textContent.includes('sammanfattning')) return;
+    const ins = lbl.parentElement.querySelector('.insight');
+    if (!ins) return;
+    const primary = avgSleep<5.5?'sömnen':avgStress>6.5?'stressen':'energin';
+    ins.innerHTML = `Du har ${nC>0?`<strong>${nC} kritiska mönster</strong>`:'inga kritiska mönster'} och ${nW} varningssignaler baserat på ${n} dagars data.
+    ${avgSleep<5.5?`<strong>Sömnen är din primära bottleneck</strong> — snitt ${(avgSleep*10).toFixed(0)}% av 100. Det påverkar allt annat.`:''}
+    ${avgStress>6.5?`<strong>Stressen dominerar</strong> ${highStressDays} av ${n} dagar.`:''}
+    Det finns ${nG} positiva mönster att bygga vidare på — formeln är redan i datan.`;
+
+    // Update the one-focus recommendation
+    const rec = lbl.parentElement.querySelector('[style*="serif"]');
+    if (rec) {
+      if (avgSleep < 5.5) rec.textContent = 'Sömn ≥7 tre nätter i rad';
+      else if (avgStress > 6.5) rec.textContent = 'Sänk stressen — ett steg åt gången';
+      else rec.textContent = 'Bygg vidare på dina bästa dagar';
+    }
+    const recBody = lbl.parentElement.querySelector('[style*="0.72rem"]');
+    if (recBody) {
+      if (avgSleep < 5.5) recBody.textContent = `Sömn är den enskilda förändring med störst kedjeeffekt. Ditt snitt ${(avgSleep*10).toFixed(0)}% visar att det finns stor potential. Bättre sömn → lägre stress → mer energi → bättre fokus. Det börjar där.`;
+      else if (avgStress > 6.5) recBody.textContent = `Stress ${(avgStress*10).toFixed(0)}% i snitt är din primära kostnad. En enda kvällsrutin som sänker kortisolet ger kedjeeffekt på sömn, HRV och energi.`;
+      else recBody.textContent = `Du har ${bestDays.length} dagar med formeln: bra sömn + låg stress. Gör det till norm, inte undantag.`;
+    }
+  });
+}
+
+(async () => {
+  let checkins;
+  try {
+    checkins = await API.getCheckins() || [];
+  } catch(e) {
+    const m = document.querySelector('.main');
+    if (m) m.insertAdjacentHTML('afterbegin', '<div style="padding:3rem 0;max-width:480px;"><div style="font-size: 0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:rgba(168,92,92,0.8);margin-bottom:1rem;">Systemfel</div><p style="font-size: 0.8rem;color:var(--fg3);line-height:1.75;">Systemet kunde inte hämta din data. Kontrollera anslutningen och ladda om sidan.</p></div>');
+    return;
+  }
+  renderPatterns(checkins);
+
+  // Agent 3 — AI patterns insight
+  if (checkins.length >= 5) {
+    try {
+      const profile = JSON.parse(localStorage.getItem('forsyne_onboarding') || '{}');
+      const resp = await fetch('/api/agent/insights/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API.token() },
+        body: JSON.stringify({ checkins, profile, context: 'mönster' })
+      });
+      if (resp.ok) {
+        const ai = await resp.json();
+        if (ai?.insikt) {
+          // Replace the static system summary insight with AI-generated one
+          document.querySelectorAll('.panel-lbl').forEach(lbl => {
+            if (!lbl.textContent.includes('sammanfattning')) return;
+            const ins = lbl.parentElement.querySelector('.insight');
+            if (ins) ins.innerHTML = ai.insikt;
+          });
+        }
+      }
+    } catch(e) {}
+  }
+})();
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

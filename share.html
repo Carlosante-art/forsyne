@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<title>Forsyne — share image</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500&family=Jost:wght@300;400&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: #050605;
+  padding: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  color: #F2F0EA;
+}
+
+/* The actual share card — always 1200x630 */
+.share {
+  width: 1200px;
+  height: 630px;
+  margin: 0 auto;
+  position: relative;
+  background: linear-gradient(to bottom, #0F1210 0%, #131714 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 70px 100px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Subtle eye background */
+.share::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url('/images/landing/hero-eye.png');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.08;
+  z-index: -2;
+  mix-blend-mode: screen;
+}
+.share::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at center, transparent 30%, #0F1210 85%),
+    linear-gradient(to bottom, #0F1210 0%, transparent 15%, transparent 85%, #0F1210 100%);
+  z-index: -1;
+}
+
+/* Top: small brand mark */
+.brand {
+  font-family: 'Jost', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: #8A8E89;
+}
+
+/* Center: the headline */
+.headline-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  max-width: 900px;
+}
+.headline {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-size: 78px;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  color: #F2F0EA;
+}
+.headline-small {
+  display: block;
+  font-size: 68px;
+  color: #CCC9BF;
+  margin-top: 6px;
+}
+.sub {
+  margin-top: 36px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 24px;
+  line-height: 1.45;
+  color: #8FAE8A;
+  max-width: 720px;
+}
+
+/* Bottom: URL */
+.footer-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Jost', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #8A8E89;
+}
+.url {
+  color: #F2F0EA;
+  letter-spacing: 0.15em;
+}
+
+/* Guide text (bara för dig, syns inte i exporten) */
+.guide {
+  max-width: 1200px;
+  margin: 20px auto 40px;
+  padding: 0 20px;
+  font-family: 'Jost', sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #8A8E89;
+}
+.guide strong { color: #8FAE8A; font-weight: 400; }
+</style>
+</head>
+<body>
+
+<div class="share">
+  <div class="brand">Forsyne</div>
+
+  <div class="headline-wrap">
+    <div class="headline">
+      Du märker det om 72 timmar.
+      <span class="headline-small">Vi ser det nu.</span>
+    </div>
+    <div class="sub">En levande modell av just din biologi.</div>
+  </div>
+
+  <div class="footer-line">
+    <span>Personligt intelligenssystem</span>
+    <span class="url">forsyne.se</span>
+  </div>
+</div>
+
+<div class="guide">
+  <p><strong>Instruktion:</strong> Tryck <strong>Windows + Shift + S</strong> och dra en ruta runt hela den mörka 1200×630-rutan ovan.</p>
+  <p>Spara som <strong>share.png</strong>. Sen lägger vi in den i landing.html som og:image.</p>
+</div>
+
+</body>
+</html>

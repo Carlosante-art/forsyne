@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Nytt lösenord</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:    #0F1210;
+  --fg:     #F2F0EA;
+  --fg2:    #CCC9BF;
+  --fg3:    #8A8E89;
+  --fg4:    #4a4e49;
+  --accent: #8FAE8A;
+  --trust:  #5B7FA6;
+  --danger: #A85C5C;
+  --serif:  'Cormorant Garamond', Georgia, serif;
+  --sans:   'Jost', system-ui, sans-serif;
+  --border: rgba(242,240,234,0.06);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--ink);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+.wrap {
+  width: 100%;
+  max-width: 360px;
+  animation: fadeUp 0.5s ease both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.logo {
+  font-family: var(--serif);
+  font-size: 1rem; letter-spacing: 0.2em;
+  color: var(--fg3); display: block;
+  margin-bottom: 3rem;
+  text-decoration: none;
+}
+.title {
+  font-family: var(--serif);
+  font-size: 2.2rem; font-weight: 300;
+  line-height: 1.2; margin-bottom: 0.4rem;
+}
+.title em { font-style: italic; color: var(--fg2); }
+.sub {
+  font-size: 0.78rem; color: var(--fg3);
+  line-height: 1.8; margin-bottom: 2rem;
+}
+.field { margin-bottom: 1.2rem; }
+.field-label {
+  font-size: 0.68rem; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--fg3);
+  display: block; margin-bottom: 0.5rem;
+}
+.field-row { position: relative; }
+.field input {
+  width: 100%; background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border); color: var(--fg);
+  font-family: var(--sans); font-size: 0.88rem;
+  font-weight: 300; padding: 0.85rem 1rem;
+  outline: none; transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.field input:focus { border-color: rgba(143,174,138,0.4); }
+.field input::placeholder { color: var(--fg4); }
+.field-toggle {
+  position: absolute; right: 1rem; top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.68rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--fg4);
+  cursor: pointer; transition: color 0.2s; user-select: none;
+}
+.field-toggle:hover { color: var(--fg3); }
+.msg {
+  font-size: 0.78rem; line-height: 1.6;
+  padding: 0.8rem 1rem; margin-bottom: 1rem;
+  display: none;
+}
+.msg.error   { color: var(--danger); border: 1px solid rgba(168,92,92,0.2);  background: rgba(168,92,92,0.06); }
+.msg.success { color: var(--trust);  border: 1px solid rgba(91,127,166,0.25); background: rgba(91,127,166,0.07); }
+.msg.visible { display: block; }
+.submit-btn {
+  width: 100%; padding: 1rem;
+  background: var(--fg); color: var(--ink);
+  font-family: var(--sans); font-size: 0.72rem;
+  font-weight: 500; letter-spacing: 0.2em;
+  text-transform: uppercase; border: none; cursor: pointer;
+  transition: all 0.3s;
+}
+.submit-btn:hover { background: var(--fg2); transform: translateY(-1px); }
+.submit-btn:active { transform: translateY(0); }
+.submit-btn.loading { opacity: 0.6; cursor: default; }
+.req {
+  font-size: 0.6rem; color: var(--fg4);
+  margin-top: 0.5rem;
+}
+
+/* ── FORSYNE DESIGN UPGRADE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+/* Topbar glow line */
+.topbar, nav {
+  border-bottom: 1px solid rgba(143,174,138,0.1) !important;
+  box-shadow: 0 1px 0 rgba(143,174,138,0.04);
+}
+/* Metric cards hover glow */
+.metric-card, .panel, .card, .data-card, .insight-card {
+  transition: box-shadow 0.3s ease;
+}
+.metric-card:hover, .panel:hover, .card:hover, .data-card:hover, .insight-card:hover {
+  box-shadow: 0 0 0 1px rgba(143,174,138,0.1), 0 4px 20px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="landing.html" class="logo">Forsyne</a>
+  <h1 class="title" id="title">Välj nytt<br><em>lösenord.</em></h1>
+  <p class="sub" id="sub">Minst 8 tecken. Välj något du faktiskt minns.</p>
+
+  <div class="msg" id="msg"></div>
+
+  <div id="formWrap">
+    <div class="field">
+      <label class="field-label">Nytt lösenord</label>
+      <div class="field-row">
+        <input type="password" id="pw1" placeholder="Minst 8 tecken" autocomplete="new-password">
+        <span class="field-toggle" onclick="toggle('pw1',this)">Visa</span>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Bekräfta lösenord</label>
+      <div class="field-row">
+        <input type="password" id="pw2" placeholder="Samma lösenord igen" autocomplete="new-password">
+      </div>
+    </div>
+    <button class="submit-btn" id="submitBtn" onclick="handleReset()">Spara nytt lösenord</button>
+    <p class="req">Lösenordet lagras krypterat och visas aldrig för någon.</p>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script>
+// Parse tokens from fragment on page load (Supabase recovery flow)
+(function() {
+  const frag = parseAuthFragment();
+  if (frag?.type === 'recovery' && frag.access_token) {
+    _setSession(frag.access_token, frag.refresh_token || '', frag.email || '');
+    history.replaceState(null, '', window.location.pathname);
+    return;
+  }
+  // If we land here without a recovery token AND no existing session, redirect
+  if (!isLoggedIn()) {
+    document.getElementById('title').innerHTML = 'Länken<br><em>har löpt ut.</em>';
+    document.getElementById('sub').textContent = 'Begär en ny återställningslänk från inloggningssidan.';
+    document.getElementById('formWrap').style.display = 'none';
+    setTimeout(() => _redirect('/login.html'), 3000);
+  }
+})();
+
+function toggle(id, btn) {
+  const el = document.getElementById(id);
+  el.type = el.type === 'password' ? 'text' : 'password';
+  btn.textContent = el.type === 'password' ? 'Visa' : 'Dölj';
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'msg ' + type + ' visible';
+}
+
+async function handleReset() {
+  const pw1 = document.getElementById('pw1').value;
+  const pw2 = document.getElementById('pw2').value;
+  const btn = document.getElementById('submitBtn');
+
+  if (!pw1) return showMsg('Ange ett lösenord.', 'error');
+  if (pw1.length < 8) return showMsg('Lösenordet måste vara minst 8 tecken.', 'error');
+  if (pw1 !== pw2) return showMsg('Lösenorden matchar inte.', 'error');
+
+  btn.textContent = 'Sparar…';
+  btn.classList.add('loading');
+
+  const result = await updatePassword(pw1);
+  if (result?.ok) {
+    showMsg('Lösenordet är uppdaterat. Du skickas till din dashboard…', 'success');
+    btn.textContent = 'Sparat ✓';
+    setTimeout(() => _redirect('/dashboard.html'), 2000);
+  } else {
+    showMsg(result?.error || 'Något gick fel. Försök igen.', 'error');
+    btn.textContent = 'Spara nytt lösenord';
+    btn.classList.remove('loading');
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleReset();
+});
+</script>
+<footer style="padding: 2rem; text-align: center; border-top: 1px solid var(--border); margin-top: 3rem;">
+  <p style="font-size: 0.68rem; color: var(--fg4); line-height: 1.7; max-width: 480px; margin: 0 auto 0.5rem;">Forsyne är ett verktyg för självförståelse och prestation. Systemets insikter ersätter inte råd från läkare, psykolog eller annan vårdgivare — de kompletterar dem. <a href="disclaimer.html" style="color:var(--fg3); text-decoration:none;">Läs mer</a></p>
+  <p style="font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg4);"><a href="manifesto.html" style="color:var(--fg4); text-decoration:none;">Manifesto</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Disclaimer</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Integritet</a> · © 2026 Forsyne</p>
+</footer>
+</body>
+</html>

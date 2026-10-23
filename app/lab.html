@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0F1210">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Forsyne">
+<title>Forsyne — Labbtester</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#0F1210; --ink2:#131714;
+  --fg:#F2F0EA; --fg2:#CCC9BF; --fg3:#8A8E89; --fg4:#4a4e49;
+  --accent:#8FAE8A; --warn:#C4875A; --danger:#A85C5C;
+  --border:rgba(242,240,234,0.06);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Jost',system-ui,sans-serif;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html, body {
+  background: linear-gradient(to bottom, var(--ink) 0%, var(--ink2) 100%);
+  color: var(--fg); font-family: var(--sans); font-weight: 300; line-height: 1.7;
+  min-height: 100vh; min-height: 100dvh;
+  -webkit-font-smoothing: antialiased; -webkit-overflow-scrolling: touch; overflow-x: hidden;
+}
+.frame { max-width: 430px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; position: relative; display: flex; flex-direction: column; }
+@media (min-width: 500px) {
+  body { background: #050605; padding: 2rem 0; }
+  .frame { background: linear-gradient(to bottom, var(--ink) 0%, var(--ink2) 100%); border-radius: 36px; overflow: hidden; box-shadow: 0 0 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05); margin-top: 1rem; padding-bottom: 1rem; }
+}
+
+nav {
+  height: 56px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1.5rem; border-bottom: 1px solid var(--border);
+  background: rgba(15,18,16,0.85); backdrop-filter: blur(32px);
+  position: sticky; top: 0; z-index: 100;
+}
+.logo { font-family: var(--serif); font-size: 1.05rem; font-weight: 400; letter-spacing: 0.18em; }
+.nav-title { font-family: var(--serif); font-size: 0.95rem; font-style: italic; color: var(--fg2); }
+.nav-icon { font-size: 1.1rem; color: var(--fg3); text-decoration: none; cursor: pointer; }
+.nav-icon:hover { color: var(--fg2); }
+
+.content { flex: 1; overflow-y: auto; }
+
+/* LIST */
+.add-btn-wrap { padding: 1.5rem; border-bottom: 1px solid var(--border); }
+.add-btn {
+  width: 100%; padding: 0.9rem;
+  background: transparent; border: 1px solid var(--fg4); color: var(--fg);
+  font-family: var(--sans); font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase;
+  cursor: pointer; transition: all 0.2s ease;
+}
+.add-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.tests-list { padding: 1.2rem 1.5rem 2rem; display: flex; flex-direction: column; gap: 1rem; }
+.test-card { padding: 1.1rem 1.2rem; border: 1px solid var(--border); background: rgba(242,240,234,0.02); }
+.test-date { font-family: var(--serif); font-size: 1.15rem; color: var(--fg); }
+.test-provider {
+  font-family: var(--sans); font-size: 0.62rem; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--fg3); margin-top: 4px;
+}
+.test-metrics { font-family: var(--sans); font-size: 0.85rem; color: var(--fg2); margin-top: 0.7rem; line-height: 1.6; }
+.test-metrics strong { color: var(--fg); font-weight: 400; }
+.test-notes { font-family: var(--serif); font-style: italic; font-size: 0.95rem; color: var(--fg3); margin-top: 0.7rem; line-height: 1.5; }
+.test-actions { margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px solid var(--border); }
+.test-delete {
+  background: none; border: none; color: var(--danger);
+  font-family: var(--sans); font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+  cursor: pointer; opacity: 0.7;
+}
+.test-delete:hover { opacity: 1; }
+
+.empty-state {
+  padding: 4rem 2rem; text-align: center; color: var(--fg2);
+  font-family: var(--serif); font-style: italic; font-size: 1.05rem; line-height: 1.7;
+}
+
+/* FORM */
+.form-wrap { padding: 1.5rem 1.5rem 2.5rem; }
+.form-section { margin-bottom: 1.8rem; }
+.form-section-label {
+  font-family: var(--sans); font-size: 0.6rem; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--fg3); margin-bottom: 0.9rem;
+}
+.form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+.form-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+
+.field { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.7rem; }
+.field-label {
+  font-family: var(--sans); font-size: 0.6rem; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--fg3);
+}
+.field-input {
+  padding: 0.75rem 0.85rem;
+  background: rgba(242,240,234,0.03);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-family: var(--sans); font-size: 0.92rem; font-weight: 300;
+  outline: none;
+  transition: border-color 0.2s ease;
+  width: 100%;
+}
+.field-input:focus { border-color: var(--accent); }
+.field-input::placeholder { color: var(--fg4); }
+.field-textarea { min-height: 80px; resize: vertical; line-height: 1.5; }
+
+.form-actions { display: flex; gap: 0.7rem; margin-top: 2rem; }
+.btn-primary {
+  flex: 1; padding: 0.9rem; border: none;
+  background: var(--accent); color: var(--ink);
+  font-family: var(--sans); font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase;
+  cursor: pointer;
+}
+.btn-primary:disabled { background: var(--fg4); cursor: not-allowed; }
+.btn-secondary {
+  padding: 0.9rem 1.4rem; background: transparent; border: 1px solid var(--border);
+  color: var(--fg2);
+  font-family: var(--sans); font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase;
+  cursor: pointer;
+}
+
+.form-error {
+  padding: 0.8rem 1rem; margin-bottom: 1rem;
+  background: rgba(168,92,92,0.08); border: 1px solid rgba(168,92,92,0.3);
+  color: var(--danger); font-family: var(--sans); font-size: 0.8rem;
+}
+
+/* LOADING */
+.loading { padding: 4rem 2rem; text-align: center; }
+.loading-dots { display: inline-flex; gap: 6px; margin-bottom: 1rem; }
+.loading-dots span {
+  width: 6px; height: 6px; background: var(--fg3); border-radius: 50%;
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+.loading-text {
+  font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--fg3);
+}
+@keyframes dotPulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="frame">
+
+<nav>
+  <div class="logo">forsyne</div>
+  <div class="nav-title">Labbtester</div>
+  <a href="today.html" class="nav-icon" title="Stäng">×</a>
+</nav>
+
+<div class="content">
+
+  <!-- LOADING -->
+  <div class="loading" id="loading">
+    <div class="loading-dots"><span></span><span></span><span></span></div>
+    <div class="loading-text">Laddar tester</div>
+  </div>
+
+  <!-- LIST VIEW -->
+  <div id="listView" style="display:none;">
+    <div class="add-btn-wrap">
+      <button class="add-btn" onclick="showForm()">+ Nytt test</button>
+    </div>
+    <div class="tests-list" id="testsList"></div>
+  </div>
+
+  <!-- FORM VIEW -->
+  <div id="formView" style="display:none;">
+    <form class="form-wrap" id="testForm">
+      <div class="form-error" id="formError" style="display:none;"></div>
+
+      <div class="form-section">
+        <div class="form-section-label">Test</div>
+        <div class="form-row-2">
+          <div class="field">
+            <label class="field-label">Datum *</label>
+            <input class="field-input" type="date" name="date" required>
+          </div>
+          <div class="field">
+            <label class="field-label">Leverantör</label>
+            <input class="field-input" type="text" name="provider" placeholder="ex Aktivitus" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Kardiorespiratorisk</div>
+        <div class="field">
+          <label class="field-label">VO2 max (ml/kg/min)</label>
+          <input class="field-input" type="number" step="0.1" name="vo2max" placeholder="ex 58.4">
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Laktattröskel 1</div>
+        <div class="form-row-3">
+          <div class="field"><label class="field-label">Watt</label><input class="field-input" type="number" step="1" name="lt1_watts"></div>
+          <div class="field"><label class="field-label">Puls</label><input class="field-input" type="number" step="1" name="lt1_bpm"></div>
+          <div class="field"><label class="field-label">Tempo</label><input class="field-input" type="text" name="lt1_pace" placeholder="5:10/km"></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Laktattröskel 2</div>
+        <div class="form-row-3">
+          <div class="field"><label class="field-label">Watt</label><input class="field-input" type="number" step="1" name="lt2_watts"></div>
+          <div class="field"><label class="field-label">Puls</label><input class="field-input" type="number" step="1" name="lt2_bpm"></div>
+          <div class="field"><label class="field-label">Tempo</label><input class="field-input" type="text" name="lt2_pace" placeholder="4:00/km"></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Kroppssammansättning</div>
+        <div class="form-row-3">
+          <div class="field"><label class="field-label">Fett %</label><input class="field-input" type="number" step="0.1" name="body_fat_pct"></div>
+          <div class="field"><label class="field-label">Muskel kg</label><input class="field-input" type="number" step="0.1" name="muscle_mass_kg"></div>
+          <div class="field"><label class="field-label">Bentäthet T</label><input class="field-input" type="number" step="0.1" name="bone_density_t_score"></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Grundvärden</div>
+        <div class="form-row-2">
+          <div class="field"><label class="field-label">Vikt (kg)</label><input class="field-input" type="number" step="0.1" name="weight_kg"></div>
+          <div class="field"><label class="field-label">Längd (cm)</label><input class="field-input" type="number" step="0.1" name="height_cm"></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Anteckningar</div>
+        <textarea class="field-input field-textarea" name="notes" placeholder="Protokoll, sensationer, miljö…"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" onclick="hideForm()">Avbryt</button>
+        <button type="submit" class="btn-primary" id="saveBtn">Spara test</button>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+</div>
+
+<script>
+function token(){ return localStorage.getItem('prv_token') || ''; }
+function authHeaders(extra){
+  const t = token();
+  const h = { 'Content-Type': 'application/json' };
+  if (t) h['Authorization'] = 'Bearer ' + t;
+  return Object.assign(h, extra || {});
+}
+if (!token()) { window.location.href = '/login.html?from=' + encodeURIComponent(location.pathname); }
+
+const loadingEl  = document.getElementById('loading');
+const listViewEl = document.getElementById('listView');
+const formViewEl = document.getElementById('formView');
+const testsListEl = document.getElementById('testsList');
+const formEl     = document.getElementById('testForm');
+const saveBtn    = document.getElementById('saveBtn');
+const formError  = document.getElementById('formError');
+
+function fmtDate(d) {
+  const months = ['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'];
+  const dt = new Date(d + 'T00:00:00');
+  return `${dt.getDate()} ${months[dt.getMonth()]} ${dt.getFullYear()}`;
+}
+
+function renderTests(tests) {
+  if (!tests.length) {
+    testsListEl.innerHTML = '<div class="empty-state">Inga labbtester än. Lägg till det första så ser din data mer av dig.</div>';
+    return;
+  }
+  testsListEl.innerHTML = tests.map(t => {
+    const metrics = [];
+    if (t.vo2max != null)        metrics.push(`VO2max <strong>${t.vo2max}</strong>`);
+    if (t.lt1_watts != null)     metrics.push(`LT1 <strong>${t.lt1_watts}W</strong>${t.lt1_bpm ? ` / ${t.lt1_bpm} bpm` : ''}${t.lt1_pace ? ` / ${t.lt1_pace}` : ''}`);
+    if (t.lt2_watts != null)     metrics.push(`LT2 <strong>${t.lt2_watts}W</strong>${t.lt2_bpm ? ` / ${t.lt2_bpm} bpm` : ''}${t.lt2_pace ? ` / ${t.lt2_pace}` : ''}`);
+    if (t.body_fat_pct != null)  metrics.push(`Fett <strong>${t.body_fat_pct}%</strong>`);
+    if (t.muscle_mass_kg != null)metrics.push(`Muskel <strong>${t.muscle_mass_kg} kg</strong>`);
+    if (t.bone_density_t_score != null) metrics.push(`Bentäthet <strong>T=${t.bone_density_t_score}</strong>`);
+    if (t.weight_kg != null)     metrics.push(`Vikt <strong>${t.weight_kg} kg</strong>`);
+    return `
+      <div class="test-card" data-id="${t.id}">
+        <div class="test-date">${fmtDate(t.date)}</div>
+        ${t.provider ? `<div class="test-provider">${escapeHTML(t.provider)}</div>` : ''}
+        ${metrics.length ? `<div class="test-metrics">${metrics.join(' · ')}</div>` : ''}
+        ${t.notes ? `<div class="test-notes">${escapeHTML(t.notes)}</div>` : ''}
+        <div class="test-actions">
+          <button class="test-delete" onclick="deleteTest('${t.id}')">Radera</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function escapeHTML(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function loadTests() {
+  try {
+    const r = await fetch('/api/lab/tests', { headers: authHeaders() });
+    if (r.status === 401) { localStorage.removeItem('prv_token'); window.location.href='/login.html'; return; }
+    const j = await r.json();
+    loadingEl.style.display = 'none';
+    listViewEl.style.display = 'block';
+    renderTests(j.tests || []);
+  } catch (e) {
+    loadingEl.style.display = 'none';
+    listViewEl.style.display = 'block';
+    testsListEl.innerHTML = '<div class="empty-state">Kunde inte ladda tester just nu.</div>';
+  }
+}
+
+function showForm() {
+  formError.style.display = 'none';
+  formEl.reset();
+  // Default today's date
+  formEl.date.value = new Date().toISOString().slice(0,10);
+  listViewEl.style.display = 'none';
+  formViewEl.style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function hideForm() {
+  formViewEl.style.display = 'none';
+  listViewEl.style.display = 'block';
+}
+
+formEl.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  formError.style.display = 'none';
+  saveBtn.disabled = true;
+
+  const fd = new FormData(formEl);
+  const body = {};
+  for (const [k, v] of fd.entries()) {
+    if (v === '' || v == null) continue;
+    if (['vo2max','lt1_watts','lt1_bpm','lt2_watts','lt2_bpm','body_fat_pct','muscle_mass_kg','bone_density_t_score','weight_kg','height_cm'].includes(k)) {
+      body[k] = Number(v);
+    } else {
+      body[k] = v;
+    }
+  }
+
+  try {
+    const r = await fetch('/api/lab/create', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(body)
+    });
+    const j = await r.json();
+    if (!r.ok || !j.ok) {
+      formError.textContent = j.error || 'Kunde inte spara.';
+      formError.style.display = 'block';
+      return;
+    }
+    hideForm();
+    await loadTests();
+  } catch (err) {
+    formError.textContent = 'Kunde inte nå servern.';
+    formError.style.display = 'block';
+  } finally {
+    saveBtn.disabled = false;
+  }
+});
+
+async function deleteTest(id) {
+  if (!confirm('Radera det här testet? Det går inte att ångra.')) return;
+  try {
+    const r = await fetch('/api/lab/' + id, { method: 'DELETE', headers: authHeaders() });
+    if (!r.ok) throw new Error('fail');
+    await loadTests();
+  } catch (e) {
+    alert('Kunde inte radera.');
+  }
+}
+
+loadTests();
+</script>
+
+</body>
+</html>

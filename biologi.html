@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Blodprover & hormoner</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<style>
+:root{--ink:#0F1210;--ink2:#131714;--ink3:#171c18;--fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;--accent:#8FAE8A;--warn:#C4875A;--danger:#A85C5C;--trust:#5B7FA6;--serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;--border:rgba(242,240,234,0.06);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;line-height:1.7;min-height:100vh;overflow-x:hidden;}
+.page-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;}
+.page-bg-img{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.18) saturate(0.4);}
+.page-bg-veil{position:absolute;inset:0;background:linear-gradient(to bottom,var(--ink) 0%,rgba(15,18,16,0.72) 9%,rgba(15,18,16,0.06) 26%,rgba(15,18,16,0.06) 74%,rgba(15,18,16,0.72) 91%,var(--ink) 100%);}
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(2rem,5vw,4rem);height:64px;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.85);backdrop-filter:blur(32px);}
+.logo{font-family:var(--serif);font-size:1.1rem;font-weight:400;letter-spacing:0.18em;color:var(--fg);text-decoration:none;}
+.nav-center{font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+.nav-meta{display:flex;align-items:center;gap:1.5rem;}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(143,174,138,0.6);animation:pulse 2.5s ease infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.nav-date{font-family:var(--serif);font-size:0.9rem;color:var(--fg2);}
+.nav-user{font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg3);text-decoration:none;}
+.nav-signal{display:none;font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--danger);text-decoration:none;align-items:center;gap:0.4rem;}
+.nav-signal::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);animation:sig-pulse 1.6s ease infinite;}
+.nav-signal.show{display:flex;}
+@keyframes sig-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(168,92,92,0.6)}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(168,92,92,0)}}
+main{position:relative;z-index:1;flex:1;min-width:0;overflow-y:auto;height:100%;}
+
+.page-header{padding:1.8rem 2rem 1.4rem;border-bottom:1px solid var(--border);}
+.page-header h1{font-family:var(--serif);font-size:1.8rem;font-weight:300;font-style:italic;line-height:1.2;color:var(--fg);}
+.page-header-sub{font-size:0.62rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);margin-top:0.3rem;}
+
+.s-section{padding:clamp(2.5rem,4vw,3.5rem) clamp(2rem,6vw,5rem);border-bottom:1px solid var(--border);}
+.s-ey{font-size:0.56rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.5rem;display:flex;align-items:center;gap:0.7rem;}
+.s-ey::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+.dots{display:flex;gap:0.4rem;}.dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:dp 1.4s ease infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.load-row{display:flex;align-items:center;gap:0.8rem;}
+.load-txt{font-size:0.6rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+
+.up-zone{border:1px solid var(--border);background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);padding:3rem 2rem;text-align:center;cursor:pointer;transition:border-color 0.2s,background 0.2s;max-width:600px;}
+.up-zone:hover,.up-zone.drag{border-color:rgba(143,174,138,0.25);background:rgba(15,18,16,0.75);}
+.up-zone-txt{font-family:var(--serif);font-style:italic;font-size:1rem;color:var(--fg3);margin-bottom:0.5rem;}
+.up-zone-meta{font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg4);}
+.up-input{display:none;}
+.up-result{margin-top:1.5rem;display:none;}
+.up-result-ey{font-size:0.54rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);margin-bottom:0.8rem;}
+.up-result-txt{font-family:var(--serif);font-style:italic;font-size:0.9rem;color:var(--fg2);line-height:1.7;max-width:560px;}
+
+.bio-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);}
+.bio-card{background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);padding:1.6rem;position:relative;overflow:hidden;}
+.bio-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;}
+.bio-card.ok::before{background:var(--accent);}
+.bio-card.warn::before{background:var(--warn);}
+.bio-card.low::before{background:var(--danger);}
+.bio-card.empty::before{background:var(--fg4);opacity:0.3;}
+.bio-name{font-size:0.66rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg3);margin-bottom:0.5rem;}
+.bio-val{font-family:var(--serif);font-size:2rem;font-weight:300;line-height:1;margin-bottom:0.3rem;}
+.bio-val.ok{color:var(--accent);}.bio-val.warn{color:var(--warn);}.bio-val.low{color:var(--danger);}.bio-val.empty{color:var(--fg4);}
+.bio-ref{font-size:0.64rem;color:var(--fg4);margin-bottom:0.5rem;}
+.bio-insight{font-family:var(--serif);font-style:italic;font-size:0.8rem;color:var(--fg3);line-height:1.7;border-top:1px solid var(--border);padding-top:0.8rem;margin-top:0.6rem;}
+.bio-empty{padding:2rem clamp(2rem,6vw,5rem);font-family:var(--serif);font-style:italic;font-size:0.82rem;color:var(--fg4);}
+
+.s-footer{padding:clamp(2rem,4vw,3rem) clamp(2rem,6vw,5rem);font-family:var(--serif);font-style:italic;font-size:0.7rem;color:var(--fg4);}
+.content-wrap{display:flex;align-items:flex-start;height:calc(100vh - 64px);overflow:hidden;}
+.sidebar{width:210px;height:100%;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:rgba(15,18,16,0.4);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;z-index:50;padding:2.5rem 0 1.8rem;}
+.sidebar::-webkit-scrollbar{display:none;}
+.ng{margin-bottom:0;}
+.ngl{font-size:0.44rem;letter-spacing:0.32em;text-transform:uppercase;color:var(--fg4);padding:0.7rem 1.8rem 0.2rem;}
+.nl{display:block;padding:0.22rem 1.8rem;font-size:0.76rem;letter-spacing:0.06em;color:var(--fg3);text-decoration:none;transition:color 0.2s,border-left-color 0.2s;border-left:1px solid transparent;cursor:pointer;}
+.nl:hover{color:var(--fg2);}
+.nl.active{color:var(--fg);border-left-color:var(--accent);background:rgba(143,174,138,0.04);}
+.nl.signal-link{color:var(--danger);display:flex;align-items:center;gap:0.5rem;}
+.nl.signal-link::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+.selvitas-wrap{margin-top:auto;padding-top:0.5rem;border-top:1px solid var(--border);}.selvitas-nav{display:block;padding:0.6rem 1.8rem 0.3rem;font-family:var(--serif);font-style:italic;font-size:0.78rem;letter-spacing:0.08em;color:var(--fg3);text-decoration:none;transition:color 0.2s;}.selvitas-nav:hover{color:var(--fg2);}
+
+@media(max-width:860px){
+  .sidebar{display:none!important;}
+  .content-wrap,.page-wrap,.layout-wrap{display:block!important;}
+  #main,.main-content,.page-content{width:100%!important;max-height:none!important;overflow-y:auto!important;}
+  .mg,.pred-grid,.today-plan-grid,.bio-grid,.src-grid,.prof-grid{grid-template-columns:1fr 1fr!important;}
+  .pred-grid,.prof-grid{grid-template-columns:1fr!important;}
+}
+</style>
+</head>
+<body>
+<script>checkAuth();</script>
+<div class="page-bg">
+  <div class="page-bg-img" style="background-image:url('images/DALL·E 2026-04-11 15.59.28 - A dark, minimal laboratory environment focused on blood testing and hormones. A clean, clinical workspace emerges from deep shadow, illuminated by a s.webp')"></div>
+  <div class="page-bg-veil"></div>
+</div>
+<nav>
+  <a href="dashboard.html" class="logo">Forsyne</a>
+  <span class="nav-center">Blodprover &amp; hormoner</span>
+  <div class="nav-meta">
+    <div class="nav-dot"></div>
+    <span class="nav-date" id="topDate"></span>
+    <a class="nav-user" id="topUser" href="profile.html"></a>
+  </div>
+</nav>
+<div class="content-wrap">
+<aside class="sidebar">
+  <div class="ng">
+    <div class="ngl">Idag</div>
+    <a class="nl" href="dashboard.html">Dashboard</a>
+    <a class="nl" href="checkin.html">Check-in</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Mönster</div>
+    <a class="nl" href="sleep.html">Sömn</a>
+    <a class="nl" href="energy.html">Energi</a>
+    <a class="nl" href="stress.html">Stress</a>
+    <a class="nl" href="training.html">Träning</a>
+    <a class="nl" href="kostlogg.html">Kost</a>
+    <a class="nl" href="wearables.html">Wearables</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Djupet</div>
+    <a class="nl" href="biologi.html">Biologi</a>
+    <a class="nl" href="dna.html">DNA</a>
+    <a class="nl" href="journal.html">Journal</a>
+    <a class="nl" href="analys.html">Analys</a>
+    <a class="nl" href="coach.html">Coach</a>
+  </div>
+</aside>
+<main>
+
+  <div class="page-header">
+    <h1>Blodprover &amp; hormoner</h1>
+    <div class="page-header-sub">Din biologi &middot; Laboratoriedata</div>
+  </div>
+
+  <!-- Ladda upp -->
+  <section class="s-section">
+    <div class="s-ey">Ladda upp provsvar</div>
+    <div class="up-zone" id="up-zone" onclick="document.getElementById('up-input').click()" ondragover="ev(event)" ondrop="drop(event)" ondragleave="this.classList.remove('drag')">
+      <div class="up-zone-txt">Drag och släpp eller klicka för att ladda upp</div>
+      <div class="up-zone-meta">PDF · JPG · PNG — max 10 MB</div>
+    </div>
+    <input class="up-input" type="file" id="up-input" accept=".pdf,.jpg,.jpeg,.png" onchange="upload(this.files[0])">
+    <div id="up-loading" style="display:none;margin-top:1rem;" class="load-row">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Agenten läser dokumentet</span>
+    </div>
+    <div class="up-result" id="up-result">
+      <div class="up-result-ey">Agentens extraktion</div>
+      <div class="up-result-txt" id="up-result-txt"></div>
+    </div>
+  </section>
+
+  <!-- Markörer -->
+  <section class="s-section" id="bio-sec" style="display:none;">
+    <div class="s-ey">Uppladdade markörer</div>
+    <div class="bio-grid" id="bio-grid"></div>
+  </section>
+
+  <div class="bio-empty" id="bio-empty" style="display:none;">
+    Inga biologiska markörer uppladdade ännu. Ladda upp ett blodprov för att aktivera analysen.
+  </div>
+
+  <footer class="s-footer">Allt krypteras med AES-256. Bara du har tillgång.</footer>
+
+</main>
+</div>
+
+<script>
+// ── Sidebar: auto-active baserat på URL ──
+(function(){
+  const page = location.pathname.split('/').pop() || 'dashboard.html';
+  document.querySelectorAll('.sidebar a.nl').forEach(a => {
+    if (a.getAttribute('href') === page) a.classList.add('active');
+  });
+})();
+
+function tw(el,text,ms,cb){let i=0;el.textContent='';const t=()=>{if(i<text.length){el.textContent+=text[i++];setTimeout(t,ms);}else if(cb)cb();};t();}
+function ev(e){e.preventDefault();document.getElementById('up-zone').classList.add('drag');}
+function drop(e){e.preventDefault();document.getElementById('up-zone').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)upload(f);}
+
+async function upload(file){
+  if(!file)return;
+  document.getElementById('up-loading').style.display='flex';
+  document.getElementById('up-result').style.display='none';
+  const fd=new FormData();
+  fd.append('file',file);
+  fd.append('type','biologi');
+  let txt='Agenten kunde inte läsa dokumentet.';
+  try{
+    const r=await fetch('/api/journal/analyze',{method:'POST',headers:{'Authorization':'Bearer '+API.token()},body:fd});
+    if(r.ok){const j=await r.json();txt=j.analysis?.systemkontext||j.insikt||j.extraction||'Dokumentet analyserades.';}
+  }catch(e){}
+  document.getElementById('up-loading').style.display='none';
+  const resEl=document.getElementById('up-result-txt');
+  document.getElementById('up-result').style.display='block';
+  tw(resEl,txt,14);
+}
+
+function renderMarkers(markers){
+  if(!markers||markers.length===0){document.getElementById('bio-empty').style.display='block';return;}
+  const grid=document.getElementById('bio-grid');
+  document.getElementById('bio-sec').style.display='block';
+  markers.forEach(m=>{
+    const status=m.status||'empty';
+    const card=document.createElement('div');
+    card.className=`bio-card ${status}`;
+    card.innerHTML=`<div class="bio-name">${m.name||'Okänd markör'}</div><div class="bio-val ${status}">${m.value||'saknas'}</div><div class="bio-ref">Ref: ${m.reference||'ej angiven'}</div>${m.insight?`<div class="bio-insight">${m.insight}</div>`:''}`;
+    grid.appendChild(card);
+  });
+}
+
+(async()=>{
+  const d=new Date();
+  const DAYS=['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+  const MONTHS=['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+  const dateEl=document.getElementById('topDate'),userEl=document.getElementById('topUser');
+  if(dateEl)dateEl.textContent=DAYS[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()];
+  if(userEl){const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');const u=API&&API.user?API.user():null;userEl.textContent=(ob.q3_1||(u?u.email.split('@')[0]:'')||'').toUpperCase();}
+
+  let checkins=[];
+  try{const r=await fetch('/api/checkins',{headers:{'Authorization':'Bearer '+API.token()}});if(r.ok){const data=await r.json();checkins=Array.isArray(data)?data:(data.checkins||[]);}}catch(e){}
+
+  try{const signalEl=document.getElementById('nav-signal');const recent=(checkins||[]).slice(-3);if(recent.filter(c=>c.stress>=7&&c.sleep<=5).length>=2&&signalEl)signalEl.classList.add('show');}catch(e){}
+
+  let markers=[];
+  try{const r=await fetch('/api/journal?type=biologi',{headers:{'Authorization':'Bearer '+API.token()}});if(r.ok){const j=await r.json();markers=j.markers||j.documents||[];}}catch(e){}
+  if(markers.length===0){document.getElementById('bio-empty').style.display='block';}
+  else{renderMarkers(markers);}
+})();
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

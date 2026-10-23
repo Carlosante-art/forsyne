@@ -1,0 +1,55 @@
+Kör EN i taget i Supabase SQL Editor.
+Vänta tills varje query är klar innan du kör nästa.
+========================================================
+
+
+--- STEG 1: RLS för training_schedule ---
+
+ALTER TABLE training_schedule ENABLE ROW LEVEL SECURITY;
+
+
+--- STEG 2: Policy för training_schedule ---
+
+CREATE POLICY "training_schedule_user" ON training_schedule FOR ALL USING (auth.uid() = user_id);
+
+
+--- STEG 3: Skapa nutrition_protocol ---
+
+CREATE TABLE IF NOT EXISTS nutrition_protocol (
+  id                    uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id               uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  fastar                boolean DEFAULT false,
+  fastfönster           text,
+  kolhydratsstrategi    text,
+  kolhydrater_gram      integer,
+  protein_gram          integer,
+  kalorier              integer,
+  tillskott             text[],
+  anteckningar          text,
+  updated_at            timestamptz DEFAULT now(),
+  UNIQUE(user_id)
+);
+
+
+--- STEG 4: RLS för nutrition_protocol ---
+
+ALTER TABLE nutrition_protocol ENABLE ROW LEVEL SECURITY;
+
+
+--- STEG 5: Policy för nutrition_protocol ---
+
+CREATE POLICY "nutrition_protocol_user" ON nutrition_protocol FOR ALL USING (auth.uid() = user_id);
+
+
+--- STEG 6: Lägg till kolumner på insights ---
+
+ALTER TABLE insights ADD COLUMN IF NOT EXISTS mönster_referens text;
+
+
+--- STEG 7: Lägg till kolumner på insights ---
+
+ALTER TABLE insights ADD COLUMN IF NOT EXISTS psi_förklaring text;
+
+
+========================================================
+Klart! Alla 7 steg körda = migrationen är komplett.

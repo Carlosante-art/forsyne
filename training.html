@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Träning</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="transitions.js"></script>
+<script src="auth.js"></script>
+<script src="cache.js"></script>
+<style>
+:root {
+  --ink:#0F1210;--ink2:#131714;
+  --fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;
+  --accent:#8FAE8A;--warn:#C4875A;--danger:#A85C5C;--trust:#5B7FA6;
+  --serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;
+  --border:rgba(242,240,234,0.06);
+  --pad:clamp(5rem,8vw,9rem);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;line-height:1.7;overflow-x:hidden;}
+
+/* ── BAKGRUND ── */
+.page-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;}
+.page-bg-img{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.18) saturate(0.4);}
+.page-bg-veil{position:absolute;inset:0;background:linear-gradient(to bottom,var(--ink) 0%,rgba(15,18,16,0.72) 9%,rgba(15,18,16,0.06) 26%,rgba(15,18,16,0.06) 74%,rgba(15,18,16,0.72) 91%,var(--ink) 100%);}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(2rem,5vw,4rem);height:64px;border-bottom:1px solid var(--border);background:rgba(15,18,16,0.85);backdrop-filter:blur(32px);}
+.logo{font-family:var(--serif);font-size:1.15rem;font-weight:400;letter-spacing:0.18em;color:var(--fg);text-decoration:none;}
+.nav-center{font-size:0.58rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg3);}
+.nav-meta{display:flex;align-items:center;gap:1.6rem;}
+.nav-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(143,174,138,0.6);animation:pulse 2.5s ease infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.nav-date{font-family:var(--serif);font-size:0.88rem;color:var(--fg2);}
+.nav-user{font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg3);text-decoration:none;}
+.nav-signal{font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--danger);display:none;align-items:center;gap:0.4rem;text-decoration:none;}
+.nav-signal.show{display:flex;}
+.nav-signal::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+@keyframes sig-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(168,92,92,0.6)}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(168,92,92,0)}}
+
+/* ── MAIN ── */
+main{position:relative;z-index:1;flex:1;min-width:0;overflow-y:auto;height:100%;}
+
+/* ── LABEL ── */
+.s-label{font-size:0.68rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--accent);opacity:0.8;display:flex;align-items:center;gap:0.75rem;margin-bottom:2.2rem;}
+.s-label::before{content:'';width:16px;height:1px;background:var(--accent);opacity:0.5;flex-shrink:0;}
+
+/* ── AKT 1 — HERO ── */
+.s-hero{min-height:100vh;display:flex;align-items:flex-start;justify-content:flex-start;flex-direction:column;padding:calc(68vh - 6rem) clamp(2rem,6vw,5rem) clamp(3.5rem,6vw,5rem);}
+.s-hero-inner{max-width:720px;}
+.s-opening{font-family:var(--serif);font-size:clamp(2.2rem,4.5vw,4rem);font-weight:300;font-style:italic;line-height:1.2;color:var(--fg);text-shadow:0 1px 24px rgba(15,18,16,0.85),0 4px 80px rgba(15,18,16,0.6);min-height:clamp(7rem,13.75vw,12.5rem);margin-bottom:2rem;}
+.s-sub{font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);opacity:0;transition:opacity 0.5s ease 0.3s;display:flex;align-items:center;gap:0.7rem;}
+.s-sub.vis{opacity:1;}
+.s-sub::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+
+/* ── AKT 2 — DATA ── */
+.s-data{padding:var(--pad) clamp(2rem,6vw,5rem);max-width:1000px;margin:0 auto;}
+.cg{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:3rem;}
+.ci{background:rgba(15,18,16,0.55);backdrop-filter:blur(12px);padding:1.3rem 1.5rem;}
+.cl{font-size:0.56rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--fg4);margin-bottom:0.5rem;}
+.cv{font-family:var(--serif);font-size:1.9rem;font-weight:300;line-height:1;color:var(--fg);margin-bottom:0.3rem;}
+.cv small{font-size:0.45em;color:var(--fg3);font-family:var(--sans);}
+.cd{font-size:0.68rem;color:var(--fg3);}
+.cd.up{color:var(--accent);}.cd.dn{color:var(--danger);}.cd.wn{color:var(--warn);}
+.dl-wrap{display:flex;flex-direction:column;}
+.dr{display:grid;grid-template-columns:100px 1fr 70px;align-items:center;gap:1.4rem;padding:0.85rem 0;border-bottom:1px solid var(--border);position:relative;opacity:0;transform:translateX(-10px);}
+.dr:last-child{border-bottom:none;}
+.dr.vis{opacity:1;transform:translateX(0);transition:opacity 0.45s ease,transform 0.45s ease;}
+.dd{font-size:0.7rem;color:var(--fg3);letter-spacing:0.05em;white-space:nowrap;}
+.dbw{height:2px;background:rgba(242,240,234,0.05);position:relative;}
+.db{height:100%;width:0%;transition:width 0.65s ease;position:absolute;left:0;top:0;}
+.dv{font-family:var(--serif);font-size:0.95rem;font-weight:300;color:var(--fg2);text-align:right;opacity:0;transition:opacity 0.3s ease 0.6s;}
+.dr.vis .dv{opacity:1;}
+.dtt{position:absolute;left:0;bottom:calc(100% + 6px);background:rgba(15,18,16,0.95);border:1px solid rgba(143,174,138,0.1);padding:0.45rem 0.8rem;font-family:var(--serif);font-style:italic;font-size:0.78rem;color:var(--fg3);line-height:1.5;pointer-events:none;opacity:0;transition:opacity 0.18s ease;z-index:20;max-width:320px;}
+.dr:hover .dtt{opacity:1;}
+.dr.empty .db{width:12%!important;background:rgba(242,240,234,0.08)!important;}
+.dr.empty .dv{color:var(--fg4);font-style:italic;}
+
+/* ── AKT 3 — INSIKT ── */
+.s-insight{padding:var(--pad) clamp(2rem,6vw,5rem);max-width:800px;margin:0 auto;opacity:0;transform:translateY(16px);transition:opacity 0.6s ease,transform 0.6s ease;}
+.s-insight.vis{opacity:1;transform:translateY(0);}
+.s-insikt{font-family:var(--serif);font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:300;line-height:1.22;color:var(--fg);max-width:680px;margin-bottom:3rem;text-shadow:0 1px 20px rgba(15,18,16,0.85);}
+.s-items{display:flex;flex-direction:column;gap:1.2rem;max-width:580px;}
+.di{display:flex;gap:0.8rem;align-items:flex-start;opacity:0;transform:translateY(8px);transition:opacity 0.4s ease,transform 0.4s ease;font-size:0.88rem;color:var(--fg2);line-height:1.7;text-shadow:0 1px 10px rgba(15,18,16,0.95);}
+.di.vis{opacity:1;transform:translateY(0);}
+.dm{font-size:1.2rem;line-height:1;margin-top:0.1rem;flex-shrink:0;}
+
+/* ── AKT 4 — VALIDERING ── */
+.s-validation{padding:var(--pad) clamp(2rem,6vw,5rem);max-width:800px;margin:0 auto;}
+.val-label{font-size:0.56rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:2.5rem;display:flex;align-items:center;gap:0.7rem;}
+.val-label::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+.val-intro{font-size:0.54rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.2rem;}
+.val-p{font-family:var(--serif);font-size:clamp(0.9rem,1.4vw,1.05rem);font-weight:300;font-style:italic;line-height:1.9;color:var(--fg2);max-width:560px;margin-bottom:2rem;text-shadow:0 1px 18px rgba(15,18,16,0.9);}
+.val-question{font-family:var(--serif);font-size:clamp(1.5rem,2.5vw,2.1rem);font-weight:300;font-style:italic;color:var(--fg);margin-bottom:1.8rem;line-height:1.15;}
+.val-btns{display:flex;gap:1rem;flex-wrap:wrap;}
+.val-btn{background:none;border:1px solid var(--border);color:var(--fg3);font-family:var(--sans);font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.65rem 1.5rem;cursor:pointer;transition:all 0.2s;}
+.val-btn:hover{border-color:rgba(242,240,234,0.15);color:var(--fg2);}
+.val-btn.ja{border-color:rgba(143,174,138,0.35);color:var(--accent);}
+.val-btn.nej{border-color:rgba(168,92,92,0.35);color:var(--danger);}
+.val-fritext{display:none;margin-top:1.4rem;}
+.val-textarea{display:block;width:100%;max-width:500px;background:rgba(15,18,16,0.7);backdrop-filter:blur(8px);border:1px solid var(--border);color:var(--fg2);font-family:var(--sans);font-size:0.82rem;padding:0.8rem 1rem;resize:vertical;margin-bottom:0.8rem;outline:none;}
+.val-textarea:focus{border-color:rgba(143,174,138,0.25);}
+.val-skicka{background:none;border:1px solid rgba(143,174,138,0.3);color:var(--accent);font-family:var(--sans);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;padding:0.55rem 1.3rem;cursor:pointer;transition:all 0.2s;}
+.val-skicka:hover{background:rgba(143,174,138,0.06);}
+.val-tack{display:none;font-family:var(--serif);font-style:italic;color:var(--fg3);font-size:0.9rem;margin-top:1rem;}
+
+/* ── BIO + REK ── */
+.s-bio{padding:var(--pad) clamp(2rem,6vw,5rem);max-width:1000px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:5rem;}
+.s-bio-label{font-size:0.54rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--fg4);margin-bottom:1.8rem;display:flex;align-items:center;gap:0.6rem;}
+.s-bio-label::before{content:'';width:10px;height:1px;background:var(--accent);opacity:0.4;}
+.bio-marker{display:flex;justify-content:space-between;align-items:baseline;padding:0.65rem 0;border-bottom:1px solid var(--border);}
+.bio-marker:last-child{border-bottom:none;}
+.bm-name{font-size:0.68rem;color:var(--fg3);letter-spacing:0.03em;line-height:1.4;}
+.bm-right{text-align:right;}
+.bm-val{font-family:var(--serif);font-size:1.05rem;font-weight:300;line-height:1;}
+.bm-status{font-size:0.54rem;letter-spacing:0.14em;text-transform:uppercase;margin-top:0.2rem;}
+.bm-ok{color:var(--accent);}.bm-warn{color:var(--warn);}.bm-bad{color:var(--danger);}
+.rek-step{padding:0.9rem 0;border-bottom:1px solid var(--border);opacity:0;transform:translateY(6px);transition:opacity 0.4s ease,transform 0.4s ease;}
+.rek-step:last-child{border-bottom:none;}
+.rek-step.vis{opacity:1;transform:translateY(0);}
+.rek-atgard{font-family:var(--serif);font-size:0.9rem;font-weight:300;color:var(--fg);line-height:1.5;margin-bottom:0.3rem;}
+.rek-varfor{font-size:0.7rem;color:var(--fg3);line-height:1.6;padding-left:0.75rem;border-left:1px solid var(--border);}
+
+/* ── FOOTER ── */
+.s-footer{border-top:1px solid rgba(143,174,138,0.06);padding:2.5rem clamp(2rem,6vw,5rem);display:flex;align-items:center;justify-content:space-between;}
+.s-footer-quote{font-family:var(--serif);font-style:italic;font-size:0.72rem;color:var(--fg4);line-height:1.8;}
+.s-footer-back{font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg3);text-decoration:none;transition:color 0.2s;}
+.s-footer-back:hover{color:var(--fg2);}
+
+/* ── DOTS ── */
+.dots{display:flex;gap:0.4rem;}
+.dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:dp 1.4s ease infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.load-row{display:flex;align-items:center;gap:0.8rem;}
+.load-txt{font-size:0.6rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+.content-wrap{display:flex;align-items:flex-start;height:calc(100vh - 64px);overflow:hidden;}
+.sidebar{width:210px;height:100%;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:rgba(15,18,16,0.4);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;z-index:50;padding:2.5rem 0 1.8rem;}
+.sidebar::-webkit-scrollbar{display:none;}
+.ng{margin-bottom:0;}
+.ngl{font-size:0.44rem;letter-spacing:0.32em;text-transform:uppercase;color:var(--fg4);padding:0.7rem 1.8rem 0.2rem;}
+.nl{display:block;padding:0.22rem 1.8rem;font-size:0.76rem;letter-spacing:0.06em;color:var(--fg3);text-decoration:none;transition:color 0.2s,border-left-color 0.2s;border-left:1px solid transparent;cursor:pointer;}
+.nl:hover{color:var(--fg2);}
+.nl.active{color:var(--fg);border-left-color:var(--accent);background:rgba(143,174,138,0.04);}
+.nl.signal-link{color:var(--danger);display:flex;align-items:center;gap:0.5rem;}
+.nl.signal-link::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:sig-pulse 1.6s ease infinite;}
+.selvitas-wrap{margin-top:auto;padding-top:0.5rem;border-top:1px solid var(--border);}.selvitas-nav{display:block;padding:0.6rem 1.8rem 0.3rem;font-family:var(--serif);font-style:italic;font-size:0.78rem;letter-spacing:0.08em;color:var(--fg3);text-decoration:none;transition:color 0.2s;}.selvitas-nav:hover{color:var(--fg2);}
+
+/* ── IDAG-SEKTION ── */
+.today-section{padding:3rem clamp(2rem,6vw,5rem);max-width:1000px;margin:0 auto;border-bottom:1px solid var(--border);}
+.section-header{display:flex;align-items:baseline;gap:1.2rem;margin-bottom:2rem;}
+.section-title{font-family:var(--serif);font-size:clamp(1.6rem,3vw,2.4rem);font-weight:300;color:var(--fg);}
+.section-sub{font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--fg4);}
+.psi-badge{display:inline-flex;align-items:baseline;gap:0.3rem;padding:0.3rem 0.8rem;border:1px solid var(--border);background:var(--ink2);}
+.psi-badge-val{font-family:var(--serif);font-size:1.4rem;font-weight:300;line-height:1;}
+.psi-badge-lbl{font-size:0.52rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--fg4);}
+.today-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);}
+.today-card{background:var(--ink2);padding:1.8rem 2rem;position:relative;}
+.today-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.today-card.train-card::before{background:var(--accent);opacity:0.6;}
+.today-card.kost-card::before{background:var(--warn);opacity:0.5;}
+.today-card-label{font-size:0.54rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--fg4);margin-bottom:1rem;}
+.today-card-main{font-family:var(--serif);font-size:1.05rem;font-weight:300;color:var(--fg);line-height:1.5;margin-bottom:0.8rem;}
+.today-card-sub{font-size:0.78rem;color:var(--fg3);line-height:1.7;}
+.today-card-warn{font-size:0.72rem;color:var(--danger);margin-top:0.8rem;padding-top:0.8rem;border-top:1px solid rgba(168,92,92,0.15);}
+.today-mod{font-size:0.72rem;color:var(--warn);margin-top:0.6rem;}
+.systeminsikt{margin-top:1.5rem;padding:1rem 1.4rem;border-left:2px solid var(--accent);background:rgba(143,174,138,0.04);}
+.systeminsikt-lbl{font-size:0.5rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--accent);margin-bottom:0.4rem;}
+.systeminsikt-txt{font-family:var(--serif);font-style:italic;font-size:0.92rem;color:var(--fg2);line-height:1.6;}
+
+/* ── VECKOSCHEMA ── */
+.schema-section{padding:3rem clamp(2rem,6vw,5rem);max-width:1000px;margin:0 auto;}
+.schema-rows{display:flex;flex-direction:column;gap:1px;border:1px solid var(--border);}
+.schema-row{display:grid;grid-template-columns:90px 1fr 1fr 70px 80px auto;align-items:center;gap:0.8rem;padding:1rem 1.2rem;background:var(--ink2);border-bottom:1px solid var(--border);transition:border-left-color 0.2s;}
+.schema-row:last-child{border-bottom:none;}
+.schema-row.has-plan{border-left:2px solid var(--accent);}
+.schema-row.is-today{background:rgba(143,174,138,0.04);}
+.schema-day{font-size:0.68rem;letter-spacing:0.08em;color:var(--fg2);font-weight:400;}
+.schema-day.today-day{color:var(--accent);}
+.schema-sel{background:var(--ink);border:1px solid var(--border);color:var(--fg2);font-family:var(--sans);font-size:0.72rem;padding:0.4rem 0.6rem;outline:none;width:100%;cursor:pointer;}
+.schema-sel:focus{border-color:rgba(143,174,138,0.3);}
+.schema-sel option{background:var(--ink);}
+.schema-num{background:var(--ink);border:1px solid var(--border);color:var(--fg2);font-family:var(--sans);font-size:0.72rem;padding:0.4rem 0.6rem;outline:none;width:100%;text-align:center;}
+.schema-num:focus{border-color:rgba(143,174,138,0.3);}
+.schema-save{background:none;border:1px solid rgba(143,174,138,0.25);color:var(--accent);font-family:var(--sans);font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;padding:0.4rem 0.9rem;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.schema-save:hover{background:rgba(143,174,138,0.06);}
+.schema-save.saving{opacity:0.5;pointer-events:none;}
+.schema-save.saved{color:var(--fg3);border-color:var(--border);}
+
+@media(max-width:860px){
+  .sidebar{display:none!important;}
+  .content-wrap,.page-wrap,.layout-wrap{display:block!important;}
+  #main,.main-content,.page-content{width:100%!important;max-height:none!important;overflow-y:auto!important;}
+  .mg,.pred-grid,.today-plan-grid,.bio-grid,.src-grid,.prof-grid{grid-template-columns:1fr 1fr!important;}
+  .pred-grid,.prof-grid{grid-template-columns:1fr!important;}
+}
+</style>
+</head>
+<body>
+<script>checkAuth();</script>
+<div class="page-bg">
+  <div class="page-bg-img" style="background-image:url('images/DALL·E 2026-04-11 15.29.27 - A dark, minimal gym interior with a single focused light source illuminating a small area. The space is mostly in shadow, with deep blacks and muted c.webp')"></div>
+  <div class="page-bg-veil"></div>
+</div>
+
+<nav>
+  <a href="dashboard.html" class="logo">Forsyne</a>
+  <span class="nav-center">Träning &amp; rörelse</span>
+  <div class="nav-meta">
+    <div class="nav-dot"></div>
+    <span class="nav-date" id="topDate"></span>
+    <a class="nav-user" id="topUser" href="profile.html"></a>
+  </div>
+</nav>
+
+<div class="content-wrap">
+<aside class="sidebar">
+  <div class="ng">
+    <div class="ngl">Idag</div>
+    <a class="nl" href="dashboard.html">Dashboard</a>
+    <a class="nl" href="checkin.html">Check-in</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Mönster</div>
+    <a class="nl" href="sleep.html">Sömn</a>
+    <a class="nl" href="energy.html">Energi</a>
+    <a class="nl" href="stress.html">Stress</a>
+    <a class="nl" href="training.html">Träning</a>
+    <a class="nl" href="kostlogg.html">Kost</a>
+    <a class="nl" href="wearables.html">Wearables</a>
+  </div>
+  <div class="ng">
+    <div class="ngl">Djupet</div>
+    <a class="nl" href="biologi.html">Biologi</a>
+    <a class="nl" href="dna.html">DNA</a>
+    <a class="nl" href="journal.html">Journal</a>
+    <a class="nl" href="analys.html">Analys</a>
+    <a class="nl" href="coach.html">Coach</a>
+  </div>
+</aside>
+
+<main>
+
+  <!-- ── IDAG ── -->
+  <section class="today-section">
+    <div class="section-header">
+      <div class="section-title">Idag</div>
+      <span class="section-sub" id="today-date-label"></span>
+      <span id="psi-badge-wrap"></span>
+    </div>
+    <div id="today-load" class="load-row">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Systemet beräknar dagens plan</span>
+    </div>
+    <div id="today-content" style="display:none;">
+      <div class="today-grid">
+        <div class="today-card train-card">
+          <div class="today-card-label">Träning</div>
+          <div class="today-card-main" id="today-train-main"></div>
+          <div class="today-card-sub" id="today-train-sub"></div>
+          <div class="today-mod" id="today-train-mod" style="display:none;"></div>
+          <div class="today-card-warn" id="today-train-warn" style="display:none;"></div>
+        </div>
+        <div class="today-card kost-card">
+          <div class="today-card-label">Kost idag</div>
+          <div class="today-card-main" id="today-kost-main"></div>
+          <div class="today-card-sub" id="today-kost-sub"></div>
+        </div>
+      </div>
+      <div class="systeminsikt" id="today-systeminsikt" style="display:none;">
+        <div class="systeminsikt-lbl">Systeminsikt</div>
+        <div class="systeminsikt-txt" id="today-systeminsikt-txt"></div>
+      </div>
+    </div>
+    <div id="today-empty" style="display:none;font-family:var(--serif);font-style:italic;font-size:0.88rem;color:var(--fg4);margin-top:1rem;">Logga ett check-in för att se dagens rekommendation.</div>
+  </section>
+
+  <!-- ── VECKOSCHEMA ── -->
+  <section class="schema-section">
+    <div class="section-header">
+      <div class="section-title">Veckoschema</div>
+      <span class="section-sub">Din planerade träningsvecka</span>
+    </div>
+    <div id="schema-load" class="load-row">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Hämtar schema</span>
+    </div>
+    <div class="schema-rows" id="schema-rows" style="display:none;"></div>
+  </section>
+
+  <!-- ── HISTORISK DATA — AKT 1 ── -->
+  <section class="s-hero">
+    <div class="s-hero-inner">
+      <div class="s-label">Mönster &amp; historik · Senaste 14 dagar</div>
+      <div class="s-opening" id="ot">
+        <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      </div>
+      <div class="s-sub" id="ol">Träning &amp; rörelse · Senaste 14 dagar</div>
+    </div>
+  </section>
+
+  <!-- AKT 2 -->
+  <section class="s-data" id="a2" style="opacity:0;transition:opacity 0.5s ease;">
+    <div class="load-row" id="a2-load">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Hämtar träningsdata</span>
+    </div>
+    <div class="cg" id="cg" style="display:none;">
+      <div class="ci"><div class="cl">Intensitet snitt · 14 dagar</div><div class="cv" id="cv-avg">—<small>/10</small></div><div class="cd" id="cd-avg"></div></div>
+      <div class="ci"><div class="cl">Träning → återhämtning</div><div class="cv" id="cv-corr">—</div><div class="cd" id="cd-corr"></div></div>
+      <div class="ci"><div class="cl">Träningsdagar av 14</div><div class="cv" id="cv-days">—<small>d</small></div><div class="cd" id="cd-days"></div></div>
+      <div class="ci"><div class="cl">Check-ins totalt</div><div class="cv" id="cv-total">—</div><div class="cd">loggade dagar</div></div>
+    </div>
+    <div class="dl-wrap" id="dl" style="display:none;"></div>
+  </section>
+
+  <!-- AKT 3 -->
+  <section class="s-insight" id="a3">
+    <div class="load-row" id="a3-load">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Systemet analyserar</span>
+    </div>
+    <div id="a3-body" style="display:none;">
+      <div class="s-insikt" id="a3-dom"></div>
+      <div class="s-items" id="a3-items"></div>
+    </div>
+  </section>
+
+  <!-- AKT 4 -->
+  <section class="s-validation">
+    <div class="val-label">Validering</div>
+    <div class="load-row" id="a4-load">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      <span class="load-txt">Systemet formulerar ett påstående</span>
+    </div>
+    <div id="a4-body" style="display:none;">
+      <div class="val-intro">Systemet säger såhär:</div>
+      <div class="val-p" id="val-stmt"></div>
+      <div class="val-question">Känner du igen dig?</div>
+      <div class="val-btns" id="val-btns">
+        <button class="val-btn ja" onclick="svara('ja')">Ja, stämmer</button>
+        <button class="val-btn nej" onclick="svara('nej')">Nej, stämmer inte</button>
+      </div>
+      <div class="val-fritext" id="val-fritext">
+        <textarea class="val-textarea" id="val-text" rows="3" placeholder="Berätta mer — systemet lyssnar."></textarea>
+        <button class="val-skicka" onclick="skicka()">Skicka</button>
+      </div>
+      <div class="val-tack" id="val-tack">Tack. Systemet uppdaterar sin modell av dig.</div>
+    </div>
+  </section>
+
+  <!-- Bio + Rek -->
+  <section class="s-bio">
+    <div>
+      <div class="s-bio-label">Biologiska markörer</div>
+      <div id="bio-markers">
+        <div class="load-row"><span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></div>
+      </div>
+    </div>
+    <div>
+      <div class="s-bio-label">Systemets rekommendation</div>
+      <div id="rek-steps">
+        <div class="load-row"><span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span><span class="load-txt">Systemet formulerar</span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="s-footer">
+    <div class="s-footer-quote">Inte baserat på genomsnitt.<br>Baserat på dig.</div>
+    <a href="dashboard.html" class="s-footer-back">← Dashboard</a>
+  </footer>
+
+</main>
+</div>
+
+<script>
+// ── Sidebar: auto-active baserat på URL ──
+(function(){
+  const page = location.pathname.split('/').pop() || 'dashboard.html';
+  document.querySelectorAll('.sidebar a.nl').forEach(a => {
+    if (a.getAttribute('href') === page) a.classList.add('active');
+  });
+})();
+
+const DAGAR_ORDER=['Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag','Söndag'];
+const TYP_OPTS=['Vila','Aktiv vila','Lätt/Rörlighet','Kondition','Medel styrka','Tung styrka'];
+const FOKUS_OPTS=['—','Ben','Överkropp','Helkropp','Kondition','Rörlighet'];
+
+function tw(el,text,ms,cb){let i=0;el.textContent='';const t=()=>{if(i<text.length){el.textContent+=text[i++];setTimeout(t,ms);}else if(cb)cb();};t();}
+function pearsonCorr(xs,ys){const n=xs.length;if(n<3)return null;const mx=xs.reduce((a,b)=>a+b,0)/n,my=ys.reduce((a,b)=>a+b,0)/n;let num=0,dx2=0,dy2=0;for(let i=0;i<n;i++){const dx=xs[i]-mx,dy=ys[i]-my;num+=dx*dy;dx2+=dx*dx;dy2+=dy*dy;}const den=Math.sqrt(dx2*dy2);return den===0?null:num/den;}
+function trainColor(v){if(v===0)return 'var(--trust)';if(v<=6)return 'var(--accent)';if(v<=8)return 'var(--warn)';return 'var(--danger)';}
+function trainLabel(v){return v===0?'Vila':v+'/10';}
+function trainComment(v,stress,sleep){
+  if(v===null||v===undefined)return 'Ingen data loggad.';
+  if(v===0)return 'Vilodag. Återhämtning sker nu — inte under passet.';
+  if(v>=9){if(stress&&stress>=7)return 'Maxintensitet på hög stressdag. Kroppen kan inte prestera och återhämta sig samtidigt.';if(sleep&&sleep<6)return 'Hårt pass med otillräcklig sömn natten innan. Biologiskt kontraproduktivt.';return 'Mycket hög intensitet. Kontrollera att återhämtningen är tillräcklig.';}
+  if(v>=7){if(sleep&&sleep>=7)return 'Bra — sömnen natten innan matchade intensiteten.';return 'Hög intensitet. Nästa vila är lika viktig som passet självt.';}
+  if(v>=4)return 'Måttlig intensitet. Det optimala fönstret för anpassning utan överbelastning.';
+  return 'Lätt rörelse. Aktiv återhämtning — bättre än total passivitet.';
+}
+function computePd(c14) {
+  const getV=c=>c.training!=null?parseFloat(c.training):(c.workout!=null?parseFloat(c.workout):null);
+  const withT=c14.filter(c=>getV(c)!==null);
+  if(withT.length<3) return null;
+  const vals=withT.map(c=>getV(c));
+  const avg=vals.reduce((s,v)=>s+v,0)/vals.length;
+  const activeDays=withT.filter(c=>getV(c)>=5).length;
+  const restDays=withT.filter(c=>getV(c)<3).length;
+  const highDays=withT.filter(c=>getV(c)>=8).length;
+  const activeRatio=activeDays/withT.length;
+  const rev=[...withT].reverse();
+  let highStreak=0;for(const c of rev){if(getV(c)>=7)highStreak++;else break;}
+  const sPairs=withT.filter(c=>c.stress>0);
+  const sCorr=sPairs.length>=3?pearsonCorr(sPairs.map(c=>getV(c)),sPairs.map(c=>c.stress)):null;
+  const nextDay=[];c14.forEach((c,i)=>{if(i<c14.length-1&&getV(c)!==null&&c14[i+1].energy!=null)nextDay.push({t:getV(c),e:c14[i+1].energy});});
+  const ndCorr=nextDay.length>=3?pearsonCorr(nextDay.map(p=>p.t),nextDay.map(p=>p.e)):null;
+  let insikt,styrka,risk,rekommendation,validation,steg;
+  if(highStreak>=3) insikt=`${highStreak} intensiva pass i rad — utan inbyggd återhämtning bryter kroppen ner, bygger inte upp. Systemet ser det i energivärden efteråt.`;
+  else if(activeRatio>0.75) insikt=`${activeDays} av ${withT.length} dagar med aktiv träning — engagemanget är högt, men utan restvila stannar anpassningen.`;
+  else if(ndCorr!==null&&ndCorr<-0.4) insikt=`Energin dagen efter träning är lägre i din data — samband ${Math.abs(ndCorr).toFixed(2)}. Intensiteten matchar inte återhämtningskapaciteten.`;
+  else if(restDays>=activeDays) insikt=`${restDays} vilodagar mot ${activeDays} aktiva. Systemet frågar: är det planerad återhämtning eller omotivation?`;
+  else insikt=`Snitt intensitet ${avg.toFixed(1)}/10 på ${withT.length} loggade dagar. Systemet letar efter mönstret mellan pass och återhämtning.`;
+  if(activeDays>=8) styrka=`${activeDays} aktiva dagar av ${withT.length} — konsistensen är ett genuint mönster, inte slump.`;
+  else if(ndCorr!==null&&ndCorr>0.4) styrka=`Energin dagen efter träning är faktiskt högre i din data — kroppen svarar bra på belastning.`;
+  else styrka=`Träningsdisciplinen syns i din data — systemet ser ett konsistent engagemang.`;
+  if(highStreak>=3) risk=`${highStreak} intensiva pass i rad utan vila — nedbrytning utan uppbyggnad är den biologiska realiteten.`;
+  else if(ndCorr!==null&&ndCorr<-0.3) risk=`Intensiteten kombinerat med din nuvarande återhämtning skapar underskott, inte kapacitet.`;
+  else if(sCorr!==null&&sCorr>0.5) risk=`Hög träningsintensitet och hög stress sammanfaller i din data — kortisol plus träningsstress är fysiologiskt mer skadligt än vardera separat.`;
+  else risk=`Utan loggad vilostrategi kan systemet inte skilja konstruktiv belastning från nedbrytning.`;
+  if(highStreak>=3) rekommendation=`Aktivt vilopass imorgon — lätt rörelse 30 min, inget mer. Mät energin dagen efter.`;
+  else if(ndCorr!==null&&ndCorr<-0.3) rekommendation=`Sänk intensiteten 20% nästa vecka och logga om morgonenergin förändras.`;
+  else rekommendation=`Lägg in en explicit vilodag efter nästa intensiva pass och mät återhämtning +1 dag.`;
+  if(highStreak>=3) validation=`Systemet ser ${highStreak} intensiva pass i rad. Det brukar inte kännas som överbelastning inifrån — tvärtom, ofta som att det fungerar bra. Men systemet ser att energinivåerna dagen efter är lägre, inte högre. Det mönstret är svårt att känna i stunden.`;
+  else if(activeRatio>0.75) validation=`Systemet ser ${activeDays} aktiva träningsdagar av ${withT.length}. Det mönstret brukar kännas som att man gör rätt saker. Men systemet ser att energikurvan inte stiger i takt med aktiviteten. Frågan är inte om du tränar tillräckligt — utan om kroppen hinner svara.`;
+  else if(ndCorr!==null&&ndCorr<-0.3) validation=`Systemet ser att dagarna efter dina pass i genomsnitt är tyngre i din data. Du märker det kanske inte som ett problem — bara som att vissa dagar är lite segare. Men systemet ser ett mönster: träningen kostar mer än den återbetalar just nu.`;
+  else validation=`Det brukar finnas en osäkerhet som är svår att sätta ord på: om man gör för mycket eller för lite, om tröttheten är produktiv eller en varningssignal. Att det är svårt att veta om kroppen faktiskt svarar.`;
+  steg=[];
+  if(highStreak>=2) steg.push({atgard:`Aktivt vilopass imorgon — 20–30 min lätt rörelse, inget intensivt.`,varfor:`${highStreak} intensiva pass i rad ökar skaderisk och hämmar muskelsyntesen.`});
+  else steg.push({atgard:`Lägg in en aktiv vilodag efter din nästa intensiva träning.`,varfor:`Träning utan inbyggd återhämtning bryter ner mer än det bygger upp.`});
+  if(ndCorr!==null&&ndCorr<-0.3) steg.push({atgard:`Minska intensiteten med 20% nästa vecka och logga om energin dagen efter förbättras.`,varfor:`Energin dagen efter dina hårda pass är lägre i din data — ett direkt tecken på återhämtningsunderskott.`});
+  else steg.push({atgard:`Sov 8h+ natten före ditt nästa hårda pass.`,varfor:`Sömnkvaliteten är den enskilt viktigaste variabeln för träningsrespons och muskelsyntes.`});
+  return{insikt,styrka,risk,rekommendation,validation,steg};
+}
+
+function computeOpening(c14) {
+  const getV = c => c.training!=null?parseFloat(c.training):(c.workout!=null?parseFloat(c.workout):null);
+  const withT = c14.filter(c => getV(c) !== null);
+  if (withT.length < 3) return 'Du tränar hårt — men kroppen återhämtar sig inte i samma takt.';
+  const activeDays = withT.filter(c => getV(c) > 0).length;
+  const highI = withT.filter(c => getV(c) > 7).length;
+  const restD = withT.filter(c => getV(c) === 0).length;
+  const rev = [...withT].reverse();
+  let streak = 0; for (const c of rev) { if (getV(c) >= 7) streak++; else break; }
+  if (streak >= 3) return `${streak} pass i rad på intensitet ≥7/10 utan inbyggd vildag.`;
+  if (highI >= 3 && restD === 0) return `${highI} högintensiva pass av ${withT.length} dagar — och noll vilodagar.`;
+  if (highI >= 3 && restD <= 1) return `${highI} pass på intensitet 8+ av ${withT.length} dagar — bara ${restD===0?'ingen':'en'} vilodag.`;
+  if (activeDays <= 2 && withT.length >= 7) return `${activeDays} träningsdagar av ${withT.length} — systemet ser utrymmet.`;
+  const vals = withT.filter(c => getV(c) > 0).map(c => getV(c));
+  const avg = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+  if (avg !== null) return `Snitt ${avg.toFixed(1)}/10 i intensitet — ${avg>7?'hög belastning utan buffert':avg>5?'balansen avgör resultatet':'aktiviteten är lägre än potentialen'}.`;
+  return 'Du tränar hårt — men kroppen återhämtar sig inte i samma takt.';
+}
+
+let _pageCheckins=[];
+let valAnswer=null;
+function svara(ans){valAnswer=ans;document.querySelector('.val-btn.ja').style.opacity=ans==='ja'?'1':'0.4';document.querySelector('.val-btn.nej').style.opacity=ans==='nej'?'1':'0.4';document.getElementById('val-fritext').style.display='block';const stmt=document.getElementById('val-stmt').textContent;const s=JSON.parse(localStorage.getItem('forsyne_val_training')||'{}');s.statement=stmt;s.answer=ans;s.timestamp=Date.now();localStorage.setItem('forsyne_val_training',JSON.stringify(s));}
+async function skicka(){const text=document.getElementById('val-text').value.trim();const stmt=document.getElementById('val-stmt').textContent;const btn=document.querySelector('.val-skicka');btn.textContent='...';btn.disabled=true;let larda='Systemet uppdaterar sin modell av dig.';try{const r=await fetch('/api/agent/validate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.token()},body:JSON.stringify({kategori:'training',paastående:stmt,svar:valAnswer==='ja'?'stämmer':'stämmer inte',kommentar:text||null,datapunkter:_pageCheckins.slice(-7)})});if(r.ok){const d=await r.json();if(d.larda_notering)larda=d.larda_notering;if(d.battre_paastående){const s=JSON.parse(localStorage.getItem('forsyne_val_training')||'{}');s.battre=d.battre_paastående;localStorage.setItem('forsyne_val_training',JSON.stringify(s));}}}catch(e){}document.getElementById('val-fritext').style.display='none';document.getElementById('val-btns').style.display='none';const tackEl=document.getElementById('val-tack');tackEl.textContent=larda;tackEl.style.display='block';}
+
+// ── SCHEMA — Veckoschema-editor ──
+let _schemaData = {};
+
+function buildSchemaRows(savedSchedule) {
+  const todayName = new Date().toLocaleDateString('sv-SE', {weekday:'long'});
+  const todayCapitalized = todayName.charAt(0).toUpperCase() + todayName.slice(1);
+  const savedMap = {};
+  (savedSchedule || []).forEach(s => { savedMap[s.dag] = s; });
+
+  const container = document.getElementById('schema-rows');
+  container.innerHTML = '';
+
+  DAGAR_ORDER.forEach(dag => {
+    const saved = savedMap[dag] || {};
+    const isToday = dag.toLowerCase() === todayName.toLowerCase();
+    const hasPlan = !!(saved.typ && saved.typ !== 'Vila');
+
+    const row = document.createElement('div');
+    row.className = 'schema-row' + (hasPlan ? ' has-plan' : '') + (isToday ? ' is-today' : '');
+    row.dataset.dag = dag;
+
+    const typSel = TYP_OPTS.map(o => `<option value="${o}" ${saved.typ===o?'selected':''}>${o}</option>`).join('');
+    const fokSel = FOKUS_OPTS.map(o => `<option value="${o}" ${(saved.fokus||'—')===o?'selected':''}>${o}</option>`).join('');
+
+    row.innerHTML = `
+      <span class="schema-day ${isToday?'today-day':''}">${dag}${isToday?' · Idag':''}</span>
+      <select class="schema-sel" data-field="typ">${typSel}</select>
+      <select class="schema-sel" data-field="fokus">${fokSel}</select>
+      <input type="number" class="schema-num" data-field="intensitet" min="1" max="10" placeholder="Int" value="${saved.intensitet||''}">
+      <input type="number" class="schema-num" data-field="varaktighet" min="1" placeholder="Min" value="${saved.varaktighet||''}">
+      <button class="schema-save" onclick="saveSchemaRow(this)">Spara</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+async function saveSchemaRow(btn) {
+  const row = btn.closest('.schema-row');
+  const dag = row.dataset.dag;
+  const typ = row.querySelector('[data-field="typ"]').value;
+  const fokus = row.querySelector('[data-field="fokus"]').value;
+  const intensitetRaw = row.querySelector('[data-field="intensitet"]').value;
+  const varaktighetRaw = row.querySelector('[data-field="varaktighet"]').value;
+
+  const payload = {
+    dag,
+    typ: typ || null,
+    fokus: fokus === '—' ? null : (fokus || null),
+    intensitet: intensitetRaw ? parseInt(intensitetRaw) : null,
+    varaktighet: varaktighetRaw ? parseInt(varaktighetRaw) : null
+  };
+
+  btn.classList.add('saving');
+  btn.textContent = '...';
+
+  try {
+    const token = API && API.token ? API.token() : null;
+    const h = token ? {'Content-Type':'application/json','Authorization':'Bearer '+token} : {'Content-Type':'application/json'};
+    const r = await fetch('/api/training-schedule', {
+      method: 'POST',
+      headers: h,
+      body: JSON.stringify({ schedule: [payload] })
+    });
+    if (r.ok) {
+      btn.textContent = 'Sparat';
+      btn.classList.remove('saving');
+      btn.classList.add('saved');
+      // Update row styling
+      const hasPlan = typ && typ !== 'Vila';
+      row.classList.toggle('has-plan', hasPlan);
+      setTimeout(() => {
+        btn.textContent = 'Spara';
+        btn.classList.remove('saved');
+      }, 2000);
+    } else {
+      btn.textContent = 'Fel';
+      btn.classList.remove('saving');
+      setTimeout(() => { btn.textContent = 'Spara'; }, 2000);
+    }
+  } catch(e) {
+    btn.textContent = 'Fel';
+    btn.classList.remove('saving');
+    setTimeout(() => { btn.textContent = 'Spara'; }, 2000);
+  }
+}
+
+// ── IDAG-REKOMMENDATION ──
+async function loadTodayRecommendation() {
+  const token = API && API.token ? API.token() : null;
+  const h = token ? {'Content-Type':'application/json','Authorization':'Bearer '+token} : {'Content-Type':'application/json'};
+
+  // sessionStorage cache
+  const cached = sessionStorage.getItem('schedule_today');
+  const cachedTime = sessionStorage.getItem('schedule_today_ts');
+  const FOUR_HOURS = 4 * 60 * 60 * 1000;
+  if (cached && cachedTime && (Date.now() - parseInt(cachedTime)) < FOUR_HOURS) {
+    renderTodayRec(JSON.parse(cached));
+    return;
+  }
+
+  try {
+    const r = await fetch('/api/agent/schedule/recommend', { method: 'POST', headers: h });
+    if (!r.ok) throw new Error('server error');
+    const data = await r.json();
+    if (data.ok === false) {
+      document.getElementById('today-load').style.display = 'none';
+      document.getElementById('today-empty').style.display = 'block';
+      return;
+    }
+    sessionStorage.setItem('schedule_today', JSON.stringify(data));
+    sessionStorage.setItem('schedule_today_ts', Date.now().toString());
+    renderTodayRec(data);
+  } catch(e) {
+    document.getElementById('today-load').style.display = 'none';
+    document.getElementById('today-empty').style.display = 'block';
+  }
+}
+
+function renderTodayRec(data) {
+  document.getElementById('today-load').style.display = 'none';
+
+  // PSI badge
+  if (data.psi != null) {
+    const psiColor = data.psi >= 70 ? 'var(--accent)' : data.psi >= 55 ? 'var(--warn)' : 'var(--danger)';
+    document.getElementById('psi-badge-wrap').innerHTML = `<span class="psi-badge"><span class="psi-badge-val" style="color:${psiColor}">${data.psi}</span><span class="psi-badge-lbl">PSI</span></span>`;
+  }
+
+  const traning = data['träning'] || {};
+  const kost = data['kost'] || {};
+
+  // Träning
+  const mainEl = document.getElementById('today-train-main');
+  const subEl = document.getElementById('today-train-sub');
+  const modEl = document.getElementById('today-train-mod');
+  const warnEl = document.getElementById('today-train-warn');
+
+  if (traning.rekommendation) {
+    mainEl.textContent = traning.rekommendation;
+    const parts = [];
+    if (traning.intensitet_idag != null) parts.push(`Intensitet: ${traning.intensitet_idag}/10`);
+    if (traning.fokus_idag) parts.push(`Fokus: ${traning.fokus_idag}`);
+    subEl.textContent = parts.join(' · ');
+    if (traning.modifiering) { modEl.textContent = traning.modifiering; modEl.style.display = 'block'; }
+    if (traning.varning) { warnEl.textContent = traning.varning; warnEl.style.display = 'block'; }
+  } else {
+    mainEl.textContent = 'Ingen träning planerad idag.';
+  }
+
+  // Kost
+  const kostMain = document.getElementById('today-kost-main');
+  const kostSub = document.getElementById('today-kost-sub');
+  if (kost.prioritet_idag) {
+    kostMain.textContent = kost.prioritet_idag;
+    const kparts = [];
+    if (kost.justering) kparts.push(kost.justering);
+    if (kost.timing) kparts.push(kost.timing);
+    kostSub.textContent = kparts.join(' · ');
+  } else {
+    kostMain.textContent = 'Följ ditt kostprotokoll idag.';
+  }
+
+  // Systeminsikt
+  if (data.systeminsikt) {
+    document.getElementById('today-systeminsikt-txt').textContent = data.systeminsikt;
+    document.getElementById('today-systeminsikt').style.display = 'block';
+  }
+
+  document.getElementById('today-content').style.display = 'block';
+}
+
+(async()=>{
+  const d=new Date();
+  const DAYS=['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+  const MONTHS=['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+  const DS=['Sön','Mån','Tis','Ons','Tor','Fre','Lör'];
+  const MS=['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'];
+  const dateEl=document.getElementById('topDate'),userEl=document.getElementById('topUser');
+  if(dateEl)dateEl.textContent=DAYS[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()];
+  if(userEl){const ob=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');const u=API&&API.user?API.user():null;userEl.textContent=(ob.q3_1||(u?u.email.split('@')[0]:'')||'').toUpperCase();}
+
+  // ── Idag-label ──
+  const todayLabel = document.getElementById('today-date-label');
+  if (todayLabel) todayLabel.textContent = DAYS[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()];
+
+  // ── Hämta schema ──
+  const token = API && API.token ? API.token() : null;
+  const h = token ? {Authorization:'Bearer '+token} : {};
+  let savedSchedule = [];
+  try {
+    const sr = await fetch('/api/training-schedule', { headers: h });
+    if (sr.ok) savedSchedule = await sr.json();
+  } catch(e) {}
+
+  document.getElementById('schema-load').style.display = 'none';
+  document.getElementById('schema-rows').style.display = 'flex';
+  document.getElementById('schema-rows').style.flexDirection = 'column';
+  buildSchemaRows(savedSchedule);
+
+  // ── Idag-rekommendation ──
+  loadTodayRecommendation();
+
+  // ── Historisk data ──
+  let checkins=[];
+  try{const r=await fetch('/api/checkins',{headers:h});if(r.ok){const data=await r.json();checkins=Array.isArray(data)?data:(data.checkins||[]);}}catch(e){}
+  _pageCheckins=checkins;
+  const last14=checkins.slice(-14);
+  const profile=JSON.parse(localStorage.getItem('forsyne_onboarding')||'{}');
+
+  try{const signalEl=document.getElementById('nav-signal');const recent=(checkins||[]).slice(-3);if(recent.filter(c=>c.stress>=7&&c.sleep<=5).length>=2&&signalEl)signalEl.classList.add('show');}catch(e){}
+
+  // ── BATCH AI ──
+  const _pdc=computePd(last14)||{};
+  let pd={
+    opening:computeOpening(last14),
+    insikt:_pdc.insikt||'Du tränar med disciplin — frågan är om återhämtningen matchar.',
+    styrka:_pdc.styrka||'Antalet aktiva dagar visar genuint engagemang.',
+    risk:_pdc.risk||'Intensiteten kombinerat med stress och sömnunderskott skapar nedbrytning, inte uppbyggnad.',
+    rekommendation:_pdc.rekommendation||'Sänk intensiteten tre dagar — observera om energin dagen efter ökar.',
+    validation:_pdc.validation||'Det finns en känsla många som tränar känner igen: att man lägger in jobbet, men att kroppen inte riktigt bekräftar att det tas emot. Att man gör rätt saker, men ändå inte känner att det byggs.',
+    steg:_pdc.steg||[{atgard:'Lägg in en aktiv vilodag efter din nästa intensiva träning.',varfor:'Träning utan inbyggd återhämtning bryter ner mer än det bygger upp.'},{atgard:'Minska intensiteten med 20% nästa vecka och logga återhämtningen.',varfor:'Systemet ser tecken på ackumulerad trötthet i dina energivärden.'}]
+  };
+  if(last14.length>=1){
+    try{
+      let _ai=PCache&&PCache.get?PCache.get('page_training'):null;
+      if(!_ai){const r=await fetch('/api/agent/page/generate',{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({page:'training',checkins:last14,profile})});if(r.ok){_ai=await r.json();if(PCache&&PCache.set)PCache.set('page_training',_ai);}}
+      if(_ai){Object.keys(_ai).forEach(k=>{if(_ai[k]!=null&&(!Array.isArray(_ai[k])||_ai[k].length>0))pd[k]=_ai[k];});}
+    }catch(e){}
+  }
+
+  // Rek
+  {const rekEl=document.getElementById('rek-steps');if(rekEl&&pd.steg?.length){rekEl.innerHTML='';pd.steg.forEach((s,i)=>{const div=document.createElement('div');div.className='rek-step';div.innerHTML=`<div class="rek-atgard">· ${s.atgard}</div><div class="rek-varfor">${s.varfor}</div>`;rekEl.appendChild(div);setTimeout(()=>div.classList.add('vis'),i*180);});}}
+
+  // AKT 1
+  const otEl=document.getElementById('ot'),olEl=document.getElementById('ol');
+  setTimeout(()=>{
+    tw(otEl,pd.opening,16,()=>{
+      olEl.classList.add('vis');
+      setTimeout(()=>{
+        document.getElementById('a2').style.opacity='1';
+
+        const withTraining=last14.filter(c=>(c.training!=null||c.workout!=null));
+        const getVal=c=>c.training!=null?parseFloat(c.training):(c.workout!=null?parseFloat(c.workout):null);
+        const trainingVals=withTraining.map(getVal).filter(v=>v!==null);
+        const activeDays=trainingVals.filter(v=>v>0).length;
+        const intensityVals=trainingVals.filter(v=>v>0);
+        const avgIntensity=intensityVals.length?(intensityVals.reduce((a,b)=>a+b,0)/intensityVals.length):null;
+
+        const recoveryPairs=[];
+        for(let i=0;i<last14.length-1;i++){const tv=getVal(last14[i]);const ne=parseFloat(last14[i+1].energy);if(tv!==null&&!isNaN(ne)&&ne>0)recoveryPairs.push({t:tv,e:ne});}
+        const corrVal=recoveryPairs.length>=3?pearsonCorr(recoveryPairs.map(p=>p.t),recoveryPairs.map(p=>p.e)):null;
+
+        if(avgIntensity!==null){document.getElementById('cv-avg').innerHTML=avgIntensity.toFixed(1)+'<small>/10</small>';const cls=avgIntensity<=6?'up':avgIntensity<=8?'wn':'dn';document.getElementById('cd-avg').textContent=avgIntensity<=6?'Måttlig — optimalt fönster':avgIntensity<=8?'Hög intensitet — bevaka':'Möjlig överträning';document.getElementById('cd-avg').className='cd '+cls;}
+        if(corrVal!==null){document.getElementById('cv-corr').textContent=corrVal.toFixed(2);const cls=corrVal<-0.3?'dn':corrVal>0.3?'up':'wn';document.getElementById('cd-corr').textContent=corrVal<-0.3?'Hög träning minskar energi nästa dag':corrVal>0.3?'Träning ökar energinivån':'Svag koppling';document.getElementById('cd-corr').className='cd '+cls;}
+        else{document.getElementById('cv-corr').textContent='—';document.getElementById('cd-corr').textContent='Otillräcklig data';}
+        document.getElementById('cv-days').innerHTML=activeDays+'<small>d</small>';
+        const daysCls=activeDays>=8?'wn':activeDays>=4?'up':'dn';
+        document.getElementById('cd-days').textContent=activeDays>=8?'Hög volym — planera återhämtning':activeDays>=4?'Bra balans träning/vila':'Låg aktivitet';
+        document.getElementById('cd-days').className='cd '+daysCls;
+        document.getElementById('cv-total').textContent=checkins.length;
+
+        document.getElementById('a2-load').style.display='none';
+        document.getElementById('cg').style.display='grid';
+        document.getElementById('dl').style.display='flex';
+
+        const dlEl=document.getElementById('dl');
+        if(last14.length===0){dlEl.innerHTML='<div style="padding:2rem 0;font-family:var(--serif);font-style:italic;font-size:0.82rem;color:var(--fg4);">Inga check-ins loggade ännu.</div>';return;}
+        last14.forEach((c,i)=>{
+          const v=getVal(c);
+          const stress=c.stress?parseFloat(c.stress):null;
+          const sleep=c.sleep?parseFloat(c.sleep):null;
+          const date=new Date(c.date||c.created_at);
+          const dateStr=DS[date.getDay()]+' '+date.getDate()+' '+MS[date.getMonth()];
+          const isEmpty=v===null;
+          const isRest=v===0;
+          const pct=isEmpty?0:isRest?8:Math.min((v/10)*100,100);
+          const color=isEmpty?'rgba(242,240,234,0.08)':trainColor(v);
+          const comment=trainComment(v,stress,sleep);
+          const label=isEmpty?'ingen data':trainLabel(v);
+          const row=document.createElement('div');
+          row.className='dr'+(isEmpty?' empty':'');
+          row.dataset.bw=pct;
+          row.innerHTML=`<span class="dd">${dateStr}</span><div class="dbw"><div class="db" style="background:${color};"></div></div><span class="dv" style="color:${isEmpty?'var(--fg4)':color};">${label}</span><div class="dtt">${comment}</div>`;
+          dlEl.appendChild(row);
+          setTimeout(()=>{row.classList.add('vis');const b=row.querySelector('.db');if(b)setTimeout(()=>{b.style.width=pct+'%';},60);},i*50);
+        });
+
+        (()=>{
+          const a3=document.getElementById('a3');
+          document.getElementById('a3-load').style.display='none';
+          document.getElementById('a3-dom').textContent=pd.insikt;
+          document.getElementById('a3-items').innerHTML=`<div class="di"><span class="dm" style="color:var(--accent);">↑</span><span>${pd.styrka}</span></div><div class="di"><span class="dm" style="color:var(--danger);">↓</span><span>${pd.risk}</span></div><div class="di"><span class="dm" style="color:var(--trust);">→</span><span>${pd.rekommendation}</span></div>`;
+          document.getElementById('a3-body').style.display='block';
+          new IntersectionObserver(entries=>{if(entries[0].isIntersecting){a3.classList.add('vis');a3.querySelectorAll('.di').forEach((di,i)=>setTimeout(()=>di.classList.add('vis'),300+i*120));}},{threshold:0.2}).observe(a3);
+        })();
+
+        document.getElementById('a4-load').style.display='none';
+        const _prev=JSON.parse(localStorage.getItem('forsyne_val_training')||'null');
+        const _valEl=document.getElementById('val-stmt');
+        if(_prev&&_prev.answer&&(Date.now()-(_prev.timestamp||0))<30*24*60*60*1000){
+          _valEl.textContent=(_prev.answer==='nej'&&_prev.battre)?_prev.battre:pd.validation;
+          const _note=document.createElement('div');
+          _note.style.cssText='font-size:0.54rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--fg4);margin-bottom:1rem;';
+          _note.textContent=_prev.answer==='ja'?'Du kände igen dig här senast.':'Du kände inte igen dig senast — systemet har sökt ett annat mönster.';
+          document.querySelector('#a4-body .val-intro').after(_note);
+        } else { _valEl.textContent=pd.validation; }
+        document.getElementById('a4-body').style.display='block';
+
+        (()=>{
+          const getV=c=>c.training!=null?parseFloat(c.training):(c.workout!=null?parseFloat(c.workout):null);
+          const bm14=checkins.slice(-14);
+          const activeDays14=bm14.filter(c=>{const v=getV(c);return v!==null&&v>0;}).length;
+          const intensityVals=bm14.map(getV).filter(v=>v!==null&&v>0);
+          const avgInt=intensityVals.length?intensityVals.reduce((a,b)=>a+b,0)/intensityVals.length:null;
+          const highI=bm14.filter(c=>{const v=getV(c);return v!==null&&v>7;}).length;
+          const restD=bm14.filter(c=>{const v=getV(c);return v===0;}).length;
+          const loadRatio=restD>0?(highI/restD):null;
+          const l7i=checkins.slice(-7).map(getV).filter(v=>v!==null&&v>0);
+          const p7i=checkins.slice(-14,-7).map(getV).filter(v=>v!==null&&v>0);
+          const al7=l7i.length?l7i.reduce((a,b)=>a+b,0)/l7i.length:null;
+          const ap7=p7i.length?p7i.reduce((a,b)=>a+b,0)/p7i.length:null;
+          const td=al7!==null&&ap7!==null?al7-ap7:null;
+          const mkr=[
+            {name:'Träningsdagar · 14d',val:activeDays14+'d',cls:activeDays14>=4&&activeDays14<=9?'bm-ok':activeDays14>=10?'bm-warn':'bm-bad',lbl:activeDays14>=4&&activeDays14<=9?'Bra balans':activeDays14>=10?'Hög volym — bevaka':'Låg aktivitet'},
+            {name:'Intensitetssnitt',val:avgInt!==null?avgInt.toFixed(1)+'/10':'—',cls:avgInt===null?'bm-ok':avgInt<=6?'bm-ok':avgInt<=8?'bm-warn':'bm-bad',lbl:avgInt===null?'Ingen data':avgInt<=6?'Optimalt fönster':avgInt<=8?'Hög belastning':'Möjlig överträning'},
+            {name:'Belastning vs återhämtning',val:loadRatio!==null?loadRatio.toFixed(1)+'x':'—',cls:loadRatio===null?'bm-ok':loadRatio<=2?'bm-ok':loadRatio<=4?'bm-warn':'bm-bad',lbl:loadRatio===null?'Otillräcklig data':loadRatio<=2?'Bra balans':loadRatio<=4?'Underskott på vila':'Kritisk obalans'},
+            {name:'Träningstrend · 7d vs 7d',val:td!==null?(td>=0?'+':'')+td.toFixed(1):'—',cls:td===null?'bm-ok':Math.abs(td)<=0.5?'bm-ok':td<0?'bm-ok':'bm-warn',lbl:td===null?'Otillräcklig data':Math.abs(td)<=0.5?'Stabil':'Intensitetsdrift'}
+          ];
+          document.getElementById('bio-markers').innerHTML=mkr.map(m=>`<div class="bio-marker"><span class="bm-name">${m.name}</span><div class="bm-right"><div class="bm-val">${m.val}</div><div class="bm-status ${m.cls}">${m.lbl}</div></div></div>`).join('');
+        })();
+      },500);
+    });
+  },500);
+})();
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

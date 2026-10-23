@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<script src="transitions.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Signalen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="system.css">
+<style>
+
+
+/* SIGNALEN HERO — tar hela toppen */
+.signalen-hero {
+  border: 1px solid rgba(168,92,92,0.25);
+  border-left: 3px solid var(--danger);
+  background: linear-gradient(135deg, rgba(168,92,92,0.08) 0%, rgba(168,92,92,0.03) 40%, transparent 70%);
+  padding: 2.5rem 3rem;
+  margin-bottom: 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.signalen-hero::before {
+  content: '';
+  position: absolute; top: 0; right: 0;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(168,92,92,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.vh-top {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 2rem;
+  margin-bottom: 2rem;
+}
+.vh-left {}
+.vh-eyebrow {
+  font-size: 0.66rem; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--danger);
+  margin-bottom: 0.8rem; opacity: 0.8;
+  display: flex; align-items: center; gap: 0.75rem;
+}
+.vh-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--danger); box-shadow: 0 0 10px var(--danger);
+  animation: pulse 2s ease infinite; flex-shrink: 0;
+}
+@keyframes pulse { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(0.8); opacity:0.5; } }
+.vh-title {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 300; line-height: 1.08; color: var(--fg);
+  margin-bottom: 0.8rem;
+}
+.vh-title em { font-style: italic; color: rgba(168,92,92,0.8); }
+.vh-sub {
+  font-size: 0.88rem; color: var(--fg2);
+  line-height: 1.75; max-width: 520px;
+}
+.vh-sub strong { color: var(--fg); font-weight: 400; }
+.vh-right { flex-shrink: 0; text-align: right; }
+.vh-day {
+  font-family: var(--serif);
+  font-size: 5rem; font-weight: 300; line-height: 1;
+  color: var(--danger); opacity: 0.9;
+}
+.vh-day-lbl {
+  font-size: 0.66rem; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--danger);
+  opacity: 0.6; margin-top: 0.3rem;
+}
+.vh-detected {
+  font-size: 0.6rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--fg4);
+  margin-top: 0.8rem;
+}
+
+/* TIDSLINJE */
+.vh-timeline {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 1px; background: rgba(168,92,92,0.1);
+  border: 1px solid rgba(168,92,92,0.12);
+}
+.tl-step {
+  background: var(--ink2); padding: 1rem;
+  position: relative;
+}
+.tl-step.passed { background: rgba(168,92,92,0.08); }
+.tl-step.now { background: rgba(168,92,92,0.15); border-top: 2px solid var(--danger); }
+.tl-step.future { background: rgba(168,92,92,0.04); }
+.tl-step-time {
+  font-size: 0.62rem; letter-spacing: 0.14em;
+  text-transform: uppercase; margin-bottom: 0.4rem;
+}
+.tl-step.passed .tl-step-time { color: var(--danger); opacity: 0.6; }
+.tl-step.now .tl-step-time { color: var(--danger); }
+.tl-step.future .tl-step-time { color: var(--fg4); }
+.tl-step-event {
+  font-size: 0.7rem; line-height: 1.5;
+}
+.tl-step.passed .tl-step-event { color: var(--fg2); }
+.tl-step.now .tl-step-event { color: var(--fg); font-family: var(--serif); font-size: 0.82rem; }
+.tl-step.future .tl-step-event { color: var(--fg4); }
+.tl-step-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  margin-bottom: 0.5rem;
+}
+.tl-step.passed .tl-step-dot { background: var(--danger); opacity: 0.5; }
+.tl-step.now .tl-step-dot { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+.tl-step.future .tl-step-dot { background: var(--fg4); }
+
+/* METRICS */
+.signalen-metrics {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); margin-bottom: 1px;
+}
+.vm { background: var(--ink2); padding: 1.6rem; position: relative; overflow: hidden; }
+.vm-lbl { font-size: 0.64rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--fg3); margin-bottom: 0.8rem; }
+.vm-val { font-family: var(--serif); font-size: clamp(1.8rem, 3vw, 2.8rem); font-weight: 300; line-height: 1; color: var(--fg); margin-bottom: 0.3rem; }
+.vm-val small { font-size: 0.38em; color: var(--fg3); font-family: var(--sans); margin-left: 0.2rem; }
+.vm-delta { font-size: 0.65rem; margin-bottom: 0.3rem; }
+.vm-trend { font-size: 0.6rem; color: var(--fg4); margin-top: 0.4rem; font-style: italic; }
+.d-dn { color: var(--danger); }
+.d-wn { color: var(--warn); }
+.vm-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.04); }
+.vm-fill { height: 100%; }
+
+/* SIGNAL BREAKDOWN */
+.signals {
+  background: var(--ink2); border: 1px solid var(--border);
+  border-top: none; padding: 2rem; margin-bottom: 1px;
+}
+.signal-row {
+  display: flex; align-items: center; gap: 1.2rem;
+  padding: 0.9rem 0; border-bottom: 1px solid var(--border);
+}
+.signal-row:last-child { border-bottom: none; }
+.signal-indicator {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.signal-name { font-size: 0.88rem; color: var(--fg2); min-width: 200px; }
+.signal-bar-wrap { flex: 1; height: 4px; background: rgba(255,255,255,0.05); }
+.signal-bar { height: 100%; }
+.signal-val { font-family: var(--serif); font-size: 0.9rem; font-weight: 300; min-width: 80px; text-align: right; }
+.signal-delta { font-size: 0.74rem; min-width: 100px; text-align: right; }
+
+/* TWO COL */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 1px; }
+.three-col { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 1px; }
+.full-col { border: 1px solid var(--border); margin-bottom: 1px; }
+.panel { background: var(--ink2); padding: 2rem; }
+.panel-lbl { font-size: 0.64rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--fg3); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.6rem; }
+.panel-lbl::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.insight { font-family: var(--serif); font-size: 1rem; font-weight: 300; line-height: 1.85; color: var(--fg2); font-style: italic; padding-left: 1.2rem; border-left: 1px solid rgba(168,92,92,0.3); }
+.insight strong { color: var(--fg); font-style: normal; font-weight: 400; }
+
+/* HISTORIK SIGNALEN */
+.signalen-history { display: flex; flex-direction: column; gap: 0; }
+.vh-item { display: flex; align-items: flex-start; gap: 1.2rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
+.vh-item:last-child { border-bottom: none; }
+.vh-item-date { font-size: 0.78rem; color: var(--fg3); min-width: 70px; padding-top: 0.1rem; }
+.vh-item-body { flex: 1; }
+.vh-item-title { font-size: 0.88rem; color: var(--fg2); margin-bottom: 0.2rem; }
+.vh-item-sub { font-size: 0.74rem; color: var(--fg3); line-height: 1.5; }
+.vh-item-outcome { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; margin-top: 0.3rem; }
+.outcome-caught { color: var(--accent); }
+.outcome-missed { color: var(--danger); }
+.outcome-partial { color: var(--warn); }
+
+/* STAT */
+.stat { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+.stat:last-child { border-bottom: none; }
+.stat-name { font-size: 0.7rem; color: var(--fg3); }
+.stat-val { font-family: var(--serif); font-size: 1.05rem; font-weight: 300; color: var(--fg); }
+.stat-val.warn { color: var(--warn); }
+.stat-val.good { color: var(--accent); }
+.stat-val.bad { color: var(--danger); }
+
+/* VÄNDPUNKTS-ÅTGÄRDER */
+.action-card {
+  padding: 1.6rem; background: var(--ink2);
+  border-top: 2px solid transparent;
+}
+.action-card.urgent { border-top-color: var(--danger); }
+.action-card.important { border-top-color: var(--warn); }
+.action-card.supportive { border-top-color: var(--accent); }
+.action-priority { font-size: 0.5rem; letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 0.5rem; }
+.action-priority.u { color: var(--danger); }
+.action-priority.i { color: var(--warn); }
+.action-priority.s { color: var(--accent); }
+.action-title { font-family: var(--serif); font-size: 1.1rem; font-weight: 300; color: var(--fg); margin-bottom: 0.5rem; line-height: 1.3; }
+.action-body { font-size: 0.72rem; color: var(--fg3); line-height: 1.65; }
+.action-body strong { color: var(--fg2); font-weight: 400; }
+.action-impact { font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; margin-top: 0.8rem; color: var(--fg4); }
+
+@media (max-width: 1100px) { .signalen-metrics { grid-template-columns: 1fr 1fr; } .vh-timeline { grid-template-columns: repeat(4,1fr); } }
+@media (max-width: 768px) { .layout { grid-template-columns: 1fr; } .sidebar { display: none; } .main { padding: 1.5rem; } .signalen-metrics, .two-col, .three-col { grid-template-columns: 1fr; } .vh-timeline { grid-template-columns: repeat(2,1fr); } }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.main > * { animation: fadeUp 0.45s ease both; }
+.main > *:nth-child(2) { animation-delay: 0.06s; }
+.main > *:nth-child(3) { animation-delay: 0.12s; }
+.main > *:nth-child(4) { animation-delay: 0.18s; }
+.main > *:nth-child(5) { animation-delay: 0.24s; }
+.main > *:nth-child(6) { animation-delay: 0.3s; }
+
+
+/* ── FORSYNE DESIGN UPGRADE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+/* Topbar glow line */
+.topbar, nav {
+  border-bottom: 1px solid rgba(143,174,138,0.1) !important;
+  box-shadow: 0 1px 0 rgba(143,174,138,0.04);
+}
+/* Metric cards hover glow */
+.metric-card, .panel, .card, .data-card, .insight-card {
+  transition: box-shadow 0.3s ease;
+}
+.metric-card:hover, .panel:hover, .card:hover, .data-card:hover, .insight-card:hover {
+  box-shadow: 0 0 0 1px rgba(143,174,138,0.1), 0 4px 20px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <header class="topbar">
+    <a href="dashboard.html" class="topbar-logo">Forsyne</a>
+    <div class="topbar-center">
+      <div class="topbar-pulse"></div>
+      <span class="topbar-status">Systemet är aktivt</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topDate"></span>
+      <span class="topbar-user" id="topUser"></span>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <div class="nav-group">
+      <div class="nav-group-label">Idag</div>
+      <a class="nav-link" href="dashboard.html">Dashboard</a>
+      <a class="nav-link" href="checkin.html">Check-in</a>
+      <a class="nav-link active" href="signal.html">Signalen</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Mönster</div>
+      <a class="nav-link" href="sleep.html">Sömn</a>
+      <a class="nav-link" href="energy.html">Energi</a>
+      <a class="nav-link" href="stress.html">Stress</a>
+      <a class="nav-link" href="training.html">Träning</a>
+      <a class="nav-link" href="nutrition.html">Kost</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Förstå dig själv</div>
+      <a class="nav-link" href="profilering.html">Profilering</a>
+      <a class="nav-link" href="analys.html">Total analys</a>
+      <a class="nav-link" href="systemkarta.html">Systemkarta</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Din biologi</div>
+      <a class="nav-link" href="wearables.html">Wearables</a>
+      <a class="nav-link" href="biologi.html">Blodprover &amp; hormoner</a>
+      <a class="nav-link" href="journal.html">Läkarjournal</a>
+    </div>
+    <div class="sidebar-foot">
+      Modell · Dag <span id="sidebarDay">–</span>
+      <div class="sidebar-bar"><div class="sidebar-bar-fill" id="sidebarBar" style="width:0%"></div></div>
+      <strong id="sidebarStatus">Laddar...</strong>
+      <div class="sidebar-foot-tagline">Inte baserat på genomsnitt.<br>Baserat på dig.</div>
+    </div>
+  </nav>
+
+  <main class="main" id="signalMain">
+    <!-- Rendered by JS -->
+  </main>
+</div>
+
+<script>
+const d = new Date();
+const DAYS   = ['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+const MONTHS = ['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+document.getElementById('topDate').textContent = DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()];
+
+function analyzeSignal(checkins) {
+  const sorted = checkins.slice().sort(function(a,b){ return a.date>b.date?1:-1; });
+  const rev = sorted.slice().reverse();
+  let streak = 0;
+  for (var i=0;i<rev.length;i++) {
+    if ((rev[i].stress||0)>=7 && (rev[i].sleep!=null?rev[i].sleep:10)<=5) streak++;
+    else break;
+  }
+  const avg = function(arr,f){ return arr.length ? arr.reduce(function(s,x){return s+(x[f]||0);},0)/arr.length : null; };
+  const periods=[], last7=sorted.slice(-7);
+  let run=[];
+  sorted.forEach(function(c){
+    if((c.stress||0)>=7&&(c.sleep!=null?c.sleep:10)<=5){run.push(c);}
+    else{if(run.length>=2)periods.push(run.slice());run=[];}
+  });
+  if(run.length>=2)periods.push(run.slice());
+  return {sorted,streak,periods,last7,
+    avgStress:avg(last7,'stress'),avgSleep:avg(last7,'sleep'),avgEnergy:avg(last7,'energy'),
+    stressAll:avg(sorted,'stress'),sleepAll:avg(sorted,'sleep')};
+}
+
+function fmtVal(v,dec){dec=dec||0;return v!=null?(+v).toFixed(dec):'—';}
+function mCol(val,ga,bb){return val==null?'var(--fg3)':val<=bb?'var(--danger)':val>=ga?'var(--accent)':'var(--warn)';}
+
+const FOOTER = '<footer style="padding:1.5rem 3.5rem 2rem;border-top:1px solid var(--border);margin-top:2rem;">'
+  + '<p style="font-size: 0.74rem;color:#5B7FA6;line-height:1.7;max-width:700px;margin-bottom:0.5rem;">Din data är krypterad, privat och tillhör bara dig. · Forsyne säljer aldrig data.</p>'
+  + '<p style="font-size: 0.74rem;color:var(--fg4);line-height:1.7;max-width:700px;margin-bottom:0.5rem;">Systemets insikter ersätter inte råd från läkare, psykolog eller annan vårdgivare.</p>'
+  + '<p style="font-size: 0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg4);"><a href="manifesto.html" style="color:var(--fg4);text-decoration:none;">Manifesto</a> · <a href="disclaimer.html" style="color:var(--fg4);text-decoration:none;">Disclaimer</a> · © 2026 Forsyne</p>'
+  + '</footer>';
+
+function render(checkins) {
+  const main = document.getElementById('signalMain');
+  const ob   = JSON.parse(localStorage.getItem('forsyne_onboarding') || '{}');
+  const u    = API.user();
+  document.getElementById('topUser').textContent = (ob.q3_1||u.email&&u.email.split('@')[0]||'').toUpperCase();
+
+  if (!checkins || checkins.length < 2) {
+    document.getElementById('sidebarFoot').innerHTML = 'Signalen · <strong style="color:var(--fg4);">Ingen data</strong>';
+    main.innerHTML = '<div style="padding:4rem 0;max-width:500px;">'
+      + '<div style="width:28px;height:1px;background:rgba(143,174,138,0.4);margin-bottom:1.8rem;"></div>'
+      + '<h2 style="font-family:var(--serif);font-size:clamp(1.6rem,3vw,2.2rem);font-weight:300;line-height:1.2;margin-bottom:1.2rem;">Systemet bevakar.<br><em>Men det behöver mer data.</em></h2>'
+      + '<p style="font-size: 0.8rem;color:var(--fg3);line-height:1.75;margin-bottom:1.8rem;">Signalen aktiveras när systemet identifierar hög stress kombinerat med låg sömnkvalitet under flera dagar i rad.</p>'
+      + '<a href="checkin.html" style="font-size: 0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);text-decoration:none;border:1px solid rgba(143,174,138,0.3);padding:0.65rem 1.4rem;">Gör din check-in</a>'
+      + '</div>' + FOOTER;
+    return;
+  }
+
+  const res = analyzeSignal(checkins);
+  const sorted=res.sorted, streak=res.streak, periods=res.periods, last7=res.last7;
+  const avgStress=res.avgStress, avgSleep=res.avgSleep, avgEnergy=res.avgEnergy, stressAll=res.stressAll, sleepAll=res.sleepAll;
+  const sc=mCol(avgStress,5,7), slc=mCol(avgSleep,7,5), ec=mCol(avgEnergy,7,4);
+
+  const metricsHtml = '<div class="signalen-metrics">'
+    + '<div class="vm"><div class="vm-lbl">Stress · 7d snitt</div><div class="vm-val" style="color:'+sc+'">'+fmtVal(avgStress,1)+'<small>/10</small></div><div class="vm-delta '+(avgStress>(stressAll||5)?'d-dn':'d-up')+'">'+(avgStress>(stressAll||5)?'↑':'↓')+' vs snitt ('+fmtVal(stressAll,1)+')</div><div class="vm-bar"><div class="vm-fill" style="width:'+(avgStress?Math.round(avgStress*10):0)+'%;background:'+sc+';"></div></div></div>'
+    + '<div class="vm"><div class="vm-lbl">Sömn · 7d snitt</div><div class="vm-val" style="color:'+slc+'">'+fmtVal(avgSleep,1)+'<small>/10</small></div><div class="vm-delta '+(avgSleep<(sleepAll||7)?'d-dn':'d-up')+'">'+(avgSleep<(sleepAll||7)?'↓':'↑')+' vs snitt ('+fmtVal(sleepAll,1)+')</div><div class="vm-bar"><div class="vm-fill" style="width:'+(avgSleep?Math.round(avgSleep*10):0)+'%;background:'+slc+';"></div></div></div>'
+    + '<div class="vm"><div class="vm-lbl">Energi · 7d snitt</div><div class="vm-val" style="color:'+ec+'">'+fmtVal(avgEnergy,1)+'<small>/10</small></div><div class="vm-delta">Påverkas av stress + sömn</div><div class="vm-bar"><div class="vm-fill" style="width:'+(avgEnergy?Math.round(avgEnergy*10):0)+'%;background:'+ec+';"></div></div></div>'
+    + '<div class="vm"><div class="vm-lbl">Check-ins</div><div class="vm-val" style="color:var(--accent)">'+checkins.length+'<small>st</small></div><div class="vm-delta">Totalt registrerade</div><div class="vm-bar"><div class="vm-fill" style="width:'+Math.min(checkins.length/30*100,100)+'%;background:var(--accent);"></div></div></div>'
+    + '</div>';
+
+  const histHtml = periods.slice(-5).reverse().map(function(p){
+    const len=p.length, ended=p[p.length-1].date<sorted[sorted.length-1].date;
+    return '<div class="vh-item"><div class="vh-item-date">'+p[0].date+'</div><div class="vh-item-body">'
+      + '<div class="vh-item-title">Hög stress + låg sömnkvalitet</div>'
+      + '<div class="vh-item-sub">'+len+' dagar i rad</div>'
+      + '<div class="vh-item-outcome '+(ended?'outcome-caught':'outcome-missed')+'">'+(ended?'Avvärjt · '+len+' dagar':'Pågår · Dag '+len)+'</div>'
+      + '</div></div>';
+  }).join('') || '<div style="padding:1.5rem 0;font-size: 0.75rem;color:var(--fg4);">Inga tidigare signaler.</div>';
+
+  if (streak >= 2) {
+    document.getElementById('sidebarFoot').innerHTML = 'Signalen · Aktivt<br><strong>Dag ' + streak + '</strong>';
+    const ss = sorted[sorted.length-streak];
+    const signals = [
+      {name:'Stress ≥7/10 · '+streak+' dagar i rad', val:fmtVal(avgStress,1)+'/10', pct:Math.round(avgStress*10), cls:'var(--danger)'},
+      {name:'Sömnkvalitet ≤5/10 · '+streak+' dagar i rad', val:fmtVal(avgSleep,1)+'/10', pct:Math.round(avgSleep*10), cls:'var(--danger)'},
+    ];
+    if(avgEnergy!=null&&avgEnergy<=5) signals.push({name:'Energi konsekvent låg',val:fmtVal(avgEnergy,1)+'/10',pct:Math.round(avgEnergy*10),cls:'var(--warn)'});
+
+    const timelineItems = sorted.slice(-Math.min(streak+2,sorted.length)).map(function(c,i,arr){
+      const isNow=i===arr.length-1;
+      return '<div class="tl-step '+(isNow?'now':'passed')+'"><div class="tl-step-dot"></div><div class="tl-step-time">'+c.date.slice(5)+'</div><div class="tl-step-event">Stress '+(c.stress||'—')+'/10 · Sömn '+(c.sleep||'—')+'/10'+(isNow?' · Du är här':'')+'</div></div>';
+    }).join('');
+
+    main.innerHTML = '<div class="signalen-hero"><div class="vh-top">'
+      + '<div class="vh-left">'
+      + '<div class="vh-eyebrow"><div class="vh-dot"></div>Signalen — Aktiv · Dag '+streak+'</div>'
+      + '<h1 class="vh-title">Systemet ser<br>ett mönster.<br><em>Det är dags att agera.</em></h1>'
+      + '<p class="vh-sub">Hög stress kombinerat med låg sömnkvalitet i <strong>'+streak+' dagar i rad.</strong></p>'
+      + '<div class="vh-detected">Första signal: '+ss.date+' · Stress '+ss.stress+'/10 · Sömn '+ss.sleep+'/10</div>'
+      + '</div>'
+      + '<div class="vh-right"><div class="vh-day">'+streak+'</div><div class="vh-day-lbl">Dag</div></div>'
+      + '</div>'
+      + '<div class="vh-timeline">'+timelineItems
+      + '<div class="tl-step future"><div class="tl-step-dot"></div><div class="tl-step-time">Imorgon</div><div class="tl-step-event">Energin faller om du inte agerar.</div></div>'
+      + '</div></div>'
+      + metricsHtml
+      + '<div class="signals"><div class="panel-lbl">Signaler som utlöste signalen</div>'
+      + signals.map(function(s){return '<div class="signal-row"><div class="signal-indicator" style="background:'+s.cls+';"></div><span class="signal-name">'+s.name+'</span><div class="signal-bar-wrap"><div class="signal-bar" style="width:'+s.pct+'%;background:'+s.cls+';"></div></div><span class="signal-val" style="color:'+s.cls+';">'+s.val+'</span><span class="signal-delta" style="color:'+s.cls+';">Flaggad</span></div>';}).join('')
+      + '</div>'
+      + '<div class="two-col">'
+      + '<div class="panel"><div class="panel-lbl">Vändpunktsplan</div>'
+      + '<p class="insight">Hög stress och låg sömnkvalitet i '+streak+' dagar tömmer din kapacitet. <strong>Tre nätter med fokus på sömn vänder trenden.</strong></p>'
+      + '<div style="margin-top:1.5rem;display:flex;flex-direction:column;gap:0.8rem;">'
+      + '<div style="padding:0.8rem;background:rgba(168,92,92,0.08);border-left:2px solid var(--danger);"><div style="font-size: 0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--danger);margin-bottom:0.3rem;">Idag — Kritiskt</div><div style="font-size: 0.78rem;font-weight:400;color:var(--fg);margin-bottom:0.3rem;">Skydda kvällen</div><div style="font-size: 0.72rem;color:var(--fg3);line-height:1.6;">Inga hårda krav efter 15:00. Inga skärmar efter 20:00.</div></div>'
+      + '<div style="padding:0.8rem;background:rgba(168,92,92,0.08);border-left:2px solid var(--danger);"><div style="font-size: 0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--danger);margin-bottom:0.3rem;">Ikväll — Kritiskt</div><div style="font-size: 0.78rem;font-weight:400;color:var(--fg);margin-bottom:0.3rem;">Läggdags 21:30–22:00</div><div style="font-size: 0.72rem;color:var(--fg3);line-height:1.6;">Tre nätter med 7h+ sömn bryter mönstret.</div></div>'
+      + '<div style="padding:0.8rem;background:rgba(196,135,90,0.08);border-left:2px solid var(--warn);"><div style="font-size: 0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--warn);margin-bottom:0.3rem;">Imorgon — Viktigt</div><div style="font-size: 0.78rem;font-weight:400;color:var(--fg);margin-bottom:0.3rem;">Inget hårt träningspass</div><div style="font-size: 0.72rem;color:var(--fg3);line-height:1.6;">Systemet är inte återhämtat. Promenad max 30 min.</div></div>'
+      + '</div></div>'
+      + '<div class="panel"><div class="panel-lbl">Tidigare signaler</div><div class="signalen-history">'+histHtml+'</div>'
+      + '<div style="margin-top:1.5rem;padding-top:1.2rem;border-top:1px solid var(--border);"><div class="panel-lbl">Statistik</div>'
+      + '<div class="stat"><span class="stat-name">Signaler totalt</span><span class="stat-val bad">'+periods.length+'</span></div>'
+      + '<div class="stat"><span class="stat-name">Totalt check-ins</span><span class="stat-val">'+checkins.length+'</span></div>'
+      + '</div></div>'
+      + '</div>' + FOOTER;
+  } else {
+    document.getElementById('sidebarFoot').innerHTML = 'Signalen · <strong style="color:var(--accent);">Ingen aktiv signal</strong>';
+    main.innerHTML = '<div style="border:1px solid rgba(143,174,138,0.2);border-left:3px solid var(--accent);background:rgba(143,174,138,0.04);padding:2rem 2.5rem;margin-bottom:1px;">'
+      + '<div style="font-size: 0.68rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--accent);margin-bottom:1.2rem;display:flex;align-items:center;gap:0.75rem;"><span style="width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;"></span>Signalen — Ingen aktiv signal</div>'
+      + '<h1 style="font-family:var(--serif);font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:300;line-height:1.2;margin-bottom:1rem;">Systemet ser inga<br>oroande mönster.<br><em>Just nu.</em></h1>'
+      + '<p style="font-size: 0.82rem;color:var(--fg3);line-height:1.75;max-width:520px;">Signalen aktiveras när systemet identifierar hög stress kombinerat med låg sömnkvalitet under flera dagar i rad. <strong>Du är inte i det mönstret just nu.</strong></p>'
+      + '</div>'
+      + metricsHtml
+      + '<div class="two-col">'
+      + '<div class="panel"><div class="panel-lbl">Vad systemet bevakar</div>'
+      + '<div style="display:flex;flex-direction:column;gap:0.6rem;margin-top:0.5rem;">'
+      + '<div class="signal-row"><div class="signal-indicator" style="background:var(--fg4);"></div><span class="signal-name">Stress ≥7/10 två dagar i rad</span><span class="signal-val" style="color:var(--accent);">Ej aktivt</span></div>'
+      + '<div class="signal-row"><div class="signal-indicator" style="background:var(--fg4);"></div><span class="signal-name">Sömnkvalitet ≤5/10 kombinerat</span><span class="signal-val" style="color:var(--accent);">Ej aktivt</span></div>'
+      + '<div class="signal-row"><div class="signal-indicator" style="background:var(--fg4);"></div><span class="signal-name">Energi sjunkande trend</span><span class="signal-val" style="color:var(--accent);">Ej aktivt</span></div>'
+      + '</div></div>'
+      + '<div class="panel"><div class="panel-lbl">Tidigare signaler</div><div class="signalen-history">'+histHtml+'</div></div>'
+      + '</div>' + FOOTER;
+  }
+}
+
+(async function() {
+  let checkins = [];
+  try { checkins = await API.getCheckins() || []; } catch(e) {}
+  render(checkins);
+})();
+<script src="auth.js"></script>
+<script>checkAuth();</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

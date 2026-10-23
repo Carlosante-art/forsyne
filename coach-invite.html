@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Coach-inbjudan</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="auth.js"></script>
+<style>
+:root{
+  --ink:#0F1210;--fg:#F2F0EA;--fg2:#CCC9BF;--fg3:#8A8E89;--fg4:#4a4e49;
+  --accent:#8FAE8A;--danger:#A85C5C;--border:rgba(242,240,234,0.06);
+  --serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--ink);color:var(--fg);font-family:var(--sans);font-weight:300;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;}
+.card{width:100%;max-width:440px;}
+.logo{font-family:var(--serif);font-size:1rem;letter-spacing:0.18em;color:var(--fg);margin-bottom:3rem;display:block;}
+.lbl{font-size:0.52rem;letter-spacing:0.30em;text-transform:uppercase;color:var(--fg4);
+  display:flex;align-items:center;gap:0.7rem;margin-bottom:1.4rem;}
+.lbl::before{content:'';width:14px;height:1px;background:var(--accent);opacity:0.4;}
+h1{font-family:var(--serif);font-size:2rem;font-weight:300;line-height:1.3;margin-bottom:0.5rem;}
+p{font-size:0.85rem;color:var(--fg3);line-height:1.7;margin-bottom:1.5rem;}
+.coach-box{border:1px solid var(--border);padding:1.2rem 1.4rem;margin-bottom:2rem;
+  background:rgba(242,240,234,0.02);}
+.coach-name{font-family:var(--serif);font-size:1.15rem;margin-bottom:0.1rem;}
+.coach-org{font-size:0.72rem;color:var(--fg3);letter-spacing:0.06em;}
+.btn{display:block;width:100%;font-family:var(--sans);font-size:0.65rem;letter-spacing:0.18em;
+  text-transform:uppercase;padding:1rem;border:1px solid var(--accent);background:transparent;
+  color:var(--accent);cursor:pointer;transition:background 0.2s,color 0.2s;text-align:center;text-decoration:none;}
+.btn:hover{background:var(--accent);color:var(--ink);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+.msg{font-family:var(--serif);font-style:italic;font-size:1.05rem;color:var(--fg2);
+  line-height:1.7;margin-top:1.5rem;}
+.msg.err{color:var(--danger);font-style:normal;font-size:0.85rem;font-family:var(--sans);}
+.dot-pulse{display:inline-flex;gap:4px;align-items:center;}
+.dot-pulse span{width:4px;height:4px;border-radius:50%;background:var(--fg3);
+  animation:dp 1.2s ease infinite;}
+.dot-pulse span:nth-child(2){animation-delay:0.2s;}
+.dot-pulse span:nth-child(3){animation-delay:0.4s;}
+@keyframes dp{0%,60%,100%{opacity:0.2;transform:scale(0.8)}30%{opacity:1;transform:scale(1)}}
+</style>
+</head>
+<body>
+<div class="card">
+  <a href="/" class="logo">Forsyne</a>
+
+  <div id="stateLoading">
+    <div class="dot-pulse"><span></span><span></span><span></span></div>
+  </div>
+
+  <div id="stateInvite" style="display:none;">
+    <div class="lbl">Coach-inbjudan</div>
+    <h1 id="inviteHeadline">Du har blivit inbjuden</h1>
+    <p id="inviteDesc"></p>
+    <div class="coach-box">
+      <div class="coach-name" id="coachName"></div>
+      <div class="coach-org" id="coachOrg"></div>
+    </div>
+    <p style="font-size:0.78rem;">
+      Genom att acceptera ger du coachen läsåtkomst till dina Forsyne-data — PSI, check-ins och systeminsikter. Du kan återkalla åtkomsten när som helst.
+    </p>
+    <button class="btn" id="acceptBtn" onclick="accept()">Acceptera inbjudan</button>
+    <div id="acceptMsg"></div>
+  </div>
+
+  <div id="stateLogin" style="display:none;">
+    <div class="lbl">Coach-inbjudan</div>
+    <h1>Logga in först</h1>
+    <p>Du behöver ett Forsyne-konto för att acceptera den här inbjudan.</p>
+    <a class="btn" id="loginLink" href="/login.html">Logga in</a>
+    <p style="margin-top:1rem;font-size:0.72rem;color:var(--fg4);">Inbjudningslänken sparas — kom tillbaka hit efter inloggning.</p>
+  </div>
+
+  <div id="stateError" style="display:none;">
+    <div class="msg err" id="errorMsg">Ogiltig eller utgången inbjudan.</div>
+  </div>
+
+  <div id="stateDone" style="display:none;">
+    <div class="lbl">Klart</div>
+    <h1>Ansluten</h1>
+    <p class="msg">Din coach har nu åtkomst till dina data.</p>
+    <a class="btn" href="/dashboard.html" style="margin-top:1.5rem;">Gå till dashboard</a>
+  </div>
+</div>
+
+<script>
+const token = new URLSearchParams(location.search).get("token");
+
+function show(id) {
+  ["stateLoading","stateInvite","stateLogin","stateError","stateDone"].forEach(s => {
+    document.getElementById(s).style.display = s === id ? "" : "none";
+  });
+}
+
+async function init() {
+  if (!token) { show("stateError"); document.getElementById("errorMsg").textContent = "Ingen inbjudningstoken."; return; }
+
+  // Fetch invite info (public endpoint)
+  let invite;
+  try {
+    const r = await fetch(`/api/coach/invite/${token}`);
+    if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
+    invite = await r.json();
+  } catch(e) {
+    show("stateError");
+    document.getElementById("errorMsg").textContent = e.message || "Ogiltig inbjudan.";
+    return;
+  }
+
+  // Populate invite UI
+  const name = invite.client_name || invite.invite_email || "dig";
+  document.getElementById("inviteHeadline").textContent = invite.client_name ? `Hej ${invite.client_name}` : "Du har blivit inbjuden";
+  document.getElementById("inviteDesc").textContent = `${invite.coach_name || "En coach"} vill följa din utveckling i Forsyne.`;
+  document.getElementById("coachName").textContent = invite.coach_name || "—";
+  document.getElementById("coachOrg").textContent  = invite.coach_organization || "";
+
+  // Check if logged in
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    // Save token to sessionStorage so user can return after login
+    sessionStorage.setItem("pendingInviteToken", token);
+    document.getElementById("loginLink").href = `/login.html?redirect=/coach-invite.html%3Ftoken%3D${token}`;
+    show("stateLogin");
+    return;
+  }
+
+  show("stateInvite");
+}
+
+async function accept() {
+  const btn = document.getElementById("acceptBtn");
+  btn.disabled = true;
+  btn.textContent = "Accepterar...";
+
+  const { data: { session } } = await supabase.auth.getSession();
+  try {
+    const r = await fetch(`/api/coach/invite/${token}/accept`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" }
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
+    show("stateDone");
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = "Acceptera inbjudan";
+    document.getElementById("acceptMsg").innerHTML = `<div class="msg err" style="margin-top:1rem;">${e.message}</div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>

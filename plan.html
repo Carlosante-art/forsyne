@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<script src="transitions.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --ink:    #0F1210;
+  --ink2:   #131714;
+  --ink3:   #171c18;
+  --fg:     #F2F0EA;
+  --fg2:    #CCC9BF;
+  --fg3:    #8A8E89;
+  --fg4:    #4a4e49;
+  --accent: #8FAE8A;
+  --trust:  #5B7FA6;
+  --warn:   #C4875A;
+  --danger: #A85C5C;
+  --serif:  'Cormorant Garamond', Georgia, serif;
+  --sans:   'Jost', system-ui, sans-serif;
+  --border: rgba(242,240,234,0.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: radial-gradient(ellipse 70% 50% at 30% 30%, rgba(91,127,166,0.04) 0%, transparent 60%), #0F1210; color: var(--fg); font-family: var(--sans); font-weight: 300; line-height: 1.7; min-height: 100vh; }
+
+.layout { display: grid; grid-template-columns: 200px 1fr; grid-template-rows: 60px 1fr; height: 100vh; overflow: hidden; }
+
+.topbar { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 60px; border-bottom: 1px solid var(--border); background: rgba(15,18,16,0.95); backdrop-filter: blur(24px); position: sticky; top: 0; z-index: 100; }
+.topbar-logo { font-family: var(--serif); font-size: 1.1rem; font-weight: 400; letter-spacing: 0.16em; color: var(--fg); text-decoration: none; }
+.topbar-right { display: flex; align-items: center; gap: 2rem; }
+.topbar-date { font-size: 0.74rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg3); }
+.topbar-user { font-size: 0.78rem; letter-spacing: 0.12em; color: var(--fg3); text-transform: uppercase; cursor: pointer; }
+
+.sidebar { border-right: 1px solid var(--border); padding: 2.5rem 0; overflow-y: auto; scrollbar-width: none; }
+.sidebar::-webkit-scrollbar { display: none; }
+.nav-group { margin-bottom: 2rem; }
+.nav-group-label { font-size: 0.62rem; letter-spacing: 0.32em; text-transform: uppercase; color: var(--fg4); padding: 0 1.8rem; margin-bottom: 0.5rem; }
+.nav-link { display: block; padding: 0.5rem 1.8rem; font-size: 0.88rem; letter-spacing: 0.06em; color: var(--fg3); text-decoration: none; transition: all 0.2s; border-left: 1px solid transparent; position: relative; }
+.nav-link:hover { color: var(--fg2); }
+.nav-link.active { color: var(--fg); border-left-color: var(--accent); }
+.nav-badge { position: absolute; right: 1.8rem; top: 50%; transform: translateY(-50%); width: 5px; height: 5px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+.sidebar-foot { margin-top: auto; padding: 1.5rem 1.8rem 0; border-top: 1px solid var(--border); font-size: 0.74rem; color: var(--fg3); line-height: 1.8; }
+.sidebar-foot strong { display: block; color: var(--accent); font-weight: 300; }
+
+.main { padding: 3rem 3.5rem; overflow-y: auto; height: 100%; }
+
+.page-header { margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+.page-eyebrow { font-size: 0.68rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.75rem; }
+.page-eyebrow::before { content: ''; width: 14px; height: 1px; background: var(--accent); opacity: 0.5; }
+.page-heading { font-family: var(--serif); font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 300; line-height: 1.1; }
+.page-heading em { font-style: italic; color: var(--fg2); }
+.page-sub { font-size: 0.82rem; color: var(--fg3); line-height: 1.7; max-width: 480px; margin-top: 0.8rem; }
+
+/* ── PLAN BLOCKS ── */
+.plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); margin-bottom: 1px; }
+.plan-block { background: var(--ink2); padding: 2rem; }
+.plan-block.full { grid-column: 1 / -1; }
+.pb-eyebrow { font-size: 0.62rem; letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 0.6rem; }
+.pb-title { font-family: var(--serif); font-size: 1.35rem; font-weight: 300; line-height: 1.2; margin-bottom: 0.8rem; }
+.pb-body { font-size: 0.78rem; color: var(--fg3); line-height: 1.75; }
+
+/* ── TODAY FOCUS ── */
+.focus-strip { background: var(--ink2); border-left: 2px solid var(--accent); padding: 1.8rem 2rem; margin-bottom: 1px; }
+.fs-label { font-size: 0.62rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.6rem; }
+.fs-title { font-family: var(--serif); font-size: 1.5rem; font-weight: 300; line-height: 1.2; margin-bottom: 0.5rem; }
+.fs-body { font-size: 0.8rem; color: var(--fg3); line-height: 1.7; }
+
+/* ── ACTION ITEMS ── */
+.action-list { display: flex; flex-direction: column; gap: 0; }
+.action-item { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
+.action-item:last-child { border-bottom: none; }
+.ai-check { width: 18px; height: 18px; border: 1px solid var(--border); flex-shrink: 0; margin-top: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.ai-check.done { border-color: var(--accent); background: rgba(143,174,138,0.12); }
+.ai-check.done::after { content: '✓'; font-size: 0.65rem; color: var(--accent); }
+.ai-priority { font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; flex-shrink: 0; padding: 0.15rem 0.5rem; border-radius: 1px; }
+.ai-p1 { color: var(--danger); background: rgba(168,92,92,0.1); }
+.ai-p2 { color: var(--warn); background: rgba(196,135,90,0.1); }
+.ai-p3 { color: var(--accent); background: rgba(143,174,138,0.08); }
+.ai-content { flex: 1; }
+.ai-title { font-size: 0.78rem; color: var(--fg2); line-height: 1.5; margin-bottom: 0.2rem; }
+.ai-detail { font-size: 0.78rem; color: var(--fg3); line-height: 1.5; }
+
+/* ── SIGNAL BANNER ── */
+.signal-banner { background: rgba(168,92,92,0.06); border: 1px solid rgba(168,92,92,0.2); padding: 1.4rem 1.8rem; margin-bottom: 1px; display: flex; gap: 1.2rem; align-items: flex-start; }
+.sb-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 6px var(--danger); flex-shrink: 0; margin-top: 5px; }
+.sb-body { flex: 1; }
+.sb-title { font-size: 0.74rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--danger); margin-bottom: 0.4rem; }
+.sb-text { font-size: 0.78rem; color: var(--fg3); line-height: 1.65; }
+
+/* ── PHASE SELECTOR ── */
+.section-divider { margin-top: 2.5rem; padding-top: 2.5rem; border-top: 1px solid var(--border); }
+.section-label { font-size: 0.62rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--fg4); margin-bottom: 1.4rem; display: flex; align-items: center; gap: 0.75rem; }
+.section-label::before { content: ''; width: 12px; height: 1px; background: var(--fg4); opacity: 0.5; }
+
+.phase-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border); }
+.phase-card { background: var(--ink2); padding: 1.4rem 1.2rem; cursor: pointer; transition: background 0.2s; position: relative; }
+.phase-card:hover { background: var(--ink3); }
+.phase-card.active { background: var(--ink3); }
+.phase-card.active::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent); }
+.pc-icon { font-size: 1.1rem; margin-bottom: 0.8rem; opacity: 0.7; }
+.phase-card.active .pc-icon { opacity: 1; }
+.pc-name { font-size: 0.78rem; letter-spacing: 0.1em; color: var(--fg2); margin-bottom: 0.3rem; font-weight: 400; }
+.phase-card.active .pc-name { color: var(--fg); }
+.pc-desc { font-size: 0.74rem; color: var(--fg4); line-height: 1.6; margin-bottom: 0.5rem; }
+.pc-adapt { font-size: 0.68rem; color: var(--fg4); line-height: 1.55; font-style: italic; }
+.phase-card.active .pc-adapt { color: var(--fg3); }
+
+/* ── GOAL SECTION ── */
+.goal-block { background: var(--ink2); padding: 2rem; margin-top: 1px; }
+.goal-label { font-size: 0.62rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--fg3); margin-bottom: 1rem; }
+.goal-textarea { width: 100%; background: rgba(255,255,255,0.02); border: 1px solid var(--border); color: var(--fg2); font-family: var(--sans); font-size: 0.8rem; font-weight: 300; line-height: 1.75; padding: 1rem 1.2rem; resize: vertical; min-height: 110px; outline: none; transition: border-color 0.2s; }
+.goal-textarea:focus { border-color: rgba(143,174,138,0.3); }
+.goal-textarea::placeholder { color: var(--fg4); }
+.goal-save { margin-top: 0.8rem; display: flex; align-items: center; gap: 1rem; }
+.goal-btn { font-family: var(--sans); font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); background: var(--fg2); border: none; padding: 0.55rem 1.4rem; cursor: pointer; transition: background 0.2s; }
+.goal-btn:hover { background: var(--fg); }
+.goal-saved { font-size: 0.6rem; color: var(--accent); letter-spacing: 0.1em; opacity: 0; transition: opacity 0.3s; }
+.goal-saved.visible { opacity: 1; }
+
+@media (max-width: 768px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .main { padding: 1.5rem; }
+  .plan-grid { grid-template-columns: 1fr; }
+  .phase-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.main > * { animation: fadeUp 0.4s ease both; }
+.main > *:nth-child(2) { animation-delay: 0.06s; }
+.main > *:nth-child(3) { animation-delay: 0.12s; }
+.main > *:nth-child(4) { animation-delay: 0.18s; }
+.main > *:nth-child(5) { animation-delay: 0.24s; }
+
+
+/* ── FORSYNE DESIGN UPGRADE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+/* Topbar glow line */
+.topbar, nav {
+  border-bottom: 1px solid rgba(143,174,138,0.1) !important;
+  box-shadow: 0 1px 0 rgba(143,174,138,0.04);
+}
+/* Metric cards hover glow */
+.metric-card, .panel, .card, .data-card, .insight-card {
+  transition: box-shadow 0.3s ease;
+}
+.metric-card:hover, .panel:hover, .card:hover, .data-card:hover, .insight-card:hover {
+  box-shadow: 0 0 0 1px rgba(143,174,138,0.1), 0 4px 20px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+<script src="auth.js"></script>
+<script>checkAuth();</script>
+<div class="layout">
+
+  <header class="topbar">
+    <a href="dashboard.html" class="topbar-logo">Forsyne</a>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topDate"></span>
+      <span class="topbar-user" id="topUser"></span>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <div class="nav-group">
+      <div class="nav-group-label">Idag</div>
+      <a class="nav-link" href="dashboard.html">Dashboard</a>
+      <a class="nav-link" href="checkin.html">Check-in</a>
+      <a class="nav-link" href="signal.html">Signalen</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Mönster</div>
+      <a class="nav-link" href="sleep.html">Sömn</a>
+      <a class="nav-link" href="energy.html">Energi</a>
+      <a class="nav-link" href="stress.html">Stress</a>
+      <a class="nav-link" href="training.html">Träning</a>
+      <a class="nav-link" href="nutrition.html">Kost</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Förstå dig själv</div>
+      <a class="nav-link" href="profilering.html">Profilering</a>
+      <a class="nav-link" href="analys.html">Total analys</a>
+      <a class="nav-link" href="systemkarta.html">Systemkarta</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Din biologi</div>
+      <a class="nav-link" href="wearables.html">Wearables</a>
+      <a class="nav-link" href="biologi.html">Blodprover &amp; hormoner</a>
+      <a class="nav-link" href="journal.html">Läkarjournal</a>
+    </div>
+    <div class="sidebar-foot">
+      Plan · Idag
+      <strong id="sidePlanDate">—</strong>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <div class="page-header">
+      <div class="page-eyebrow">Plan · Systemets rekommendationer</div>
+      <h1 class="page-heading" id="pageHeading">Idag.<br><em>Vad systemet ser.</em></h1>
+      <p class="page-sub" id="pageSub">Baserat på din senaste check-in och mönstren systemet identifierat — det här är vad som faktiskt spelar roll idag.</p>
+    </div>
+
+    <!-- SIGNAL BANNER (visas bara när signalen är aktiv) -->
+    <div class="signal-banner" id="signalBanner" style="display:none;">
+      <div class="sb-dot"></div>
+      <div class="sb-body">
+        <div class="sb-title">Signalen aktiv</div>
+        <div class="sb-text" id="signalBannerText">Systemet ser en kritisk kombination av sömnunderskott och stress. Planen nedan prioriterar avvärjning.</div>
+      </div>
+    </div>
+
+    <!-- TODAY FOCUS -->
+    <div class="focus-strip" id="focusStrip">
+      <div class="fs-label">Fokus idag</div>
+      <div class="fs-title" id="focusTitle">Laddar systemets bedömning...</div>
+      <div class="fs-body" id="focusBody"></div>
+    </div>
+
+    <!-- PLAN GRID -->
+    <div class="plan-grid" id="planGrid">
+      <div class="plan-block">
+        <div class="pb-eyebrow" style="color:var(--accent);">Energiprognos</div>
+        <div class="pb-title" id="planEnergyTitle">—</div>
+        <div class="pb-body" id="planEnergyBody">Beräknar...</div>
+      </div>
+      <div class="plan-block">
+        <div class="pb-eyebrow" style="color:var(--trust);">Rekommendation</div>
+        <div class="pb-title" id="planRecTitle">—</div>
+        <div class="pb-body" id="planRecBody">Beräknar...</div>
+      </div>
+      <div class="plan-block">
+        <div class="pb-eyebrow" style="color:var(--warn);">Att undvika idag</div>
+        <div class="pb-title" id="planAvoidTitle">—</div>
+        <div class="pb-body" id="planAvoidBody">Beräknar...</div>
+      </div>
+      <div class="plan-block">
+        <div class="pb-eyebrow" style="color:var(--fg3);">Imorgon</div>
+        <div class="pb-title" id="planTomorrowTitle">—</div>
+        <div class="pb-body" id="planTomorrowBody">Beräknar...</div>
+      </div>
+    </div>
+
+    <!-- ACTION ITEMS -->
+    <div class="plan-block full" style="margin-top:1px;background:var(--ink2);padding:2rem;">
+      <div class="pb-eyebrow" style="color:var(--fg3);font-size: 0.62rem;letter-spacing:0.22em;text-transform:uppercase;margin-bottom:1.2rem;">Åtgärdslista · Prioriterade insatser</div>
+      <div class="action-list" id="actionList">
+        <div style="font-size: 0.78rem;color:var(--fg4);">Laddar...</div>
+      </div>
+    </div>
+
+    <!-- PHASE SELECTOR -->
+    <div class="section-divider">
+      <div class="section-label">Din träningsfas</div>
+      <div class="phase-grid" id="phaseGrid">
+
+        <div class="phase-card" data-phase="bygga" onclick="selectPhase(this)">
+          <div class="pc-icon">▲</div>
+          <div class="pc-name">Bygga</div>
+          <div class="pc-desc">Volym och progression. Kroppen anpassar sig till ökad belastning.</div>
+          <div class="pc-adapt">Signalen justeras — lägre HRV under tunga veckor är förväntad.</div>
+        </div>
+
+        <div class="phase-card" data-phase="forma" onclick="selectPhase(this)">
+          <div class="pc-icon">◈</div>
+          <div class="pc-name">Forma</div>
+          <div class="pc-desc">Intensitet och komposition. Mer av rätt, mindre av fel.</div>
+          <div class="pc-adapt">Energitrösklar höjs — lägre Body Battery är biologiskt normal.</div>
+        </div>
+
+        <div class="phase-card" data-phase="toppa" onclick="selectPhase(this)">
+          <div class="pc-icon">◎</div>
+          <div class="pc-name">Toppa</div>
+          <div class="pc-desc">Peaking. Maximera kapacitet inför ett specifikt datum.</div>
+          <div class="pc-adapt">Systemet bevakar taper-perioden — tillfälliga dippar är planerade.</div>
+        </div>
+
+        <div class="phase-card" data-phase="aterhämta" onclick="selectPhase(this)">
+          <div class="pc-icon">○</div>
+          <div class="pc-name">Återhämta</div>
+          <div class="pc-desc">Aktiv återhämtning. Kroppen behöver tid att absorbera.</div>
+          <div class="pc-adapt">Systemet är känsligare — fångar positiva trender tidigt.</div>
+        </div>
+
+        <div class="phase-card" data-phase="forändra" onclick="selectPhase(this)">
+          <div class="pc-icon">→</div>
+          <div class="pc-name">Förändra</div>
+          <div class="pc-desc">Ny riktning. Systemet lär sig din nya baslinje från grunden.</div>
+          <div class="pc-adapt">Standardinställningar — systemet bygger din baslinje från grunden.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- GOAL SECTION -->
+    <div class="goal-block">
+      <div class="goal-label">Vad jobbar du mot just nu?</div>
+      <textarea class="goal-textarea" id="goalText" placeholder="Berätta fritt. Systemet förstår om det är ett maraton om 12 veckor, att gå ner 8 kg, att sluta krascha på fredagar eller att prestera bättre på jobbet.&#10;Inga rätta svar — bara din verklighet."></textarea>
+      <div class="goal-save">
+        <button class="goal-btn" onclick="saveGoal()">Spara</button>
+        <span class="goal-saved" id="goalSaved">Sparat</span>
+      </div>
+    </div>
+
+  <footer style="padding: 1.5rem 3.5rem 2rem; border-top: 1px solid var(--border); margin-top: 2rem;">
+    <p style="font-size: 0.74rem; color: #5B7FA6; line-height: 1.7; max-width: 700px; margin-bottom: 0.5rem;">Din data är krypterad, privat och tillhör bara dig. · Forsyne säljer aldrig data.</p>
+    <p style="font-size: 0.74rem; color: var(--fg4); line-height: 1.7; max-width: 700px; margin-bottom: 0.5rem;">Systemets insikter ersätter inte råd från läkare, psykolog eller annan vårdgivare.</p>
+    <p style="font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg4);"><a href="manifesto.html" style="color:var(--fg4); text-decoration:none;">Manifesto</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Disclaimer</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Integritet</a> · © 2026 Forsyne</p>
+  </footer>
+
+  </main>
+</div>
+
+<script>
+const DAYS   = ['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+const MONTHS = ['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+
+const d = new Date();
+document.getElementById('topDate').textContent = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+document.getElementById('sidePlanDate').textContent = `${d.getDate()} ${MONTHS[d.getMonth()]}`;
+
+const ob   = JSON.parse(localStorage.getItem('forsyne_onboarding') || '{}');
+const u    = API.user();
+const name = ob.q3_1 || (u?.email?.split('@')[0] || '');
+document.getElementById('topUser').textContent = name.toUpperCase();
+
+function toggle(id, show) { const el = document.getElementById(id); if (el) el.style.display = show ? '' : 'none'; }
+
+function renderPlan(checkins, daily) {
+  if (!checkins || checkins.length === 0) {
+    document.querySelector('.main').innerHTML = `
+      <div style="padding:4rem 0;max-width:500px;">
+        <div style="width:28px;height:1px;background:rgba(143,174,138,0.4);margin-bottom:1.8rem;"></div>
+        <h2 style="font-family:var(--serif);font-size:clamp(1.6rem,3vw,2.2rem);font-weight:300;line-height:1.2;margin-bottom:1.2rem;">Ingen plan ännu.<br><em>Systemet vet inte var du är.</em></h2>
+        <p style="font-size: 0.8rem;color:var(--fg3);line-height:1.75;margin-bottom:1.8rem;">En plan kräver data. Din första check-in ger systemet nog för att börja räkna — och en veckas data ger nog för att planera.</p>
+        <a href="checkin.html" style="font-size: 0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);text-decoration:none;border:1px solid rgba(143,174,138,0.3);padding:0.65rem 1.4rem;">Gör din första check-in</a>
+      </div>`;
+    return;
+  }
+
+  const sorted  = [...checkins].sort((a, b) => a.date < b.date ? -1 : 1);
+  const latest  = sorted[sorted.length - 1];
+  const last7   = sorted.slice(-7);
+  const avg7    = f => last7.length ? (last7.reduce((s, c) => s + (c[f] || 0), 0) / last7.length).toFixed(1) : '—';
+
+  const e = latest.energy  ?? 5;
+  const sl = latest.sleep  ?? 5;
+  const st = latest.stress ?? 5;
+
+  // Signal detection
+  let streak = 0;
+  const rev = [...sorted].reverse();
+  for (const c of rev) { if (c.stress >= 7 && c.sleep <= 5) streak++; else break; }
+  const signalActive = streak >= 2;
+
+  if (signalActive) {
+    toggle('signalBanner', true);
+    document.getElementById('signalBannerText').textContent =
+      `Systemet ser dag ${streak} av en streaking kombination: stress ≥7 och sömn ≤5. Planen nedan prioriterar avvärjning.`;
+  }
+
+  // Focus
+  let focusTitle, focusBody;
+  if (signalActive) {
+    focusTitle = `Avvärj signalen.`;
+    focusBody  = `Du är ${streak} dagar in i ett aktivt mönster. Kroppens återhämtning är komprometterad. Varje beslut idag bör filtreras mot ett enda kriterium: sänker detta stressnivån och ökar sömndurationen?`;
+  } else if (e >= 7) {
+    focusTitle = `Bygg på det som fungerar.`;
+    focusBody  = `Energi ${e}/10 är en buffert — inte ett tecken på att du kan pressa mer. Det är exakt dessa dagar som skapar marginal för kommande toppar.`;
+  } else if (e <= 4) {
+    focusTitle = `Återhämtning är produktivitet.`;
+    focusBody  = `Energi ${e}/10 signalerar att kroppen inte är redo för hård belastning. Kognitiv kapacitet är ungefär 50% av normalt — prioritera uppgifter som kräver minst av dig.`;
+  } else {
+    focusTitle = `Stabil dag — håll kursen.`;
+    focusBody  = `Systemet ser inga dramatiska avvikelser. Energi ${e}/10, stress ${st}/10. Det är en dag för att bibehålla mönstret — inte pressa gränsen.`;
+  }
+  document.getElementById('focusTitle').textContent = focusTitle;
+  document.getElementById('focusBody').textContent  = focusBody;
+
+  // Plan blocks — use daily data from /api/analyze if available
+  const pred = daily?.prediction;
+  const ins  = daily?.insight;
+  const bal  = daily?.balance;
+
+  document.getElementById('planEnergyTitle').textContent = e >= 7 ? 'Hög kapacitet' : e >= 5 ? 'Medel kapacitet' : 'Låg kapacitet';
+  document.getElementById('planEnergyBody').textContent  = pred?.insikt ? pred.insikt.slice(0, 120) + '…'
+    : `Energi ${e}/10 idag. 7-dagarssnitt: ${avg7('energy')}. ${e < 5 ? 'Under din baseline.' : 'Inom normal variation.'}`;
+
+  document.getElementById('planRecTitle').textContent  = ins?.rekommendation ? ins.rekommendation.slice(0, 60) : 'Baserat på din data';
+  document.getElementById('planRecBody').textContent   = ins?.insikt ? ins.insikt.slice(0, 140) + '…'
+    : `Stress ${st}/10 · Sömn ${sl}/10 · Fokus ${latest.focus ?? '—'}/10.`;
+
+  const avoidItems = [];
+  if (st >= 7)  avoidItems.push('Fler beslut än nödvändigt — kortisolet är förhöjt');
+  if (sl <= 5)  avoidItems.push('Kompensera sömnbrist med koffein efter 12:00');
+  if (e <= 4)   avoidItems.push('Hård träning — CNS är inte återhämtat');
+  if (!avoidItems.length) avoidItems.push('Inga kritiska risker identifierade idag');
+  document.getElementById('planAvoidTitle').textContent = avoidItems[0];
+  document.getElementById('planAvoidBody').textContent  = avoidItems.slice(1).join('. ') || 'Systemet ser inga uppenbara fallgropar idag.';
+
+  const tmDag = pred?.dagar_till_krasch;
+  document.getElementById('planTomorrowTitle').textContent = signalActive ? `Dag ${streak + 1} av signalen` : 'Fortsätt mönstret';
+  document.getElementById('planTomorrowBody').textContent  = pred?.om_inget?.[0]?.prediktion
+    ? pred.om_inget[0].prediktion
+    : `Om sömnen förblir ${sl}/10 och stress ${st}/10 — förvänta dig liknande energi imorgon.`;
+
+  // Action items
+  const actions = [];
+  if (sl <= 5)  actions.push({ p: 'P1', title: `Lägg dig senast 22:00 ikväll`, detail: `Varje timme sömnunderskott kostar upp till 30% kognitiv kapacitet nästa dag.` });
+  if (st >= 7)  actions.push({ p: 'P1', title: `Identifiera en stressor du kan eliminera idag`, detail: `Hög stress med sömnunderskott eskalerar. En borttagen stressor är mer värd än tio minuters andning.` });
+  if (e <= 5)   actions.push({ p: 'P2', title: `Undvik kognitiva toppmöten före 10:00`, detail: `Morgonmänniskor toppar kl 8–11 men med energi ${e}/10 är kapaciteten begränsad — vänta tills kroppen värmt upp.` });
+  if (bal?.styrkeinsikt) actions.push({ p: 'P3', title: bal.styrkeinsikt.slice(0, 70), detail: '' });
+  if (!actions.length) actions.push({ p: 'P3', title: 'Systemet ser inga kritiska åtgärder idag', detail: 'Du är i balans. Håll rutinen.' });
+
+  const pClass = { P1: 'ai-p1', P2: 'ai-p2', P3: 'ai-p3' };
+  document.getElementById('actionList').innerHTML = actions.map((a, i) => `
+    <div class="action-item">
+      <div class="ai-check" id="ac${i}" onclick="toggleCheck(this)"></div>
+      <span class="ai-priority ${pClass[a.p]}">${a.p}</span>
+      <div class="ai-content">
+        <div class="ai-title">${a.title}</div>
+        ${a.detail ? `<div class="ai-detail">${a.detail}</div>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function toggleCheck(el) { el.classList.toggle('done'); }
+
+function selectPhase(card) {
+  document.querySelectorAll('.phase-card').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+  localStorage.setItem('prv_phase', card.dataset.phase);
+}
+
+function saveGoal() {
+  const val = document.getElementById('goalText').value.trim();
+  if (!val) return;
+  localStorage.setItem('prv_goal', val);
+  const saved = document.getElementById('goalSaved');
+  saved.classList.add('visible');
+  setTimeout(() => saved.classList.remove('visible'), 2000);
+}
+
+// Restore saved phase + goal
+(function restoreState() {
+  const savedPhase = localStorage.getItem('prv_phase');
+  if (savedPhase) {
+    const card = document.querySelector(`.phase-card[data-phase="${savedPhase}"]`);
+    if (card) card.classList.add('active');
+  } else {
+    // Default: Förändra (new users)
+    const def = document.querySelector('.phase-card[data-phase="forändra"]');
+    if (def) def.classList.add('active');
+  }
+  const savedGoal = localStorage.getItem('prv_goal');
+  if (savedGoal) document.getElementById('goalText').value = savedGoal;
+})();
+
+(async () => {
+  let checkins, daily;
+  try {
+    checkins = await API.getCheckins() || [];
+  } catch(e) {
+    document.querySelector('.main').insertAdjacentHTML('afterbegin',
+      '<div style="padding:3rem 0;max-width:480px;"><div style="font-size: 0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:rgba(168,92,92,0.8);margin-bottom:1rem;">Systemfel</div><p style="font-size: 0.8rem;color:var(--fg3);line-height:1.75;">Systemet kunde inte hämta din data. Kontrollera anslutningen och ladda om sidan.</p></div>'
+    );
+    return;
+  }
+
+  // Try to load cached daily analysis
+  try {
+    const r = await fetch('/api/daily-data', { headers: { 'Authorization': 'Bearer ' + API.token() } });
+    if (r.ok) daily = await r.json();
+  } catch(e) {}
+
+  renderPlan(checkins, daily);
+})();
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

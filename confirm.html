@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forsyne — Bekräftar konto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:    #0F1210;
+  --fg:     #F2F0EA;
+  --fg2:    #CCC9BF;
+  --fg3:    #8A8E89;
+  --fg4:    #4a4e49;
+  --accent: #8FAE8A;
+  --trust:  #5B7FA6;
+  --danger: #A85C5C;
+  --serif:  'Cormorant Garamond', Georgia, serif;
+  --sans:   'Jost', system-ui, sans-serif;
+  --border: rgba(242,240,234,0.06);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--ink);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+.wrap {
+  text-align: center;
+  max-width: 360px;
+  animation: fadeUp 0.5s ease both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.logo {
+  font-family: var(--serif);
+  font-size: 1rem; letter-spacing: 0.2em;
+  color: var(--fg3); display: block;
+  margin-bottom: 3rem;
+  text-decoration: none;
+}
+.icon {
+  font-size: 2.5rem; margin-bottom: 1.5rem;
+  display: block; opacity: 0; color: var(--trust);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transform: scale(0.8);
+}
+.icon.visible { opacity: 1; transform: scale(1); }
+.icon.error   { color: var(--danger); }
+.title {
+  font-family: var(--serif);
+  font-size: 2.2rem; font-weight: 300;
+  line-height: 1.2; margin-bottom: 0.6rem;
+}
+.title em { font-style: italic; color: var(--fg2); }
+.sub {
+  font-size: 0.8rem; color: var(--fg3);
+  line-height: 1.8; margin-bottom: 2rem;
+}
+.progress {
+  width: 100%; height: 1px;
+  background: rgba(242,240,234,0.06);
+  border-radius: 1px; overflow: hidden;
+  margin-bottom: 2rem;
+}
+.progress-fill {
+  height: 100%; background: var(--trust);
+  width: 0%; transition: width 2s linear;
+}
+.btn {
+  display: inline-block; padding: 0.9rem 2rem;
+  background: var(--fg); color: var(--ink);
+  font-family: var(--sans); font-size: 0.72rem;
+  font-weight: 500; letter-spacing: 0.2em;
+  text-transform: uppercase; text-decoration: none;
+  transition: all 0.2s; opacity: 0;
+  pointer-events: none;
+}
+.btn.visible { opacity: 1; pointer-events: auto; }
+.btn:hover { background: var(--fg2); }
+
+/* ── FORSYNE DESIGN UPGRADE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+/* Topbar glow line */
+.topbar, nav {
+  border-bottom: 1px solid rgba(143,174,138,0.1) !important;
+  box-shadow: 0 1px 0 rgba(143,174,138,0.04);
+}
+/* Metric cards hover glow */
+.metric-card, .panel, .card, .data-card, .insight-card {
+  transition: box-shadow 0.3s ease;
+}
+.metric-card:hover, .panel:hover, .card:hover, .data-card:hover, .insight-card:hover {
+  box-shadow: 0 0 0 1px rgba(143,174,138,0.1), 0 4px 20px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="landing.html" class="logo">Forsyne</a>
+  <span class="icon" id="icon">◎</span>
+  <h1 class="title" id="title">Bekräftar<br><em>ditt konto.</em></h1>
+  <p class="sub" id="sub">Ett ögonblick…</p>
+  <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+  <a href="onboarding.html" class="btn" id="btn">Fortsätt till onboarding</a>
+</div>
+
+<script src="auth.js"></script>
+<script>
+(async function() {
+  const icon     = document.getElementById('icon');
+  const title    = document.getElementById('title');
+  const sub      = document.getElementById('sub');
+  const fill     = document.getElementById('progressFill');
+  const btn      = document.getElementById('btn');
+
+  // Parse tokens from URL fragment (Supabase puts them there after email click)
+  const fragment = parseAuthFragment();
+
+  if (!fragment) {
+    // No fragment — maybe already confirmed or invalid link
+    icon.textContent = '✕';
+    icon.classList.add('error', 'visible');
+    title.innerHTML = 'Länken<br><em>är ogiltig.</em>';
+    sub.textContent = 'Länken kan ha löpt ut. Försök registrera dig igen.';
+    btn.href = 'login.html';
+    btn.textContent = 'Tillbaka till inloggning';
+    btn.classList.add('visible');
+    return;
+  }
+
+  const type = fragment.type || 'signup'; // signup | magiclink | recovery
+
+  // Store session
+  _setSession(fragment.access_token, fragment.refresh_token, fragment.email || '', fragment.user_id || '');
+
+  // Clean URL
+  history.replaceState(null, '', window.location.pathname);
+
+  // Show success
+  icon.textContent = '◎';
+  icon.classList.add('visible');
+
+  // Start progress bar
+  setTimeout(() => { fill.style.width = '100%'; }, 50);
+
+  if (type === 'recovery') {
+    // Password reset flow — redirect to reset.html
+    title.innerHTML = 'Återställer<br><em>lösenordet.</em>';
+    sub.textContent = 'Du skickas vidare nu…';
+    btn.href = 'reset.html';
+    btn.textContent = 'Välj nytt lösenord';
+    setTimeout(() => { _redirect('reset.html'); }, 2000);
+    return;
+  }
+
+  if (type === 'magiclink') {
+    title.innerHTML = 'Inloggad.<br><em>Välkommen.</em>';
+    sub.textContent = 'Du skickas vidare nu…';
+  } else {
+    title.innerHTML = 'Konto bekräftat.<br><em>Välkommen.</em>';
+    sub.textContent = 'Onboardingen bygger din modell — det tar 15–20 minuter.';
+  }
+
+  // Check Supabase profile to determine destination (handles cross-device case)
+  const hasProfile = await checkHasProfile();
+  const dest = hasProfile ? 'dashboard.html' : 'onboarding.html';
+  btn.href = dest;
+  btn.textContent = dest === 'dashboard.html' ? 'Gå till din dashboard' : 'Starta onboarding';
+
+  // Show button + auto-redirect after 2s
+  setTimeout(() => { btn.classList.add('visible'); }, 1500);
+  setTimeout(() => { _redirect(dest); }, 2200);
+})();
+</script>
+<footer style="padding: 2rem; text-align: center; border-top: 1px solid var(--border); margin-top: 3rem;">
+  <p style="font-size: 0.68rem; color: var(--fg4); line-height: 1.7; max-width: 480px; margin: 0 auto 0.5rem;">Forsyne är ett verktyg för självförståelse och prestation. Systemets insikter ersätter inte råd från läkare, psykolog eller annan vårdgivare — de kompletterar dem. <a href="disclaimer.html" style="color:var(--fg3); text-decoration:none;">Läs mer</a></p>
+  <p style="font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg4);"><a href="manifesto.html" style="color:var(--fg4); text-decoration:none;">Manifesto</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Disclaimer</a> · <a href="disclaimer.html" style="color:var(--fg4); text-decoration:none;">Integritet</a> · © 2026 Forsyne</p>
+</footer>
+</body>
+</html>
